@@ -1,0 +1,1912 @@
+{
+	"name": "sell",
+	"segment": 1,
+	"templates": [
+		{
+			"other": {},
+			"name": "incentum-sell",
+			"ledger": "THWJcWwvAGCqGgzpqxwDH9DgaXSwrtJWBm",
+			"versionMajor": 1,
+			"versionMinor": 0,
+			"versionPatch": 0,
+			"description": "Sell an item.",
+			"tags": [],
+			"reducers": [
+				{
+					"type": "start",
+					"code": "(\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $x.assert.isAtLeast($form.price, 0, 'price must be at least 0');\n  $x.assert.isOk($form.buyTitle, 'please supply a buyTitle');\n  $x.assert.isOk($form.buySubtitle, 'please supply a buySubtitle');\n\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.isAtLeast($count($o.coins), 1, 'must have at least one token to sell');\n  $cost := $x.toCoinUnit($form.price, $x.coin.praxDecimals);\n  $price := $x.coin.prax($cost);\n  \n  $newstate := {\n    'ended': false,\n    'owner': $action.ledger,\n    'price': $price,\n    'item': $o,\n    'tags': $action.tags,\n    'buyTitle': $form.buyTitle,\n    'buySubtitle': $form.buySubtitle,\n    'view': {\n      'title': $form.title,\n      'subtitle': $form.subtitle,\n      'description': $form.description\n    }\n  };\n  $out := $x.output($action.ledger, [], $form.title, $form.subtitle, $form.description, $action.tags, {});\n  $x.result($newstate, [$out])\n)\n",
+					"language": "jsonata"
+				},
+				{
+					"type": "end",
+					"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 0, 'do not send coins, just send the start output');\n\n  $newstate := $merge([$state, { 'ended': true }]);\n  $x.result($newstate)\n)\n",
+					"language": "jsonata"
+				},
+				{
+					"type": "buy",
+					"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 1, 'please only send me one coin');\n  $coin := $o.coins[0];\n  $price := $state.price;\n  $x.assert.isTrue($x.coin.same($coin, $price), 'only send me ' & $price.symbol);\n  $x.assert.isTrue($x.coin.greaterThanOrEqual($coin, $price), 'sorry, the price is' & $x.toDisplay($price) & ' ' & $price.symbol);\n  \n  $view := {\n    'ended': true,\n    'view': {\n      'title': $state.buyTitle,\n      'subtitle': $state.buySubtitle,\n      'description': $state.view.description,\n      'msgs': ['Sold to ' & $action.ledger]\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $item := $x.output($action.ledger, $state.item.coins, $form.title, $form.subtitle, $form.description, $action.tags);\n  $buy := $x.output($state.owner, $o.coins, $state.buyTitle, $state.buySubtitle, '', $state.tags);\n  $x.result($newState, [$item, $buy])\n)\n",
+					"language": "jsonata"
+				}
+			]
+		}
+	],
+	"templateSel": 0,
+	"reducerSel": 0,
+	"outputs": [
+		{
+			"name": "painting",
+			"json": "{\n\t\"tags\": [],\n\t\"ledger\": \"Alice\",\n\t\"data\": {},\n\t\"title\": \"My painting\",\n\t\"subtitle\": \"My painting\",\n\t\"msgs\": [],\n\t\"description\": \"### My great painting\",\n\t\"coins\": [\n\t  {\n\t    \"symbol\": \"PAINTING-1\",\n\t    \"decimals\": 2,\n\t    \"amount\": 100,\n\t    \"other\": {},\n\t    \"mint\": \"mint\"\n\t  }\n\t]\n}",
+			"output": {
+				"tags": [],
+				"ledger": "Alice",
+				"data": {},
+				"title": "My painting",
+				"subtitle": "My painting",
+				"msgs": [],
+				"description": "### My great painting",
+				"coins": [
+					{
+						"symbol": "PAINTING-1",
+						"decimals": 2,
+						"amount": 100,
+						"other": {},
+						"mint": "mint"
+					}
+				]
+			}
+		},
+		{
+			"name": "buy",
+			"json": "{\n\t\"tags\": [],\n\t\"ledger\": \"Alice\",\n\t\"data\": {},\n\t\"title\": \"\",\n\t\"subtitle\": \"\",\n\t\"msgs\": [],\n\t\"description\": \"\",\n\t\"coins\": [\n\t  {\n\t\t\t\t\"amount\": \"1000000000\",\n\t\t\t\t\"symbol\": \"PRAX\",\n\t\t\t\t\"mint\": \"854e09acdaae89b21e9cc7c14f599028628e6a97dd6514d5260622a9a1adc553\",\n\t\t\t\t\"other\": {},\n\t\t\t\t\"decimals\": 8\n\t\t}\n\t]\n}",
+			"output": {
+				"tags": [],
+				"ledger": "Alice",
+				"data": {},
+				"title": "",
+				"subtitle": "",
+				"msgs": [],
+				"description": "",
+				"coins": [
+					{
+						"amount": "1000000000",
+						"symbol": "PRAX",
+						"mint": "854e09acdaae89b21e9cc7c14f599028628e6a97dd6514d5260622a9a1adc553",
+						"other": {},
+						"decimals": 8
+					}
+				]
+			}
+		}
+	],
+	"outputSel": 1,
+	"actions": [
+		{
+			"name": "start",
+			"json": "{\n\t\"template\": \"incentum-sell\",\n\t\"form\": {\n\t  \"title\": \"Selling PAINTING-1\",\n\t  \"subtitle\": \"Selling my painting\",\n\t  \"description\": \"### This is my great painting\",\n\t  \"price\": 10,\n\t  \"buyTitle\": \"Sold my painting!\",\n\t  \"buySubtitle\": \"Sold my painting!\"\n\t},\n\t\"ledger\": \"Alice\",\n\t\"type\": \"start\",\n\t\"inputs\": [\n\t  \"painting\"\n\t]\n}",
+			"action": {
+				"template": "incentum-sell",
+				"form": {
+					"title": "Selling PAINTING-1",
+					"subtitle": "Selling my painting",
+					"description": "### This is my great painting",
+					"price": 10,
+					"buyTitle": "Sold my painting!",
+					"buySubtitle": "Sold my painting!"
+				},
+				"ledger": "Alice",
+				"type": "start",
+				"inputs": [
+					"painting"
+				]
+			},
+			"template": ""
+		},
+		{
+			"name": "buy",
+			"json": "{\n\t\"template\": \"incentum-sell\",\n\t\"form\": {\n\t  \"title\": \"Bought Alice painting\",\n\t  \"subtitle\": \"Bought Alice painting\"\n\t},\n\t\"ledger\": \"Bob\",\n\t\"type\": \"buy\",\n\t\"inputs\": [\"buy\"]\n}",
+			"action": {
+				"template": "incentum-sell",
+				"form": {
+					"title": "Bought Alice painting",
+					"subtitle": "Bought Alice painting"
+				},
+				"ledger": "Bob",
+				"type": "buy",
+				"inputs": [
+					"buy"
+				]
+			},
+			"template": ""
+		}
+	],
+	"actionSel": 0,
+	"states": [
+		{
+			"name": "start",
+			"json": "{\n\t\"coins\": [],\n\t\"state\": {}\n}"
+		},
+		{
+			"name": "item",
+			"json": "{\n\t\t\"state\": {\n\t\t\t\"ended\": false,\n\t\t\t\"owner\": \"Alice\",\n\t\t\t\"price\": {\n\t\t\t\t\"amount\": \"1000000000\",\n\t\t\t\t\"symbol\": \"PRAX\",\n\t\t\t\t\"mint\": \"854e09acdaae89b21e9cc7c14f599028628e6a97dd6514d5260622a9a1adc553\",\n\t\t\t\t\"other\": {},\n\t\t\t\t\"decimals\": 8\n\t\t\t},\n\t\t\t\"item\": {\n\t\t\t\t\"actionKey\": \"\",\n\t\t\t\t\"key\": \"painting\",\n\t\t\t\t\"ledger\": \"Alice\",\n\t\t\t\t\"data\": {},\n\t\t\t\t\"tags\": [],\n\t\t\t\t\"title\": \"My painting\",\n\t\t\t\t\"subtitle\": \"My painting\",\n\t\t\t\t\"description\": \"### My great painting\",\n\t\t\t\t\"msgs\": [],\n\t\t\t\t\"coins\": [\n\t\t\t\t\t{\n\t\t\t\t\t\t\"amount\": 100,\n\t\t\t\t\t\t\"symbol\": \"PAINTING-1\",\n\t\t\t\t\t\t\"other\": {},\n\t\t\t\t\t\t\"mint\": \"mint\",\n\t\t\t\t\t\t\"decimals\": 2\n\t\t\t\t\t}\n\t\t\t\t]\n\t\t\t},\n\t\t\t\"buyTitle\": \"Sold my painting!\",\n\t\t\t\"buySubtitle\": \"Sold my painting!\",\n\t\t\t\"view\": {\n\t\t\t  \"title\": \"Selling PAINTING-1\",\n\t\t\t  \"subtitle\": \"Selling my painting\"\n\t\t\t}\n\t\t},\n\t\t\"coins\": [\n\t\t\t{\n\t\t\t\t\"amount\": \"100\",\n\t\t\t\t\"symbol\": \"PAINTING-1\",\n\t\t\t\t\"mint\": \"mint\",\n\t\t\t\t\"other\": {},\n\t\t\t\t\"decimals\": 2\n\t\t\t}\n\t\t]\n\t}"
+		}
+	],
+	"stateSel": 0,
+	"results": [
+		{
+			"name": "start",
+			"result": {
+				"outputs": [
+					{
+						"ledger": "Alice",
+						"data": {},
+						"coins": [],
+						"tags": [],
+						"msgs": [],
+						"title": "",
+						"subtitle": "",
+						"description": ""
+					}
+				],
+				"state": {
+					"state": {
+						"ended": false,
+						"owner": "Alice",
+						"price": {
+							"amount": "1000000000",
+							"symbol": "PRAX",
+							"mint": "854e09acdaae89b21e9cc7c14f599028628e6a97dd6514d5260622a9a1adc553",
+							"other": {},
+							"decimals": 8
+						},
+						"item": {
+							"actionKey": "",
+							"key": "painting",
+							"ledger": "Alice",
+							"data": {},
+							"tags": [],
+							"title": "My painting",
+							"subtitle": "My painting",
+							"description": "### My great painting",
+							"msgs": [],
+							"coins": [
+								{
+									"amount": 100,
+									"symbol": "PAINTING-1",
+									"other": {},
+									"mint": "mint",
+									"decimals": 2
+								}
+							]
+						},
+						"buyTitle": "Sold my painting!",
+						"buySubtitle": "Sold my painting!",
+						"view": {}
+					},
+					"coins": [
+						{
+							"amount": "100",
+							"symbol": "PAINTING-1",
+							"mint": "mint",
+							"other": {},
+							"decimals": 2
+						}
+					]
+				},
+				"mint": []
+			},
+			"contract": {
+				"ledger": "Alice",
+				"template": {
+					"reducerMap": {
+						"start": {
+							"type": "start",
+							"code": "(\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $x.assert.isAtLeast($form.price, 0, 'price must be at least 0');\n\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.isAtLeast($count($o.coins), 1, 'must have at least one token to sell');\n  $cost := $x.toCoinUnit($form.price, $x.coin.praxDecimals);\n  $price := $x.coin.prax($cost);\n  \n  $newstate := {\n    'ended': false,\n    'owner': $action.ledger,\n    'price': $price,\n    'item': $o,\n    'buyTitle': $form.buyTitle,\n    'buySubtitle': $form.buySubtitle,\n    'view': {\n      'title': $from.title,\n      'subtitle': $from.subtitle,\n      'description': $form.description\n    }\n  };\n  $out := $x.output($action.ledger, [], $form.title, $form.subtitle, $form.description, $action.tags, {});\n  $x.result($newstate, [$out])\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"end": {
+							"type": "end",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 0, 'do not send coins, just send the start output');\n\n  $newstate := $merge([$state, { 'ended': true }]);\n  $x.result($newstate)\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"buy": {
+							"type": "buy",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 1, 'please only send me one coin');\n  $coin := $o.coins[0];\n  $price := $state.price;\n  $x.assert.isTrue($x.coin.same($coin, $price), 'only send me ' & $price.symbol);\n  $x.assert.isTrue($x.coin.greaterThanOrEqual($coin, $price), 'sorry, the price is' & $x.toDisplay($price) & ' ' & $price.symbol);\n  \n  $view := {\n    'ended': true,\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'description': $state.view.description,\n      'msgs': ['Sold to ' & $action.ledger]\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $item := $x.output($action.ledger, $state.item.coins, $form.title, $form.subtitle, $form.description, $action.tags);\n  $buy := $x.output($state.owner, $o.coins, $state.buyTitle, $state.buySubtitle, '', $state.tags);\n  $x.result($newState, [$item, $buy])\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						}
+					},
+					"name": "incentum-sell",
+					"tags": [],
+					"other": {},
+					"ledger": "Ledger",
+					"versionMajor": 1,
+					"versionMinor": 0,
+					"versionPatch": 0,
+					"reducers": [
+						{
+							"type": "start",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $x.assert.isAtLeast($form.price, 0, 'price must be at least 0');\n  $x.assert.isOk($form.buyTitle, 'please supply a buyTitle');\n  $x.assert.isOk($form.buySubtitle, 'please supply a buySubtitle');\n\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.isAtLeast($count($o.coins), 1, 'must have at least one token to sell');\n  $cost := $x.toCoinUnit($form.price, $x.coin.praxDecimals);\n  $price := $x.coin.prax($cost);\n  \n  $newstate := {\n    'ended': false,\n    'owner': $action.ledger,\n    'price': $price,\n    'item': $o,\n    'tags': $action.tags,\n    'buyTitle': $form.buyTitle,\n    'buySubtitle': $form.buySubtitle,\n    'view': {\n      'title': $form.title,\n      'subtitle': $form.subtitle,\n      'description': $form.description\n    }\n  };\n  $out := $x.output($action.ledger, [], $form.title, $form.subtitle, $form.description, $action.tags, {});\n  $x.result($newstate, [$out])\n)\n"
+						},
+						{
+							"type": "end",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 0, 'do not send coins, just send the start output');\n\n  $newstate := $merge([$state, { 'ended': true }]);\n  $x.result($newstate)\n)\n"
+						},
+						{
+							"type": "buy",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 1, 'please only send me one coin');\n  $coin := $o.coins[0];\n  $price := $state.price;\n  $x.assert.isTrue($x.coin.same($coin, $price), 'only send me ' & $price.symbol);\n  $x.assert.isTrue($x.coin.greaterThanOrEqual($coin, $price), 'sorry, the price is' & $x.toDisplay($price) & ' ' & $price.symbol);\n  \n  $view := {\n    'ended': true,\n    'view': {\n      'title': $state.buyTitle,\n      'subtitle': $state.buySubtitle,\n      'description': $state.view.description,\n      'msgs': ['Sold to ' & $action.ledger]\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $item := $x.output($action.ledger, $state.item.coins, $form.title, $form.subtitle, $form.description, $action.tags);\n  $buy := $x.output($state.owner, $o.coins, $state.buyTitle, $state.buySubtitle, '', $state.tags);\n  $x.result($newState, [$item, $buy])\n)\n"
+						}
+					],
+					"description": "incentum-sell Description"
+				},
+				"other": {},
+				"title": "",
+				"subtitle": "",
+				"description": "",
+				"key": "4ec07c319f2e2df46f67b4168ade7ed94363fcf9e7aeae895611252b7d9c299b"
+			}
+		},
+		{
+			"name": "start",
+			"result": {
+				"outputs": [
+					{
+						"ledger": "Alice",
+						"data": {},
+						"coins": [],
+						"tags": [],
+						"msgs": [],
+						"title": "Selling PAINTING-1",
+						"subtitle": "Selling my painting",
+						"description": ""
+					}
+				],
+				"state": {
+					"state": {
+						"ended": false,
+						"owner": "Alice",
+						"price": {
+							"amount": "1000000000",
+							"symbol": "PRAX",
+							"mint": "854e09acdaae89b21e9cc7c14f599028628e6a97dd6514d5260622a9a1adc553",
+							"other": {},
+							"decimals": 8
+						},
+						"item": {
+							"actionKey": "",
+							"key": "painting",
+							"ledger": "Alice",
+							"data": {},
+							"tags": [],
+							"title": "My painting",
+							"subtitle": "My painting",
+							"description": "### My great painting",
+							"msgs": [],
+							"coins": [
+								{
+									"amount": 100,
+									"symbol": "PAINTING-1",
+									"other": {},
+									"mint": "mint",
+									"decimals": 2
+								}
+							]
+						},
+						"buyTitle": "Sold my painting!",
+						"buySubtitle": "Sold my painting!",
+						"view": {}
+					},
+					"coins": [
+						{
+							"amount": "100",
+							"symbol": "PAINTING-1",
+							"mint": "mint",
+							"other": {},
+							"decimals": 2
+						}
+					]
+				},
+				"mint": []
+			},
+			"contract": {
+				"ledger": "Alice",
+				"template": {
+					"reducerMap": {
+						"start": {
+							"type": "start",
+							"code": "(\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $x.assert.isAtLeast($form.price, 0, 'price must be at least 0');\n\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.isAtLeast($count($o.coins), 1, 'must have at least one token to sell');\n  $cost := $x.toCoinUnit($form.price, $x.coin.praxDecimals);\n  $price := $x.coin.prax($cost);\n  \n  $newstate := {\n    'ended': false,\n    'owner': $action.ledger,\n    'price': $price,\n    'item': $o,\n    'buyTitle': $form.buyTitle,\n    'buySubtitle': $form.buySubtitle,\n    'view': {\n      'title': $from.title,\n      'subtitle': $from.subtitle,\n      'description': $form.description\n    }\n  };\n  $out := $x.output($action.ledger, [], $form.title, $form.subtitle, $form.description, $action.tags, {});\n  $x.result($newstate, [$out])\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"end": {
+							"type": "end",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 0, 'do not send coins, just send the start output');\n\n  $newstate := $merge([$state, { 'ended': true }]);\n  $x.result($newstate)\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"buy": {
+							"type": "buy",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 1, 'please only send me one coin');\n  $coin := $o.coins[0];\n  $price := $state.price;\n  $x.assert.isTrue($x.coin.same($coin, $price), 'only send me ' & $price.symbol);\n  $x.assert.isTrue($x.coin.greaterThanOrEqual($coin, $price), 'sorry, the price is' & $x.toDisplay($price) & ' ' & $price.symbol);\n  \n  $view := {\n    'ended': true,\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'description': $state.view.description,\n      'msgs': ['Sold to ' & $action.ledger]\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $item := $x.output($action.ledger, $state.item.coins, $form.title, $form.subtitle, $form.description, $action.tags);\n  $buy := $x.output($state.owner, $o.coins, $state.buyTitle, $state.buySubtitle, '', $state.tags);\n  $x.result($newState, [$item, $buy])\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						}
+					},
+					"name": "incentum-sell",
+					"tags": [],
+					"other": {},
+					"ledger": "Ledger",
+					"versionMajor": 1,
+					"versionMinor": 0,
+					"versionPatch": 0,
+					"reducers": [
+						{
+							"type": "start",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $x.assert.isAtLeast($form.price, 0, 'price must be at least 0');\n  $x.assert.isOk($form.buyTitle, 'please supply a buyTitle');\n  $x.assert.isOk($form.buySubtitle, 'please supply a buySubtitle');\n\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.isAtLeast($count($o.coins), 1, 'must have at least one token to sell');\n  $cost := $x.toCoinUnit($form.price, $x.coin.praxDecimals);\n  $price := $x.coin.prax($cost);\n  \n  $newstate := {\n    'ended': false,\n    'owner': $action.ledger,\n    'price': $price,\n    'item': $o,\n    'tags': $action.tags,\n    'buyTitle': $form.buyTitle,\n    'buySubtitle': $form.buySubtitle,\n    'view': {\n      'title': $form.title,\n      'subtitle': $form.subtitle,\n      'description': $form.description\n    }\n  };\n  $out := $x.output($action.ledger, [], $form.title, $form.subtitle, $form.description, $action.tags, {});\n  $x.result($newstate, [$out])\n)\n"
+						},
+						{
+							"type": "end",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 0, 'do not send coins, just send the start output');\n\n  $newstate := $merge([$state, { 'ended': true }]);\n  $x.result($newstate)\n)\n"
+						},
+						{
+							"type": "buy",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 1, 'please only send me one coin');\n  $coin := $o.coins[0];\n  $price := $state.price;\n  $x.assert.isTrue($x.coin.same($coin, $price), 'only send me ' & $price.symbol);\n  $x.assert.isTrue($x.coin.greaterThanOrEqual($coin, $price), 'sorry, the price is' & $x.toDisplay($price) & ' ' & $price.symbol);\n  \n  $view := {\n    'ended': true,\n    'view': {\n      'title': $state.buyTitle,\n      'subtitle': $state.buySubtitle,\n      'description': $state.view.description,\n      'msgs': ['Sold to ' & $action.ledger]\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $item := $x.output($action.ledger, $state.item.coins, $form.title, $form.subtitle, $form.description, $action.tags);\n  $buy := $x.output($state.owner, $o.coins, $state.buyTitle, $state.buySubtitle, '', $state.tags);\n  $x.result($newState, [$item, $buy])\n)\n"
+						}
+					],
+					"description": "incentum-sell Description"
+				},
+				"other": {},
+				"title": "",
+				"subtitle": "",
+				"description": "",
+				"key": "4ec07c319f2e2df46f67b4168ade7ed94363fcf9e7aeae895611252b7d9c299b"
+			}
+		},
+		{
+			"name": "buy",
+			"result": {
+				"outputs": [
+					{
+						"ledger": "Alice",
+						"data": {},
+						"coins": [
+							{
+								"amount": 100,
+								"symbol": "PAINTING-1",
+								"other": {},
+								"mint": "mint",
+								"decimals": 2
+							}
+						],
+						"tags": [],
+						"msgs": [],
+						"title": "",
+						"subtitle": "",
+						"description": ""
+					},
+					{
+						"ledger": "Alice",
+						"data": {},
+						"coins": [
+							{
+								"amount": "1000000000",
+								"symbol": "PRAX",
+								"other": {},
+								"mint": "854e09acdaae89b21e9cc7c14f599028628e6a97dd6514d5260622a9a1adc553",
+								"decimals": 8
+							}
+						],
+						"tags": [],
+						"msgs": [],
+						"title": "Sold my painting!",
+						"subtitle": "Sold my painting!",
+						"description": ""
+					}
+				],
+				"state": {
+					"state": {
+						"ended": true,
+						"owner": "Alice",
+						"price": {
+							"amount": "1000000000",
+							"symbol": "PRAX",
+							"mint": "854e09acdaae89b21e9cc7c14f599028628e6a97dd6514d5260622a9a1adc553",
+							"other": {},
+							"decimals": 8
+						},
+						"item": {
+							"actionKey": "",
+							"key": "painting",
+							"ledger": "Alice",
+							"data": {},
+							"tags": [],
+							"title": "My painting",
+							"subtitle": "My painting",
+							"description": "### My great painting",
+							"msgs": [],
+							"coins": [
+								{
+									"amount": 100,
+									"symbol": "PAINTING-1",
+									"other": {},
+									"mint": "mint",
+									"decimals": 2
+								}
+							]
+						},
+						"buyTitle": "Sold my painting!",
+						"buySubtitle": "Sold my painting!",
+						"view": {
+							"msgs": [
+								"Sold to Alice"
+							]
+						}
+					},
+					"coins": []
+				},
+				"mint": []
+			},
+			"contract": {
+				"ledger": "Alice",
+				"template": {
+					"reducerMap": {
+						"start": {
+							"type": "start",
+							"code": "(\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $x.assert.isAtLeast($form.price, 0, 'price must be at least 0');\n\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.isAtLeast($count($o.coins), 1, 'must have at least one token to sell');\n  $cost := $x.toCoinUnit($form.price, $x.coin.praxDecimals);\n  $price := $x.coin.prax($cost);\n  \n  $newstate := {\n    'ended': false,\n    'owner': $action.ledger,\n    'price': $price,\n    'item': $o,\n    'buyTitle': $form.buyTitle,\n    'buySubtitle': $form.buySubtitle,\n    'view': {\n      'title': $from.title,\n      'subtitle': $from.subtitle,\n      'description': $form.description\n    }\n  };\n  $out := $x.output($action.ledger, [], $form.title, $form.subtitle, $form.description, $action.tags, {});\n  $x.result($newstate, [$out])\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"end": {
+							"type": "end",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 0, 'do not send coins, just send the start output');\n\n  $newstate := $merge([$state, { 'ended': true }]);\n  $x.result($newstate)\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"buy": {
+							"type": "buy",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 1, 'please only send me one coin');\n  $coin := $o.coins[0];\n  $price := $state.price;\n  $x.assert.isTrue($x.coin.same($coin, $price), 'only send me ' & $price.symbol);\n  $x.assert.isTrue($x.coin.greaterThanOrEqual($coin, $price), 'sorry, the price is' & $x.toDisplay($price) & ' ' & $price.symbol);\n  \n  $view := {\n    'ended': true,\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'description': $state.view.description,\n      'msgs': ['Sold to ' & $action.ledger]\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $item := $x.output($action.ledger, $state.item.coins, $form.title, $form.subtitle, $form.description, $action.tags);\n  $buy := $x.output($state.owner, $o.coins, $state.buyTitle, $state.buySubtitle, '', $state.tags);\n  $x.result($newState, [$item, $buy])\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						}
+					},
+					"name": "incentum-sell",
+					"tags": [],
+					"other": {},
+					"ledger": "Ledger",
+					"versionMajor": 1,
+					"versionMinor": 0,
+					"versionPatch": 0,
+					"reducers": [
+						{
+							"type": "start",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $x.assert.isAtLeast($form.price, 0, 'price must be at least 0');\n  $x.assert.isOk($form.buyTitle, 'please supply a buyTitle');\n  $x.assert.isOk($form.buySubtitle, 'please supply a buySubtitle');\n\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.isAtLeast($count($o.coins), 1, 'must have at least one token to sell');\n  $cost := $x.toCoinUnit($form.price, $x.coin.praxDecimals);\n  $price := $x.coin.prax($cost);\n  \n  $newstate := {\n    'ended': false,\n    'owner': $action.ledger,\n    'price': $price,\n    'item': $o,\n    'tags': $action.tags,\n    'buyTitle': $form.buyTitle,\n    'buySubtitle': $form.buySubtitle,\n    'view': {\n      'title': $form.title,\n      'subtitle': $form.subtitle,\n      'description': $form.description\n    }\n  };\n  $out := $x.output($action.ledger, [], $form.title, $form.subtitle, $form.description, $action.tags, {});\n  $x.result($newstate, [$out])\n)\n"
+						},
+						{
+							"type": "end",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 0, 'do not send coins, just send the start output');\n\n  $newstate := $merge([$state, { 'ended': true }]);\n  $x.result($newstate)\n)\n"
+						},
+						{
+							"type": "buy",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 1, 'please only send me one coin');\n  $coin := $o.coins[0];\n  $price := $state.price;\n  $x.assert.isTrue($x.coin.same($coin, $price), 'only send me ' & $price.symbol);\n  $x.assert.isTrue($x.coin.greaterThanOrEqual($coin, $price), 'sorry, the price is' & $x.toDisplay($price) & ' ' & $price.symbol);\n  \n  $view := {\n    'ended': true,\n    'view': {\n      'title': $state.buyTitle,\n      'subtitle': $state.buySubtitle,\n      'description': $state.view.description,\n      'msgs': ['Sold to ' & $action.ledger]\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $item := $x.output($action.ledger, $state.item.coins, $form.title, $form.subtitle, $form.description, $action.tags);\n  $buy := $x.output($state.owner, $o.coins, $state.buyTitle, $state.buySubtitle, '', $state.tags);\n  $x.result($newState, [$item, $buy])\n)\n"
+						}
+					],
+					"description": "incentum-sell Description"
+				},
+				"other": {},
+				"title": "",
+				"subtitle": "",
+				"description": "",
+				"key": "4ec07c319f2e2df46f67b4168ade7ed94363fcf9e7aeae895611252b7d9c299b"
+			}
+		},
+		{
+			"name": "buy",
+			"result": {
+				"outputs": [
+					{
+						"ledger": "Bob",
+						"data": {},
+						"coins": [
+							{
+								"amount": 100,
+								"symbol": "PAINTING-1",
+								"other": {},
+								"mint": "mint",
+								"decimals": 2
+							}
+						],
+						"tags": [],
+						"msgs": [],
+						"title": "",
+						"subtitle": "",
+						"description": ""
+					},
+					{
+						"ledger": "Alice",
+						"data": {},
+						"coins": [
+							{
+								"amount": "1000000000",
+								"symbol": "PRAX",
+								"other": {},
+								"mint": "854e09acdaae89b21e9cc7c14f599028628e6a97dd6514d5260622a9a1adc553",
+								"decimals": 8
+							}
+						],
+						"tags": [],
+						"msgs": [],
+						"title": "Sold my painting!",
+						"subtitle": "Sold my painting!",
+						"description": ""
+					}
+				],
+				"state": {
+					"state": {
+						"ended": true,
+						"owner": "Alice",
+						"price": {
+							"amount": "1000000000",
+							"symbol": "PRAX",
+							"mint": "854e09acdaae89b21e9cc7c14f599028628e6a97dd6514d5260622a9a1adc553",
+							"other": {},
+							"decimals": 8
+						},
+						"item": {
+							"actionKey": "",
+							"key": "painting",
+							"ledger": "Alice",
+							"data": {},
+							"tags": [],
+							"title": "My painting",
+							"subtitle": "My painting",
+							"description": "### My great painting",
+							"msgs": [],
+							"coins": [
+								{
+									"amount": 100,
+									"symbol": "PAINTING-1",
+									"other": {},
+									"mint": "mint",
+									"decimals": 2
+								}
+							]
+						},
+						"buyTitle": "Sold my painting!",
+						"buySubtitle": "Sold my painting!",
+						"view": {
+							"msgs": [
+								"Sold to Bob"
+							]
+						}
+					},
+					"coins": []
+				},
+				"mint": []
+			},
+			"contract": {
+				"ledger": "Bob",
+				"template": {
+					"reducerMap": {
+						"start": {
+							"type": "start",
+							"code": "(\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $x.assert.isAtLeast($form.price, 0, 'price must be at least 0');\n\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.isAtLeast($count($o.coins), 1, 'must have at least one token to sell');\n  $cost := $x.toCoinUnit($form.price, $x.coin.praxDecimals);\n  $price := $x.coin.prax($cost);\n  \n  $newstate := {\n    'ended': false,\n    'owner': $action.ledger,\n    'price': $price,\n    'item': $o,\n    'buyTitle': $form.buyTitle,\n    'buySubtitle': $form.buySubtitle,\n    'view': {\n      'title': $from.title,\n      'subtitle': $from.subtitle,\n      'description': $form.description\n    }\n  };\n  $out := $x.output($action.ledger, [], $form.title, $form.subtitle, $form.description, $action.tags, {});\n  $x.result($newstate, [$out])\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"end": {
+							"type": "end",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 0, 'do not send coins, just send the start output');\n\n  $newstate := $merge([$state, { 'ended': true }]);\n  $x.result($newstate)\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"buy": {
+							"type": "buy",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 1, 'please only send me one coin');\n  $coin := $o.coins[0];\n  $price := $state.price;\n  $x.assert.isTrue($x.coin.same($coin, $price), 'only send me ' & $price.symbol);\n  $x.assert.isTrue($x.coin.greaterThanOrEqual($coin, $price), 'sorry, the price is' & $x.toDisplay($price) & ' ' & $price.symbol);\n  \n  $view := {\n    'ended': true,\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'description': $state.view.description,\n      'msgs': ['Sold to ' & $action.ledger]\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $item := $x.output($action.ledger, $state.item.coins, $form.title, $form.subtitle, $form.description, $action.tags);\n  $buy := $x.output($state.owner, $o.coins, $state.buyTitle, $state.buySubtitle, '', $state.tags);\n  $x.result($newState, [$item, $buy])\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						}
+					},
+					"name": "incentum-sell",
+					"tags": [],
+					"other": {},
+					"ledger": "Ledger",
+					"versionMajor": 1,
+					"versionMinor": 0,
+					"versionPatch": 0,
+					"reducers": [
+						{
+							"type": "start",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $x.assert.isAtLeast($form.price, 0, 'price must be at least 0');\n  $x.assert.isOk($form.buyTitle, 'please supply a buyTitle');\n  $x.assert.isOk($form.buySubtitle, 'please supply a buySubtitle');\n\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.isAtLeast($count($o.coins), 1, 'must have at least one token to sell');\n  $cost := $x.toCoinUnit($form.price, $x.coin.praxDecimals);\n  $price := $x.coin.prax($cost);\n  \n  $newstate := {\n    'ended': false,\n    'owner': $action.ledger,\n    'price': $price,\n    'item': $o,\n    'tags': $action.tags,\n    'buyTitle': $form.buyTitle,\n    'buySubtitle': $form.buySubtitle,\n    'view': {\n      'title': $form.title,\n      'subtitle': $form.subtitle,\n      'description': $form.description\n    }\n  };\n  $out := $x.output($action.ledger, [], $form.title, $form.subtitle, $form.description, $action.tags, {});\n  $x.result($newstate, [$out])\n)\n"
+						},
+						{
+							"type": "end",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 0, 'do not send coins, just send the start output');\n\n  $newstate := $merge([$state, { 'ended': true }]);\n  $x.result($newstate)\n)\n"
+						},
+						{
+							"type": "buy",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 1, 'please only send me one coin');\n  $coin := $o.coins[0];\n  $price := $state.price;\n  $x.assert.isTrue($x.coin.same($coin, $price), 'only send me ' & $price.symbol);\n  $x.assert.isTrue($x.coin.greaterThanOrEqual($coin, $price), 'sorry, the price is' & $x.toDisplay($price) & ' ' & $price.symbol);\n  \n  $view := {\n    'ended': true,\n    'view': {\n      'title': $state.buyTitle,\n      'subtitle': $state.buySubtitle,\n      'description': $state.view.description,\n      'msgs': ['Sold to ' & $action.ledger]\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $item := $x.output($action.ledger, $state.item.coins, $form.title, $form.subtitle, $form.description, $action.tags);\n  $buy := $x.output($state.owner, $o.coins, $state.buyTitle, $state.buySubtitle, '', $state.tags);\n  $x.result($newState, [$item, $buy])\n)\n"
+						}
+					],
+					"description": "incentum-sell Description"
+				},
+				"other": {},
+				"title": "",
+				"subtitle": "",
+				"description": "",
+				"key": "1bb8676bc430d6014cf445dd69153385f3ad80e0f41082266684cd0b04ba7b19"
+			}
+		},
+		{
+			"name": "buy",
+			"result": {
+				"outputs": [
+					{
+						"ledger": "Bob",
+						"data": {},
+						"coins": [
+							{
+								"amount": 100,
+								"symbol": "PAINTING-1",
+								"other": {},
+								"mint": "mint",
+								"decimals": 2
+							}
+						],
+						"tags": [],
+						"msgs": [],
+						"title": "Bought Alice painting",
+						"subtitle": "Bought Alice painting",
+						"description": ""
+					},
+					{
+						"ledger": "Alice",
+						"data": {},
+						"coins": [
+							{
+								"amount": "1000000000",
+								"symbol": "PRAX",
+								"other": {},
+								"mint": "854e09acdaae89b21e9cc7c14f599028628e6a97dd6514d5260622a9a1adc553",
+								"decimals": 8
+							}
+						],
+						"tags": [],
+						"msgs": [],
+						"title": "Sold my painting!",
+						"subtitle": "Sold my painting!",
+						"description": ""
+					}
+				],
+				"state": {
+					"state": {
+						"ended": true,
+						"owner": "Alice",
+						"price": {
+							"amount": "1000000000",
+							"symbol": "PRAX",
+							"mint": "854e09acdaae89b21e9cc7c14f599028628e6a97dd6514d5260622a9a1adc553",
+							"other": {},
+							"decimals": 8
+						},
+						"item": {
+							"actionKey": "",
+							"key": "painting",
+							"ledger": "Alice",
+							"data": {},
+							"tags": [],
+							"title": "My painting",
+							"subtitle": "My painting",
+							"description": "### My great painting",
+							"msgs": [],
+							"coins": [
+								{
+									"amount": 100,
+									"symbol": "PAINTING-1",
+									"other": {},
+									"mint": "mint",
+									"decimals": 2
+								}
+							]
+						},
+						"buyTitle": "Sold my painting!",
+						"buySubtitle": "Sold my painting!",
+						"view": {
+							"msgs": [
+								"Sold to Bob"
+							]
+						}
+					},
+					"coins": []
+				},
+				"mint": []
+			},
+			"contract": {
+				"ledger": "Bob",
+				"template": {
+					"reducerMap": {
+						"start": {
+							"type": "start",
+							"code": "(\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $x.assert.isAtLeast($form.price, 0, 'price must be at least 0');\n\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.isAtLeast($count($o.coins), 1, 'must have at least one token to sell');\n  $cost := $x.toCoinUnit($form.price, $x.coin.praxDecimals);\n  $price := $x.coin.prax($cost);\n  \n  $newstate := {\n    'ended': false,\n    'owner': $action.ledger,\n    'price': $price,\n    'item': $o,\n    'buyTitle': $form.buyTitle,\n    'buySubtitle': $form.buySubtitle,\n    'view': {\n      'title': $from.title,\n      'subtitle': $from.subtitle,\n      'description': $form.description\n    }\n  };\n  $out := $x.output($action.ledger, [], $form.title, $form.subtitle, $form.description, $action.tags, {});\n  $x.result($newstate, [$out])\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"end": {
+							"type": "end",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 0, 'do not send coins, just send the start output');\n\n  $newstate := $merge([$state, { 'ended': true }]);\n  $x.result($newstate)\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"buy": {
+							"type": "buy",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 1, 'please only send me one coin');\n  $coin := $o.coins[0];\n  $price := $state.price;\n  $x.assert.isTrue($x.coin.same($coin, $price), 'only send me ' & $price.symbol);\n  $x.assert.isTrue($x.coin.greaterThanOrEqual($coin, $price), 'sorry, the price is' & $x.toDisplay($price) & ' ' & $price.symbol);\n  \n  $view := {\n    'ended': true,\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'description': $state.view.description,\n      'msgs': ['Sold to ' & $action.ledger]\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $item := $x.output($action.ledger, $state.item.coins, $form.title, $form.subtitle, $form.description, $action.tags);\n  $buy := $x.output($state.owner, $o.coins, $state.buyTitle, $state.buySubtitle, '', $state.tags);\n  $x.result($newState, [$item, $buy])\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						}
+					},
+					"name": "incentum-sell",
+					"tags": [],
+					"other": {},
+					"ledger": "Ledger",
+					"versionMajor": 1,
+					"versionMinor": 0,
+					"versionPatch": 0,
+					"reducers": [
+						{
+							"type": "start",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $x.assert.isAtLeast($form.price, 0, 'price must be at least 0');\n  $x.assert.isOk($form.buyTitle, 'please supply a buyTitle');\n  $x.assert.isOk($form.buySubtitle, 'please supply a buySubtitle');\n\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.isAtLeast($count($o.coins), 1, 'must have at least one token to sell');\n  $cost := $x.toCoinUnit($form.price, $x.coin.praxDecimals);\n  $price := $x.coin.prax($cost);\n  \n  $newstate := {\n    'ended': false,\n    'owner': $action.ledger,\n    'price': $price,\n    'item': $o,\n    'tags': $action.tags,\n    'buyTitle': $form.buyTitle,\n    'buySubtitle': $form.buySubtitle,\n    'view': {\n      'title': $form.title,\n      'subtitle': $form.subtitle,\n      'description': $form.description\n    }\n  };\n  $out := $x.output($action.ledger, [], $form.title, $form.subtitle, $form.description, $action.tags, {});\n  $x.result($newstate, [$out])\n)\n"
+						},
+						{
+							"type": "end",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 0, 'do not send coins, just send the start output');\n\n  $newstate := $merge([$state, { 'ended': true }]);\n  $x.result($newstate)\n)\n"
+						},
+						{
+							"type": "buy",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 1, 'please only send me one coin');\n  $coin := $o.coins[0];\n  $price := $state.price;\n  $x.assert.isTrue($x.coin.same($coin, $price), 'only send me ' & $price.symbol);\n  $x.assert.isTrue($x.coin.greaterThanOrEqual($coin, $price), 'sorry, the price is' & $x.toDisplay($price) & ' ' & $price.symbol);\n  \n  $view := {\n    'ended': true,\n    'view': {\n      'title': $state.buyTitle,\n      'subtitle': $state.buySubtitle,\n      'description': $state.view.description,\n      'msgs': ['Sold to ' & $action.ledger]\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $item := $x.output($action.ledger, $state.item.coins, $form.title, $form.subtitle, $form.description, $action.tags);\n  $buy := $x.output($state.owner, $o.coins, $state.buyTitle, $state.buySubtitle, '', $state.tags);\n  $x.result($newState, [$item, $buy])\n)\n"
+						}
+					],
+					"description": "incentum-sell Description"
+				},
+				"other": {},
+				"title": "",
+				"subtitle": "",
+				"description": "",
+				"key": "1bb8676bc430d6014cf445dd69153385f3ad80e0f41082266684cd0b04ba7b19"
+			}
+		},
+		{
+			"name": "start",
+			"result": {
+				"outputs": [
+					{
+						"ledger": "Alice",
+						"data": {},
+						"coins": [],
+						"tags": [],
+						"msgs": [],
+						"title": "Selling PAINTING-1",
+						"subtitle": "Selling my painting",
+						"description": ""
+					}
+				],
+				"state": {
+					"state": {
+						"ended": false,
+						"owner": "Alice",
+						"price": {
+							"amount": "1000000000",
+							"symbol": "PRAX",
+							"mint": "854e09acdaae89b21e9cc7c14f599028628e6a97dd6514d5260622a9a1adc553",
+							"other": {},
+							"decimals": 8
+						},
+						"item": {
+							"actionKey": "",
+							"key": "painting",
+							"ledger": "Alice",
+							"data": {},
+							"tags": [],
+							"title": "My painting",
+							"subtitle": "My painting",
+							"description": "### My great painting",
+							"msgs": [],
+							"coins": [
+								{
+									"amount": 100,
+									"symbol": "PAINTING-1",
+									"other": {},
+									"mint": "mint",
+									"decimals": 2
+								}
+							]
+						},
+						"buyTitle": "Sold my painting!",
+						"buySubtitle": "Sold my painting!",
+						"view": {
+							"title": "Selling PAINTING-1",
+							"subtitle": "Selling my painting"
+						}
+					},
+					"coins": [
+						{
+							"amount": "100",
+							"symbol": "PAINTING-1",
+							"mint": "mint",
+							"other": {},
+							"decimals": 2
+						}
+					]
+				},
+				"mint": []
+			},
+			"contract": {
+				"ledger": "Alice",
+				"template": {
+					"reducerMap": {
+						"start": {
+							"type": "start",
+							"code": "(\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $x.assert.isAtLeast($form.price, 0, 'price must be at least 0');\n\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.isAtLeast($count($o.coins), 1, 'must have at least one token to sell');\n  $cost := $x.toCoinUnit($form.price, $x.coin.praxDecimals);\n  $price := $x.coin.prax($cost);\n  \n  $newstate := {\n    'ended': false,\n    'owner': $action.ledger,\n    'price': $price,\n    'item': $o,\n    'buyTitle': $form.buyTitle,\n    'buySubtitle': $form.buySubtitle,\n    'view': {\n      'title': $form.title,\n      'subtitle': $form.subtitle,\n      'description': $form.description\n    }\n  };\n  $out := $x.output($action.ledger, [], $form.title, $form.subtitle, $form.description, $action.tags, {});\n  $x.result($newstate, [$out])\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"end": {
+							"type": "end",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 0, 'do not send coins, just send the start output');\n\n  $newstate := $merge([$state, { 'ended': true }]);\n  $x.result($newstate)\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"buy": {
+							"type": "buy",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 1, 'please only send me one coin');\n  $coin := $o.coins[0];\n  $price := $state.price;\n  $x.assert.isTrue($x.coin.same($coin, $price), 'only send me ' & $price.symbol);\n  $x.assert.isTrue($x.coin.greaterThanOrEqual($coin, $price), 'sorry, the price is' & $x.toDisplay($price) & ' ' & $price.symbol);\n  \n  $view := {\n    'ended': true,\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'description': $state.view.description,\n      'msgs': ['Sold to ' & $action.ledger]\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $item := $x.output($action.ledger, $state.item.coins, $form.title, $form.subtitle, $form.description, $action.tags);\n  $buy := $x.output($state.owner, $o.coins, $state.buyTitle, $state.buySubtitle, '', $state.tags);\n  $x.result($newState, [$item, $buy])\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						}
+					},
+					"name": "incentum-sell",
+					"tags": [],
+					"other": {},
+					"ledger": "Ledger",
+					"versionMajor": 1,
+					"versionMinor": 0,
+					"versionPatch": 0,
+					"reducers": [
+						{
+							"type": "start",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $x.assert.isAtLeast($form.price, 0, 'price must be at least 0');\n  $x.assert.isOk($form.buyTitle, 'please supply a buyTitle');\n  $x.assert.isOk($form.buySubtitle, 'please supply a buySubtitle');\n\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.isAtLeast($count($o.coins), 1, 'must have at least one token to sell');\n  $cost := $x.toCoinUnit($form.price, $x.coin.praxDecimals);\n  $price := $x.coin.prax($cost);\n  \n  $newstate := {\n    'ended': false,\n    'owner': $action.ledger,\n    'price': $price,\n    'item': $o,\n    'tags': $action.tags,\n    'buyTitle': $form.buyTitle,\n    'buySubtitle': $form.buySubtitle,\n    'view': {\n      'title': $form.title,\n      'subtitle': $form.subtitle,\n      'description': $form.description\n    }\n  };\n  $out := $x.output($action.ledger, [], $form.title, $form.subtitle, $form.description, $action.tags, {});\n  $x.result($newstate, [$out])\n)\n"
+						},
+						{
+							"type": "end",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 0, 'do not send coins, just send the start output');\n\n  $newstate := $merge([$state, { 'ended': true }]);\n  $x.result($newstate)\n)\n"
+						},
+						{
+							"type": "buy",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 1, 'please only send me one coin');\n  $coin := $o.coins[0];\n  $price := $state.price;\n  $x.assert.isTrue($x.coin.same($coin, $price), 'only send me ' & $price.symbol);\n  $x.assert.isTrue($x.coin.greaterThanOrEqual($coin, $price), 'sorry, the price is' & $x.toDisplay($price) & ' ' & $price.symbol);\n  \n  $view := {\n    'ended': true,\n    'view': {\n      'title': $state.buyTitle,\n      'subtitle': $state.buySubtitle,\n      'description': $state.view.description,\n      'msgs': ['Sold to ' & $action.ledger]\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $item := $x.output($action.ledger, $state.item.coins, $form.title, $form.subtitle, $form.description, $action.tags);\n  $buy := $x.output($state.owner, $o.coins, $state.buyTitle, $state.buySubtitle, '', $state.tags);\n  $x.result($newState, [$item, $buy])\n)\n"
+						}
+					],
+					"description": "incentum-sell Description"
+				},
+				"other": {},
+				"title": "",
+				"subtitle": "",
+				"description": "",
+				"key": "4ec07c319f2e2df46f67b4168ade7ed94363fcf9e7aeae895611252b7d9c299b"
+			}
+		},
+		{
+			"name": "buy",
+			"result": {
+				"outputs": [
+					{
+						"ledger": "Bob",
+						"data": {},
+						"coins": [
+							{
+								"amount": 100,
+								"symbol": "PAINTING-1",
+								"other": {},
+								"mint": "mint",
+								"decimals": 2
+							}
+						],
+						"tags": [],
+						"msgs": [],
+						"title": "Bought Alice painting",
+						"subtitle": "Bought Alice painting",
+						"description": ""
+					},
+					{
+						"ledger": "Alice",
+						"data": {},
+						"coins": [
+							{
+								"amount": "1000000000",
+								"symbol": "PRAX",
+								"other": {},
+								"mint": "854e09acdaae89b21e9cc7c14f599028628e6a97dd6514d5260622a9a1adc553",
+								"decimals": 8
+							}
+						],
+						"tags": [],
+						"msgs": [],
+						"title": "Sold my painting!",
+						"subtitle": "Sold my painting!",
+						"description": ""
+					}
+				],
+				"state": {
+					"state": {
+						"ended": true,
+						"owner": "Alice",
+						"price": {
+							"amount": "1000000000",
+							"symbol": "PRAX",
+							"mint": "854e09acdaae89b21e9cc7c14f599028628e6a97dd6514d5260622a9a1adc553",
+							"other": {},
+							"decimals": 8
+						},
+						"item": {
+							"actionKey": "",
+							"key": "painting",
+							"ledger": "Alice",
+							"data": {},
+							"tags": [],
+							"title": "My painting",
+							"subtitle": "My painting",
+							"description": "### My great painting",
+							"msgs": [],
+							"coins": [
+								{
+									"amount": 100,
+									"symbol": "PAINTING-1",
+									"other": {},
+									"mint": "mint",
+									"decimals": 2
+								}
+							]
+						},
+						"title": "Selling PAINTING-1",
+						"subtitle": "Selling my painting",
+						"buyTitle": "Sold my painting!",
+						"buySubtitle": "Sold my painting!",
+						"view": {
+							"msgs": [
+								"Sold to Bob"
+							]
+						}
+					},
+					"coins": []
+				},
+				"mint": []
+			},
+			"contract": {
+				"ledger": "Bob",
+				"template": {
+					"reducerMap": {
+						"start": {
+							"type": "start",
+							"code": "(\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $x.assert.isAtLeast($form.price, 0, 'price must be at least 0');\n\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.isAtLeast($count($o.coins), 1, 'must have at least one token to sell');\n  $cost := $x.toCoinUnit($form.price, $x.coin.praxDecimals);\n  $price := $x.coin.prax($cost);\n  \n  $newstate := {\n    'ended': false,\n    'owner': $action.ledger,\n    'price': $price,\n    'item': $o,\n    'buyTitle': $form.buyTitle,\n    'buySubtitle': $form.buySubtitle,\n    'view': {\n      'title': $form.title,\n      'subtitle': $form.subtitle,\n      'description': $form.description\n    }\n  };\n  $out := $x.output($action.ledger, [], $form.title, $form.subtitle, $form.description, $action.tags, {});\n  $x.result($newstate, [$out])\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"end": {
+							"type": "end",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 0, 'do not send coins, just send the start output');\n\n  $newstate := $merge([$state, { 'ended': true }]);\n  $x.result($newstate)\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"buy": {
+							"type": "buy",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 1, 'please only send me one coin');\n  $coin := $o.coins[0];\n  $price := $state.price;\n  $x.assert.isTrue($x.coin.same($coin, $price), 'only send me ' & $price.symbol);\n  $x.assert.isTrue($x.coin.greaterThanOrEqual($coin, $price), 'sorry, the price is' & $x.toDisplay($price) & ' ' & $price.symbol);\n  \n  $view := {\n    'ended': true,\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'description': $state.view.description,\n      'msgs': ['Sold to ' & $action.ledger]\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $item := $x.output($action.ledger, $state.item.coins, $form.title, $form.subtitle, $form.description, $action.tags);\n  $buy := $x.output($state.owner, $o.coins, $state.buyTitle, $state.buySubtitle, '', $state.tags);\n  $x.result($newState, [$item, $buy])\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						}
+					},
+					"name": "incentum-sell",
+					"tags": [],
+					"other": {},
+					"ledger": "Ledger",
+					"versionMajor": 1,
+					"versionMinor": 0,
+					"versionPatch": 0,
+					"reducers": [
+						{
+							"type": "start",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $x.assert.isAtLeast($form.price, 0, 'price must be at least 0');\n  $x.assert.isOk($form.buyTitle, 'please supply a buyTitle');\n  $x.assert.isOk($form.buySubtitle, 'please supply a buySubtitle');\n\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.isAtLeast($count($o.coins), 1, 'must have at least one token to sell');\n  $cost := $x.toCoinUnit($form.price, $x.coin.praxDecimals);\n  $price := $x.coin.prax($cost);\n  \n  $newstate := {\n    'ended': false,\n    'owner': $action.ledger,\n    'price': $price,\n    'item': $o,\n    'tags': $action.tags,\n    'buyTitle': $form.buyTitle,\n    'buySubtitle': $form.buySubtitle,\n    'view': {\n      'title': $form.title,\n      'subtitle': $form.subtitle,\n      'description': $form.description\n    }\n  };\n  $out := $x.output($action.ledger, [], $form.title, $form.subtitle, $form.description, $action.tags, {});\n  $x.result($newstate, [$out])\n)\n"
+						},
+						{
+							"type": "end",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 0, 'do not send coins, just send the start output');\n\n  $newstate := $merge([$state, { 'ended': true }]);\n  $x.result($newstate)\n)\n"
+						},
+						{
+							"type": "buy",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 1, 'please only send me one coin');\n  $coin := $o.coins[0];\n  $price := $state.price;\n  $x.assert.isTrue($x.coin.same($coin, $price), 'only send me ' & $price.symbol);\n  $x.assert.isTrue($x.coin.greaterThanOrEqual($coin, $price), 'sorry, the price is' & $x.toDisplay($price) & ' ' & $price.symbol);\n  \n  $view := {\n    'ended': true,\n    'view': {\n      'title': $state.buyTitle,\n      'subtitle': $state.buySubtitle,\n      'description': $state.view.description,\n      'msgs': ['Sold to ' & $action.ledger]\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $item := $x.output($action.ledger, $state.item.coins, $form.title, $form.subtitle, $form.description, $action.tags);\n  $buy := $x.output($state.owner, $o.coins, $state.buyTitle, $state.buySubtitle, '', $state.tags);\n  $x.result($newState, [$item, $buy])\n)\n"
+						}
+					],
+					"description": "incentum-sell Description"
+				},
+				"other": {},
+				"title": "",
+				"subtitle": "",
+				"description": "",
+				"key": "1bb8676bc430d6014cf445dd69153385f3ad80e0f41082266684cd0b04ba7b19"
+			}
+		},
+		{
+			"name": "buy",
+			"result": {
+				"outputs": [
+					{
+						"ledger": "Bob",
+						"data": {},
+						"coins": [
+							{
+								"amount": 100,
+								"symbol": "PAINTING-1",
+								"other": {},
+								"mint": "mint",
+								"decimals": 2
+							}
+						],
+						"tags": [],
+						"msgs": [],
+						"title": "Bought Alice painting",
+						"subtitle": "Bought Alice painting",
+						"description": ""
+					},
+					{
+						"ledger": "Alice",
+						"data": {},
+						"coins": [
+							{
+								"amount": "1000000000",
+								"symbol": "PRAX",
+								"other": {},
+								"mint": "854e09acdaae89b21e9cc7c14f599028628e6a97dd6514d5260622a9a1adc553",
+								"decimals": 8
+							}
+						],
+						"tags": [],
+						"msgs": [],
+						"title": "Sold my painting!",
+						"subtitle": "Sold my painting!",
+						"description": ""
+					}
+				],
+				"state": {
+					"state": {
+						"ended": true,
+						"owner": "Alice",
+						"price": {
+							"amount": "1000000000",
+							"symbol": "PRAX",
+							"mint": "854e09acdaae89b21e9cc7c14f599028628e6a97dd6514d5260622a9a1adc553",
+							"other": {},
+							"decimals": 8
+						},
+						"item": {
+							"actionKey": "",
+							"key": "painting",
+							"ledger": "Alice",
+							"data": {},
+							"tags": [],
+							"title": "My painting",
+							"subtitle": "My painting",
+							"description": "### My great painting",
+							"msgs": [],
+							"coins": [
+								{
+									"amount": 100,
+									"symbol": "PAINTING-1",
+									"other": {},
+									"mint": "mint",
+									"decimals": 2
+								}
+							]
+						},
+						"buyTitle": "Sold my painting!",
+						"buySubtitle": "Sold my painting!",
+						"view": {
+							"title": "Selling PAINTING-1",
+							"subtitle": "Selling my painting",
+							"msgs": [
+								"Sold to Bob"
+							]
+						}
+					},
+					"coins": []
+				},
+				"mint": []
+			},
+			"contract": {
+				"ledger": "Bob",
+				"template": {
+					"reducerMap": {
+						"start": {
+							"type": "start",
+							"code": "(\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $x.assert.isAtLeast($form.price, 0, 'price must be at least 0');\n\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.isAtLeast($count($o.coins), 1, 'must have at least one token to sell');\n  $cost := $x.toCoinUnit($form.price, $x.coin.praxDecimals);\n  $price := $x.coin.prax($cost);\n  \n  $newstate := {\n    'ended': false,\n    'owner': $action.ledger,\n    'price': $price,\n    'item': $o,\n    'buyTitle': $form.buyTitle,\n    'buySubtitle': $form.buySubtitle,\n    'view': {\n      'title': $form.title,\n      'subtitle': $form.subtitle,\n      'description': $form.description\n    }\n  };\n  $out := $x.output($action.ledger, [], $form.title, $form.subtitle, $form.description, $action.tags, {});\n  $x.result($newstate, [$out])\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"end": {
+							"type": "end",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 0, 'do not send coins, just send the start output');\n\n  $newstate := $merge([$state, { 'ended': true }]);\n  $x.result($newstate)\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"buy": {
+							"type": "buy",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 1, 'please only send me one coin');\n  $coin := $o.coins[0];\n  $price := $state.price;\n  $x.assert.isTrue($x.coin.same($coin, $price), 'only send me ' & $price.symbol);\n  $x.assert.isTrue($x.coin.greaterThanOrEqual($coin, $price), 'sorry, the price is' & $x.toDisplay($price) & ' ' & $price.symbol);\n  \n  $view := {\n    'ended': true,\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'description': $state.view.description,\n      'msgs': ['Sold to ' & $action.ledger]\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $item := $x.output($action.ledger, $state.item.coins, $form.title, $form.subtitle, $form.description, $action.tags);\n  $buy := $x.output($state.owner, $o.coins, $state.buyTitle, $state.buySubtitle, '', $state.tags);\n  $x.result($newState, [$item, $buy])\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						}
+					},
+					"name": "incentum-sell",
+					"tags": [],
+					"other": {},
+					"ledger": "Ledger",
+					"versionMajor": 1,
+					"versionMinor": 0,
+					"versionPatch": 0,
+					"reducers": [
+						{
+							"type": "start",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $x.assert.isAtLeast($form.price, 0, 'price must be at least 0');\n  $x.assert.isOk($form.buyTitle, 'please supply a buyTitle');\n  $x.assert.isOk($form.buySubtitle, 'please supply a buySubtitle');\n\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.isAtLeast($count($o.coins), 1, 'must have at least one token to sell');\n  $cost := $x.toCoinUnit($form.price, $x.coin.praxDecimals);\n  $price := $x.coin.prax($cost);\n  \n  $newstate := {\n    'ended': false,\n    'owner': $action.ledger,\n    'price': $price,\n    'item': $o,\n    'tags': $action.tags,\n    'buyTitle': $form.buyTitle,\n    'buySubtitle': $form.buySubtitle,\n    'view': {\n      'title': $form.title,\n      'subtitle': $form.subtitle,\n      'description': $form.description\n    }\n  };\n  $out := $x.output($action.ledger, [], $form.title, $form.subtitle, $form.description, $action.tags, {});\n  $x.result($newstate, [$out])\n)\n"
+						},
+						{
+							"type": "end",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 0, 'do not send coins, just send the start output');\n\n  $newstate := $merge([$state, { 'ended': true }]);\n  $x.result($newstate)\n)\n"
+						},
+						{
+							"type": "buy",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 1, 'please only send me one coin');\n  $coin := $o.coins[0];\n  $price := $state.price;\n  $x.assert.isTrue($x.coin.same($coin, $price), 'only send me ' & $price.symbol);\n  $x.assert.isTrue($x.coin.greaterThanOrEqual($coin, $price), 'sorry, the price is' & $x.toDisplay($price) & ' ' & $price.symbol);\n  \n  $view := {\n    'ended': true,\n    'view': {\n      'title': $state.buyTitle,\n      'subtitle': $state.buySubtitle,\n      'description': $state.view.description,\n      'msgs': ['Sold to ' & $action.ledger]\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $item := $x.output($action.ledger, $state.item.coins, $form.title, $form.subtitle, $form.description, $action.tags);\n  $buy := $x.output($state.owner, $o.coins, $state.buyTitle, $state.buySubtitle, '', $state.tags);\n  $x.result($newState, [$item, $buy])\n)\n"
+						}
+					],
+					"description": "incentum-sell Description"
+				},
+				"other": {},
+				"title": "",
+				"subtitle": "",
+				"description": "",
+				"key": "1bb8676bc430d6014cf445dd69153385f3ad80e0f41082266684cd0b04ba7b19"
+			}
+		},
+		{
+			"name": "buy",
+			"result": {
+				"outputs": [
+					{
+						"ledger": "Bob",
+						"data": {},
+						"coins": [
+							{
+								"amount": 100,
+								"symbol": "PAINTING-1",
+								"other": {},
+								"mint": "mint",
+								"decimals": 2
+							}
+						],
+						"tags": [],
+						"msgs": [],
+						"title": "Bought Alice painting",
+						"subtitle": "Bought Alice painting",
+						"description": ""
+					},
+					{
+						"ledger": "Alice",
+						"data": {},
+						"coins": [
+							{
+								"amount": "1000000000",
+								"symbol": "PRAX",
+								"other": {},
+								"mint": "854e09acdaae89b21e9cc7c14f599028628e6a97dd6514d5260622a9a1adc553",
+								"decimals": 8
+							}
+						],
+						"tags": [],
+						"msgs": [],
+						"title": "Sold my painting!",
+						"subtitle": "Sold my painting!",
+						"description": ""
+					}
+				],
+				"state": {
+					"state": {
+						"ended": true,
+						"owner": "Alice",
+						"price": {
+							"amount": "1000000000",
+							"symbol": "PRAX",
+							"mint": "854e09acdaae89b21e9cc7c14f599028628e6a97dd6514d5260622a9a1adc553",
+							"other": {},
+							"decimals": 8
+						},
+						"item": {
+							"actionKey": "",
+							"key": "painting",
+							"ledger": "Alice",
+							"data": {},
+							"tags": [],
+							"title": "My painting",
+							"subtitle": "My painting",
+							"description": "### My great painting",
+							"msgs": [],
+							"coins": [
+								{
+									"amount": 100,
+									"symbol": "PAINTING-1",
+									"other": {},
+									"mint": "mint",
+									"decimals": 2
+								}
+							]
+						},
+						"buyTitle": "Sold my painting!",
+						"buySubtitle": "Sold my painting!",
+						"view": {
+							"title": "Selling PAINTING-1",
+							"subtitle": "Selling my painting",
+							"msgs": [
+								"Sold to Bob"
+							]
+						}
+					},
+					"coins": []
+				},
+				"mint": []
+			},
+			"contract": {
+				"ledger": "Bob",
+				"template": {
+					"reducerMap": {
+						"start": {
+							"type": "start",
+							"code": "(\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $x.assert.isAtLeast($form.price, 0, 'price must be at least 0');\n\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.isAtLeast($count($o.coins), 1, 'must have at least one token to sell');\n  $cost := $x.toCoinUnit($form.price, $x.coin.praxDecimals);\n  $price := $x.coin.prax($cost);\n  \n  $newstate := {\n    'ended': false,\n    'owner': $action.ledger,\n    'price': $price,\n    'item': $o,\n    'buyTitle': $form.buyTitle,\n    'buySubtitle': $form.buySubtitle,\n    'view': {\n      'title': $form.title,\n      'subtitle': $form.subtitle,\n      'description': $form.description\n    }\n  };\n  $out := $x.output($action.ledger, [], $form.title, $form.subtitle, $form.description, $action.tags, {});\n  $x.result($newstate, [$out])\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"end": {
+							"type": "end",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 0, 'do not send coins, just send the start output');\n\n  $newstate := $merge([$state, { 'ended': true }]);\n  $x.result($newstate)\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"buy": {
+							"type": "buy",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 1, 'please only send me one coin');\n  $coin := $o.coins[0];\n  $price := $state.price;\n  $x.assert.isTrue($x.coin.same($coin, $price), 'only send me ' & $price.symbol);\n  $x.assert.isTrue($x.coin.greaterThanOrEqual($coin, $price), 'sorry, the price is' & $x.toDisplay($price) & ' ' & $price.symbol);\n  \n  $view := {\n    'ended': true,\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'description': $state.view.description,\n      'msgs': ['Sold to ' & $action.ledger]\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $item := $x.output($action.ledger, $state.item.coins, $form.title, $form.subtitle, $form.description, $action.tags);\n  $buy := $x.output($state.owner, $o.coins, $state.buyTitle, $state.buySubtitle, '', $state.tags);\n  $x.result($newState, [$item, $buy])\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						}
+					},
+					"name": "incentum-sell",
+					"tags": [],
+					"other": {},
+					"ledger": "Ledger",
+					"versionMajor": 1,
+					"versionMinor": 0,
+					"versionPatch": 0,
+					"reducers": [
+						{
+							"type": "start",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $x.assert.isAtLeast($form.price, 0, 'price must be at least 0');\n  $x.assert.isOk($form.buyTitle, 'please supply a buyTitle');\n  $x.assert.isOk($form.buySubtitle, 'please supply a buySubtitle');\n\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.isAtLeast($count($o.coins), 1, 'must have at least one token to sell');\n  $cost := $x.toCoinUnit($form.price, $x.coin.praxDecimals);\n  $price := $x.coin.prax($cost);\n  \n  $newstate := {\n    'ended': false,\n    'owner': $action.ledger,\n    'price': $price,\n    'item': $o,\n    'tags': $action.tags,\n    'buyTitle': $form.buyTitle,\n    'buySubtitle': $form.buySubtitle,\n    'view': {\n      'title': $form.title,\n      'subtitle': $form.subtitle,\n      'description': $form.description\n    }\n  };\n  $out := $x.output($action.ledger, [], $form.title, $form.subtitle, $form.description, $action.tags, {});\n  $x.result($newstate, [$out])\n)\n"
+						},
+						{
+							"type": "end",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 0, 'do not send coins, just send the start output');\n\n  $newstate := $merge([$state, { 'ended': true }]);\n  $x.result($newstate)\n)\n"
+						},
+						{
+							"type": "buy",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 1, 'please only send me one coin');\n  $coin := $o.coins[0];\n  $price := $state.price;\n  $x.assert.isTrue($x.coin.same($coin, $price), 'only send me ' & $price.symbol);\n  $x.assert.isTrue($x.coin.greaterThanOrEqual($coin, $price), 'sorry, the price is' & $x.toDisplay($price) & ' ' & $price.symbol);\n  \n  $view := {\n    'ended': true,\n    'view': {\n      'title': $state.buyTitle,\n      'subtitle': $state.buySubtitle,\n      'description': $state.view.description,\n      'msgs': ['Sold to ' & $action.ledger]\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $item := $x.output($action.ledger, $state.item.coins, $form.title, $form.subtitle, $form.description, $action.tags);\n  $buy := $x.output($state.owner, $o.coins, $state.buyTitle, $state.buySubtitle, '', $state.tags);\n  $x.result($newState, [$item, $buy])\n)\n"
+						}
+					],
+					"description": "incentum-sell Description"
+				},
+				"other": {},
+				"title": "",
+				"subtitle": "",
+				"description": "",
+				"key": "1bb8676bc430d6014cf445dd69153385f3ad80e0f41082266684cd0b04ba7b19"
+			}
+		},
+		{
+			"name": "buy",
+			"result": {
+				"outputs": [
+					{
+						"ledger": "Bob",
+						"data": {},
+						"coins": [
+							{
+								"amount": 100,
+								"symbol": "PAINTING-1",
+								"other": {},
+								"mint": "mint",
+								"decimals": 2
+							}
+						],
+						"tags": [],
+						"msgs": [],
+						"title": "Bought Alice painting",
+						"subtitle": "Bought Alice painting",
+						"description": ""
+					},
+					{
+						"ledger": "Alice",
+						"data": {},
+						"coins": [
+							{
+								"amount": "1000000000",
+								"symbol": "PRAX",
+								"other": {},
+								"mint": "854e09acdaae89b21e9cc7c14f599028628e6a97dd6514d5260622a9a1adc553",
+								"decimals": 8
+							}
+						],
+						"tags": [],
+						"msgs": [],
+						"title": "Sold my painting!",
+						"subtitle": "Sold my painting!",
+						"description": ""
+					}
+				],
+				"state": {
+					"state": {
+						"ended": true,
+						"owner": "Alice",
+						"price": {
+							"amount": "1000000000",
+							"symbol": "PRAX",
+							"mint": "854e09acdaae89b21e9cc7c14f599028628e6a97dd6514d5260622a9a1adc553",
+							"other": {},
+							"decimals": 8
+						},
+						"item": {
+							"actionKey": "",
+							"key": "painting",
+							"ledger": "Alice",
+							"data": {},
+							"tags": [],
+							"title": "My painting",
+							"subtitle": "My painting",
+							"description": "### My great painting",
+							"msgs": [],
+							"coins": [
+								{
+									"amount": 100,
+									"symbol": "PAINTING-1",
+									"other": {},
+									"mint": "mint",
+									"decimals": 2
+								}
+							]
+						},
+						"buyTitle": "Sold my painting!",
+						"buySubtitle": "Sold my painting!",
+						"view": {
+							"title": "Sold my painting!",
+							"subtitle": "Sold my painting!",
+							"msgs": [
+								"Sold to Bob"
+							]
+						}
+					},
+					"coins": []
+				},
+				"mint": []
+			},
+			"contract": {
+				"ledger": "Bob",
+				"template": {
+					"reducerMap": {
+						"start": {
+							"type": "start",
+							"code": "(\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $x.assert.isAtLeast($form.price, 0, 'price must be at least 0');\n\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.isAtLeast($count($o.coins), 1, 'must have at least one token to sell');\n  $cost := $x.toCoinUnit($form.price, $x.coin.praxDecimals);\n  $price := $x.coin.prax($cost);\n  \n  $newstate := {\n    'ended': false,\n    'owner': $action.ledger,\n    'price': $price,\n    'item': $o,\n    'buyTitle': $form.buyTitle,\n    'buySubtitle': $form.buySubtitle,\n    'view': {\n      'title': $form.title,\n      'subtitle': $form.subtitle,\n      'description': $form.description\n    }\n  };\n  $out := $x.output($action.ledger, [], $form.title, $form.subtitle, $form.description, $action.tags, {});\n  $x.result($newstate, [$out])\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"end": {
+							"type": "end",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 0, 'do not send coins, just send the start output');\n\n  $newstate := $merge([$state, { 'ended': true }]);\n  $x.result($newstate)\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"buy": {
+							"type": "buy",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 1, 'please only send me one coin');\n  $coin := $o.coins[0];\n  $price := $state.price;\n  $x.assert.isTrue($x.coin.same($coin, $price), 'only send me ' & $price.symbol);\n  $x.assert.isTrue($x.coin.greaterThanOrEqual($coin, $price), 'sorry, the price is' & $x.toDisplay($price) & ' ' & $price.symbol);\n  \n  $view := {\n    'ended': true,\n    'view': {\n      'title': $state.buyTitle,\n      'subtitle': $state.buySubtitle,\n      'description': $state.view.description,\n      'msgs': ['Sold to ' & $action.ledger]\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $item := $x.output($action.ledger, $state.item.coins, $form.title, $form.subtitle, $form.description, $action.tags);\n  $buy := $x.output($state.owner, $o.coins, $state.buyTitle, $state.buySubtitle, '', $state.tags);\n  $x.result($newState, [$item, $buy])\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						}
+					},
+					"name": "incentum-sell",
+					"tags": [],
+					"other": {},
+					"ledger": "Ledger",
+					"versionMajor": 1,
+					"versionMinor": 0,
+					"versionPatch": 0,
+					"reducers": [
+						{
+							"type": "start",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $x.assert.isAtLeast($form.price, 0, 'price must be at least 0');\n  $x.assert.isOk($form.buyTitle, 'please supply a buyTitle');\n  $x.assert.isOk($form.buySubtitle, 'please supply a buySubtitle');\n\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.isAtLeast($count($o.coins), 1, 'must have at least one token to sell');\n  $cost := $x.toCoinUnit($form.price, $x.coin.praxDecimals);\n  $price := $x.coin.prax($cost);\n  \n  $newstate := {\n    'ended': false,\n    'owner': $action.ledger,\n    'price': $price,\n    'item': $o,\n    'tags': $action.tags,\n    'buyTitle': $form.buyTitle,\n    'buySubtitle': $form.buySubtitle,\n    'view': {\n      'title': $form.title,\n      'subtitle': $form.subtitle,\n      'description': $form.description\n    }\n  };\n  $out := $x.output($action.ledger, [], $form.title, $form.subtitle, $form.description, $action.tags, {});\n  $x.result($newstate, [$out])\n)\n"
+						},
+						{
+							"type": "end",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 0, 'do not send coins, just send the start output');\n\n  $newstate := $merge([$state, { 'ended': true }]);\n  $x.result($newstate)\n)\n"
+						},
+						{
+							"type": "buy",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 1, 'please only send me one coin');\n  $coin := $o.coins[0];\n  $price := $state.price;\n  $x.assert.isTrue($x.coin.same($coin, $price), 'only send me ' & $price.symbol);\n  $x.assert.isTrue($x.coin.greaterThanOrEqual($coin, $price), 'sorry, the price is' & $x.toDisplay($price) & ' ' & $price.symbol);\n  \n  $view := {\n    'ended': true,\n    'view': {\n      'title': $state.buyTitle,\n      'subtitle': $state.buySubtitle,\n      'description': $state.view.description,\n      'msgs': ['Sold to ' & $action.ledger]\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $item := $x.output($action.ledger, $state.item.coins, $form.title, $form.subtitle, $form.description, $action.tags);\n  $buy := $x.output($state.owner, $o.coins, $state.buyTitle, $state.buySubtitle, '', $state.tags);\n  $x.result($newState, [$item, $buy])\n)\n"
+						}
+					],
+					"description": "incentum-sell Description"
+				},
+				"other": {},
+				"title": "",
+				"subtitle": "",
+				"description": "",
+				"key": "1bb8676bc430d6014cf445dd69153385f3ad80e0f41082266684cd0b04ba7b19"
+			}
+		},
+		{
+			"name": "start",
+			"result": {
+				"outputs": [
+					{
+						"ledger": "Alice",
+						"data": {},
+						"coins": [],
+						"tags": [],
+						"msgs": [],
+						"title": "Selling PAINTING-1",
+						"subtitle": "Selling my painting",
+						"description": ""
+					}
+				],
+				"state": {
+					"state": {
+						"ended": false,
+						"owner": "Alice",
+						"price": {
+							"amount": "1000000000",
+							"symbol": "PRAX",
+							"mint": "854e09acdaae89b21e9cc7c14f599028628e6a97dd6514d5260622a9a1adc553",
+							"other": {},
+							"decimals": 8
+						},
+						"item": {
+							"actionKey": "",
+							"key": "painting",
+							"ledger": "Alice",
+							"data": {},
+							"tags": [],
+							"title": "My painting",
+							"subtitle": "My painting",
+							"description": "### My great painting",
+							"msgs": [],
+							"coins": [
+								{
+									"amount": 100,
+									"symbol": "PAINTING-1",
+									"other": {},
+									"mint": "mint",
+									"decimals": 2
+								}
+							]
+						},
+						"buyTitle": "Sold my painting!",
+						"buySubtitle": "Sold my painting!",
+						"view": {
+							"title": "Selling PAINTING-1",
+							"subtitle": "Selling my painting"
+						}
+					},
+					"coins": [
+						{
+							"amount": "100",
+							"symbol": "PAINTING-1",
+							"mint": "mint",
+							"other": {},
+							"decimals": 2
+						}
+					]
+				},
+				"mint": []
+			},
+			"contract": {
+				"ledger": "Alice",
+				"template": {
+					"reducerMap": {
+						"start": {
+							"type": "start",
+							"code": "(\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $x.assert.isAtLeast($form.price, 0, 'price must be at least 0');\n  $x.assert.isOk($form.buyTitle, 'please supply a buyTitle');\n  $x.assert.isOk($form.buySubtitle, 'please supply a buySubtitle');\n\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.isAtLeast($count($o.coins), 1, 'must have at least one token to sell');\n  $cost := $x.toCoinUnit($form.price, $x.coin.praxDecimals);\n  $price := $x.coin.prax($cost);\n  \n  $newstate := {\n    'ended': false,\n    'owner': $action.ledger,\n    'price': $price,\n    'item': $o,\n    'tags': $action.tags,\n    'buyTitle': $form.buyTitle,\n    'buySubtitle': $form.buySubtitle,\n    'view': {\n      'title': $form.title,\n      'subtitle': $form.subtitle,\n      'description': $form.description\n    }\n  };\n  $out := $x.output($action.ledger, [], $form.title, $form.subtitle, $form.description, $action.tags, {});\n  $x.result($newstate, [$out])\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"end": {
+							"type": "end",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 0, 'do not send coins, just send the start output');\n\n  $newstate := $merge([$state, { 'ended': true }]);\n  $x.result($newstate)\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"buy": {
+							"type": "buy",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 1, 'please only send me one coin');\n  $coin := $o.coins[0];\n  $price := $state.price;\n  $x.assert.isTrue($x.coin.same($coin, $price), 'only send me ' & $price.symbol);\n  $x.assert.isTrue($x.coin.greaterThanOrEqual($coin, $price), 'sorry, the price is' & $x.toDisplay($price) & ' ' & $price.symbol);\n  \n  $view := {\n    'ended': true,\n    'view': {\n      'title': $state.buyTitle,\n      'subtitle': $state.buySubtitle,\n      'description': $state.view.description,\n      'msgs': ['Sold to ' & $action.ledger]\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $item := $x.output($action.ledger, $state.item.coins, $form.title, $form.subtitle, $form.description, $action.tags);\n  $buy := $x.output($state.owner, $o.coins, $state.buyTitle, $state.buySubtitle, '', $state.tags);\n  $x.result($newState, [$item, $buy])\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						}
+					},
+					"name": "incentum-sell",
+					"tags": [],
+					"other": {},
+					"ledger": "Ledger",
+					"versionMajor": 1,
+					"versionMinor": 0,
+					"versionPatch": 0,
+					"reducers": [
+						{
+							"type": "start",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $x.assert.isAtLeast($form.price, 0, 'price must be at least 0');\n  $x.assert.isOk($form.buyTitle, 'please supply a buyTitle');\n  $x.assert.isOk($form.buySubtitle, 'please supply a buySubtitle');\n\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.isAtLeast($count($o.coins), 1, 'must have at least one token to sell');\n  $cost := $x.toCoinUnit($form.price, $x.coin.praxDecimals);\n  $price := $x.coin.prax($cost);\n  \n  $newstate := {\n    'ended': false,\n    'owner': $action.ledger,\n    'price': $price,\n    'item': $o,\n    'tags': $action.tags,\n    'buyTitle': $form.buyTitle,\n    'buySubtitle': $form.buySubtitle,\n    'view': {\n      'title': $form.title,\n      'subtitle': $form.subtitle,\n      'description': $form.description\n    }\n  };\n  $out := $x.output($action.ledger, [], $form.title, $form.subtitle, $form.description, $action.tags, {});\n  $x.result($newstate, [$out])\n)\n"
+						},
+						{
+							"type": "end",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 0, 'do not send coins, just send the start output');\n\n  $newstate := $merge([$state, { 'ended': true }]);\n  $x.result($newstate)\n)\n"
+						},
+						{
+							"type": "buy",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 1, 'please only send me one coin');\n  $coin := $o.coins[0];\n  $price := $state.price;\n  $x.assert.isTrue($x.coin.same($coin, $price), 'only send me ' & $price.symbol);\n  $x.assert.isTrue($x.coin.greaterThanOrEqual($coin, $price), 'sorry, the price is' & $x.toDisplay($price) & ' ' & $price.symbol);\n  \n  $view := {\n    'ended': true,\n    'view': {\n      'title': $state.buyTitle,\n      'subtitle': $state.buySubtitle,\n      'description': $state.view.description,\n      'msgs': ['Sold to ' & $action.ledger]\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $item := $x.output($action.ledger, $state.item.coins, $form.title, $form.subtitle, $form.description, $action.tags);\n  $buy := $x.output($state.owner, $o.coins, $state.buyTitle, $state.buySubtitle, '', $state.tags);\n  $x.result($newState, [$item, $buy])\n)\n"
+						}
+					],
+					"description": "incentum-sell Description"
+				},
+				"other": {},
+				"title": "",
+				"subtitle": "",
+				"description": "",
+				"key": "4ec07c319f2e2df46f67b4168ade7ed94363fcf9e7aeae895611252b7d9c299b"
+			}
+		},
+		{
+			"name": "start",
+			"result": {
+				"outputs": [
+					{
+						"ledger": "Alice",
+						"data": {},
+						"coins": [],
+						"tags": [],
+						"msgs": [],
+						"title": "Selling PAINTING-1",
+						"subtitle": "Selling my painting",
+						"description": ""
+					}
+				],
+				"state": {
+					"state": {
+						"ended": false,
+						"owner": "Alice",
+						"price": {
+							"amount": "1000000000",
+							"symbol": "PRAX",
+							"mint": "854e09acdaae89b21e9cc7c14f599028628e6a97dd6514d5260622a9a1adc553",
+							"other": {},
+							"decimals": 8
+						},
+						"item": {
+							"actionKey": "",
+							"key": "painting",
+							"ledger": "Alice",
+							"data": {},
+							"tags": [],
+							"title": "My painting",
+							"subtitle": "My painting",
+							"description": "### My great painting",
+							"msgs": [],
+							"coins": [
+								{
+									"amount": 100,
+									"symbol": "PAINTING-1",
+									"other": {},
+									"mint": "mint",
+									"decimals": 2
+								}
+							]
+						},
+						"buyTitle": "Sold my painting!",
+						"buySubtitle": "Sold my painting!",
+						"view": {
+							"title": "Selling PAINTING-1",
+							"subtitle": "Selling my painting"
+						}
+					},
+					"coins": [
+						{
+							"amount": "100",
+							"symbol": "PAINTING-1",
+							"mint": "mint",
+							"other": {},
+							"decimals": 2
+						}
+					]
+				},
+				"mint": []
+			},
+			"contract": {
+				"ledger": "Alice",
+				"template": {
+					"reducerMap": {
+						"start": {
+							"type": "start",
+							"code": "(\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $x.assert.isAtLeast($form.price, 0, 'price must be at least 0');\n  $x.assert.isOk($form.buyTitle, 'please supply a buyTitle');\n  $x.assert.isOk($form.buySubtitle, 'please supply a buySubtitle');\n\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.isAtLeast($count($o.coins), 1, 'must have at least one token to sell');\n  $cost := $x.toCoinUnit($form.price, $x.coin.praxDecimals);\n  $price := $x.coin.prax($cost);\n  \n  $newstate := {\n    'ended': false,\n    'owner': $action.ledger,\n    'price': $price,\n    'item': $o,\n    'tags': $action.tags,\n    'buyTitle': $form.buyTitle,\n    'buySubtitle': $form.buySubtitle,\n    'view': {\n      'title': $form.title,\n      'subtitle': $form.subtitle,\n      'description': $form.description\n    }\n  };\n  $out := $x.output($action.ledger, [], $form.title, $form.subtitle, $form.description, $action.tags, {});\n  $x.result($newstate, [$out])\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"end": {
+							"type": "end",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 0, 'do not send coins, just send the start output');\n\n  $newstate := $merge([$state, { 'ended': true }]);\n  $x.result($newstate)\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"buy": {
+							"type": "buy",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 1, 'please only send me one coin');\n  $coin := $o.coins[0];\n  $price := $state.price;\n  $x.assert.isTrue($x.coin.same($coin, $price), 'only send me ' & $price.symbol);\n  $x.assert.isTrue($x.coin.greaterThanOrEqual($coin, $price), 'sorry, the price is' & $x.toDisplay($price) & ' ' & $price.symbol);\n  \n  $view := {\n    'ended': true,\n    'view': {\n      'title': $state.buyTitle,\n      'subtitle': $state.buySubtitle,\n      'description': $state.view.description,\n      'msgs': ['Sold to ' & $action.ledger]\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $item := $x.output($action.ledger, $state.item.coins, $form.title, $form.subtitle, $form.description, $action.tags);\n  $buy := $x.output($state.owner, $o.coins, $state.buyTitle, $state.buySubtitle, '', $state.tags);\n  $x.result($newState, [$item, $buy])\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						}
+					},
+					"name": "incentum-sell",
+					"tags": [],
+					"other": {},
+					"ledger": "Ledger",
+					"versionMajor": 1,
+					"versionMinor": 0,
+					"versionPatch": 0,
+					"reducers": [
+						{
+							"type": "start",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $x.assert.isAtLeast($form.price, 0, 'price must be at least 0');\n  $x.assert.isOk($form.buyTitle, 'please supply a buyTitle');\n  $x.assert.isOk($form.buySubtitle, 'please supply a buySubtitle');\n\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.isAtLeast($count($o.coins), 1, 'must have at least one token to sell');\n  $cost := $x.toCoinUnit($form.price, $x.coin.praxDecimals);\n  $price := $x.coin.prax($cost);\n  \n  $newstate := {\n    'ended': false,\n    'owner': $action.ledger,\n    'price': $price,\n    'item': $o,\n    'tags': $action.tags,\n    'buyTitle': $form.buyTitle,\n    'buySubtitle': $form.buySubtitle,\n    'view': {\n      'title': $form.title,\n      'subtitle': $form.subtitle,\n      'description': $form.description\n    }\n  };\n  $out := $x.output($action.ledger, [], $form.title, $form.subtitle, $form.description, $action.tags, {});\n  $x.result($newstate, [$out])\n)\n"
+						},
+						{
+							"type": "end",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 0, 'do not send coins, just send the start output');\n\n  $newstate := $merge([$state, { 'ended': true }]);\n  $x.result($newstate)\n)\n"
+						},
+						{
+							"type": "buy",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 1, 'please only send me one coin');\n  $coin := $o.coins[0];\n  $price := $state.price;\n  $x.assert.isTrue($x.coin.same($coin, $price), 'only send me ' & $price.symbol);\n  $x.assert.isTrue($x.coin.greaterThanOrEqual($coin, $price), 'sorry, the price is' & $x.toDisplay($price) & ' ' & $price.symbol);\n  \n  $view := {\n    'ended': true,\n    'view': {\n      'title': $state.buyTitle,\n      'subtitle': $state.buySubtitle,\n      'description': $state.view.description,\n      'msgs': ['Sold to ' & $action.ledger]\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $item := $x.output($action.ledger, $state.item.coins, $form.title, $form.subtitle, $form.description, $action.tags);\n  $buy := $x.output($state.owner, $o.coins, $state.buyTitle, $state.buySubtitle, '', $state.tags);\n  $x.result($newState, [$item, $buy])\n)\n"
+						}
+					],
+					"description": "incentum-sell Description"
+				},
+				"other": {},
+				"title": "",
+				"subtitle": "",
+				"description": "",
+				"key": "4ec07c319f2e2df46f67b4168ade7ed94363fcf9e7aeae895611252b7d9c299b"
+			}
+		},
+		{
+			"name": "start",
+			"result": {
+				"outputs": [
+					{
+						"ledger": "Alice",
+						"data": {},
+						"coins": [],
+						"tags": [],
+						"msgs": [],
+						"title": "Selling PAINTING-1",
+						"subtitle": "Selling my painting",
+						"description": "### This is my great painting"
+					}
+				],
+				"state": {
+					"state": {
+						"ended": false,
+						"owner": "Alice",
+						"price": {
+							"amount": "1000000000",
+							"symbol": "PRAX",
+							"mint": "854e09acdaae89b21e9cc7c14f599028628e6a97dd6514d5260622a9a1adc553",
+							"other": {},
+							"decimals": 8
+						},
+						"item": {
+							"actionKey": "",
+							"key": "painting",
+							"ledger": "Alice",
+							"data": {},
+							"tags": [],
+							"title": "My painting",
+							"subtitle": "My painting",
+							"description": "### My great painting",
+							"msgs": [],
+							"coins": [
+								{
+									"amount": 100,
+									"symbol": "PAINTING-1",
+									"other": {},
+									"mint": "mint",
+									"decimals": 2
+								}
+							]
+						},
+						"buyTitle": "Sold my painting!",
+						"buySubtitle": "Sold my painting!",
+						"view": {
+							"title": "Selling PAINTING-1",
+							"subtitle": "Selling my painting",
+							"description": "### This is my great painting"
+						}
+					},
+					"coins": [
+						{
+							"amount": "100",
+							"symbol": "PAINTING-1",
+							"mint": "mint",
+							"other": {},
+							"decimals": 2
+						}
+					]
+				},
+				"mint": []
+			},
+			"contract": {
+				"ledger": "Alice",
+				"template": {
+					"reducerMap": {
+						"start": {
+							"type": "start",
+							"code": "(\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $x.assert.isAtLeast($form.price, 0, 'price must be at least 0');\n  $x.assert.isOk($form.buyTitle, 'please supply a buyTitle');\n  $x.assert.isOk($form.buySubtitle, 'please supply a buySubtitle');\n\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.isAtLeast($count($o.coins), 1, 'must have at least one token to sell');\n  $cost := $x.toCoinUnit($form.price, $x.coin.praxDecimals);\n  $price := $x.coin.prax($cost);\n  \n  $newstate := {\n    'ended': false,\n    'owner': $action.ledger,\n    'price': $price,\n    'item': $o,\n    'tags': $action.tags,\n    'buyTitle': $form.buyTitle,\n    'buySubtitle': $form.buySubtitle,\n    'view': {\n      'title': $form.title,\n      'subtitle': $form.subtitle,\n      'description': $form.description\n    }\n  };\n  $out := $x.output($action.ledger, [], $form.title, $form.subtitle, $form.description, $action.tags, {});\n  $x.result($newstate, [$out])\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"end": {
+							"type": "end",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 0, 'do not send coins, just send the start output');\n\n  $newstate := $merge([$state, { 'ended': true }]);\n  $x.result($newstate)\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"buy": {
+							"type": "buy",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 1, 'please only send me one coin');\n  $coin := $o.coins[0];\n  $price := $state.price;\n  $x.assert.isTrue($x.coin.same($coin, $price), 'only send me ' & $price.symbol);\n  $x.assert.isTrue($x.coin.greaterThanOrEqual($coin, $price), 'sorry, the price is' & $x.toDisplay($price) & ' ' & $price.symbol);\n  \n  $view := {\n    'ended': true,\n    'view': {\n      'title': $state.buyTitle,\n      'subtitle': $state.buySubtitle,\n      'description': $state.view.description,\n      'msgs': ['Sold to ' & $action.ledger]\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $item := $x.output($action.ledger, $state.item.coins, $form.title, $form.subtitle, $form.description, $action.tags);\n  $buy := $x.output($state.owner, $o.coins, $state.buyTitle, $state.buySubtitle, '', $state.tags);\n  $x.result($newState, [$item, $buy])\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						}
+					},
+					"name": "incentum-sell",
+					"tags": [],
+					"other": {},
+					"ledger": "Ledger",
+					"versionMajor": 1,
+					"versionMinor": 0,
+					"versionPatch": 0,
+					"reducers": [
+						{
+							"type": "start",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $x.assert.isAtLeast($form.price, 0, 'price must be at least 0');\n  $x.assert.isOk($form.buyTitle, 'please supply a buyTitle');\n  $x.assert.isOk($form.buySubtitle, 'please supply a buySubtitle');\n\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.isAtLeast($count($o.coins), 1, 'must have at least one token to sell');\n  $cost := $x.toCoinUnit($form.price, $x.coin.praxDecimals);\n  $price := $x.coin.prax($cost);\n  \n  $newstate := {\n    'ended': false,\n    'owner': $action.ledger,\n    'price': $price,\n    'item': $o,\n    'tags': $action.tags,\n    'buyTitle': $form.buyTitle,\n    'buySubtitle': $form.buySubtitle,\n    'view': {\n      'title': $form.title,\n      'subtitle': $form.subtitle,\n      'description': $form.description\n    }\n  };\n  $out := $x.output($action.ledger, [], $form.title, $form.subtitle, $form.description, $action.tags, {});\n  $x.result($newstate, [$out])\n)\n"
+						},
+						{
+							"type": "end",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 0, 'do not send coins, just send the start output');\n\n  $newstate := $merge([$state, { 'ended': true }]);\n  $x.result($newstate)\n)\n"
+						},
+						{
+							"type": "buy",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 1, 'please only send me one coin');\n  $coin := $o.coins[0];\n  $price := $state.price;\n  $x.assert.isTrue($x.coin.same($coin, $price), 'only send me ' & $price.symbol);\n  $x.assert.isTrue($x.coin.greaterThanOrEqual($coin, $price), 'sorry, the price is' & $x.toDisplay($price) & ' ' & $price.symbol);\n  \n  $view := {\n    'ended': true,\n    'view': {\n      'title': $state.buyTitle,\n      'subtitle': $state.buySubtitle,\n      'description': $state.view.description,\n      'msgs': ['Sold to ' & $action.ledger]\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $item := $x.output($action.ledger, $state.item.coins, $form.title, $form.subtitle, $form.description, $action.tags);\n  $buy := $x.output($state.owner, $o.coins, $state.buyTitle, $state.buySubtitle, '', $state.tags);\n  $x.result($newState, [$item, $buy])\n)\n"
+						}
+					],
+					"description": "incentum-sell Description"
+				},
+				"other": {},
+				"title": "",
+				"subtitle": "",
+				"description": "",
+				"key": "4ec07c319f2e2df46f67b4168ade7ed94363fcf9e7aeae895611252b7d9c299b"
+			}
+		}
+	],
+	"resultSel": 0,
+	"schemaSel": 0,
+	"jsonSchemas": [
+		{
+			"name": "start",
+			"json": "{\n  \"title\": \"Sell an Item\",\n  \"type\": \"object\",\n  \"required\": [\n    \"title\",\n    \"subtitle\",\n    \"description\",\n    \"price\",\n    \"output:item\",\n    \"buyTitle\",\n    \"buySubtitle\"\n  ],\n  \"properties\": {\n    \"title\": {\n      \"type\": \"string\",\n      \"title\": \"Title\"\n    },\n    \"subtitle\": {\n      \"type\": \"string\",\n      \"title\": \"Subtitle\"\n    },\n    \"description\": {\n      \"type\": \"string\",\n      \"title\": \"Description\",\n      \"description\": \"Can be markdown\"\n    },\n    \"price\": {\n      \"type\": \"integer\",\n      \"title\": \"Price\"\n    },\n    \"buyTitle\": {\n      \"type\": \"string\",\n      \"title\": \"Buy Title\"\n    },\n    \"buySubtitle\": {\n      \"type\": \"string\",\n      \"title\": \"Buy Subtitle\"\n    },\n    \"output:item\": {\n      \"type\": \"string\",\n      \"title\": \"Item\"\n    }\n  }\n}"
+		},
+		{
+			"name": "buy",
+			"json": "{\n  \"title\": \"Buy Item\",\n  \"type\": \"object\",\n  \"required\": [\n    \"title\",\n    \"subtitle\",\n    \"output:payment\"\n  ],\n  \"properties\": {\n    \"title\": {\n      \"type\": \"string\",\n      \"title\": \"Title\"\n    },\n    \"subtitle\": {\n      \"type\": \"string\",\n      \"title\": \"Subtitle\"\n    },\n    \"output:payment\": {\n      \"type\": \"string\",\n      \"title\": \"Payment\"\n    }\n  }\n}"
+		}
+	],
+	"jsonSchemaSel": 0,
+	"uiSchemas": [
+		{
+			"name": "start",
+			"json": "{\n  \"output:item\": {\n    \"ui:widget\": \"praxOutputs\"\n  },\n  \"description\": {\n    \"ui:widget\": \"textarea\",\n    \"ui:options\": {\n      \"rows\": 5\n    }\n  }\n}"
+		},
+		{
+			"name": "buy",
+			"json": "{\n  \"output:payment\": {\n    \"ui:widget\": \"praxOutputs\"\n  }\n}"
+		}
+	],
+	"uiSchemaSel": 0,
+	"markdown": [
+		{
+			"name": "start",
+			"json": "### Sell an Item\n\nSell an item. Add the item, with a title, subtitle,\ndescription, and price.\n\nThe buyTitle and buySubtitle are passed on the output\ncontaining the item sent back to you when the item\nsells."
+		},
+		{
+			"name": "buy",
+			"json": "### Buy an Item\n\nAdd a payment to purchase the item."
+		}
+	],
+	"markdownSel": 0,
+	"formData": "{\n\t\"title\": \"asdf\",\n\t\"subtitle\": \"asdf\",\n\t\"output:payment\": \"painting\"\n}",
+	"jsonSchemaObject": {
+		"title": "Buy Item",
+		"type": "object",
+		"required": [
+			"title",
+			"subtitle",
+			"output:payment"
+		],
+		"properties": {
+			"title": {
+				"type": "string",
+				"title": "Title"
+			},
+			"subtitle": {
+				"type": "string",
+				"title": "Subtitle"
+			},
+			"output:payment": {
+				"type": "string",
+				"title": "Payment"
+			}
+		}
+	},
+	"uiSchemaObject": {
+		"output:payment": {
+			"ui:widget": "praxOutputs"
+		}
+	},
+	"showSaveTemplateForm": false,
+	"showSaveSchemasForm": false,
+	"formSegment": 0
+}

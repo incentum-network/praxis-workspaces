@@ -1,0 +1,2400 @@
+{
+	"name": "earn",
+	"segment": 6,
+	"templates": [
+		{
+			"other": {},
+			"name": "incentum-earn",
+			"ledger": "THWJcWwvAGCqGgzpqxwDH9DgaXSwrtJWBm",
+			"versionMajor": 1,
+			"versionMinor": 0,
+			"versionPatch": 0,
+			"description": "Contract to earn tokens in various ways",
+			"tags": [],
+			"reducers": [
+				{
+					"type": "start",
+					"code": "(\n  $x.assert.isNotNaN($form.min, 'min isNaN');\n  $x.assert.isAtLeast($number($form.min), 0, 'min must be >= 0');\n  \n  $min := $x.toCoinUnit($form.min, $x.coin.praxDecimals);\n  $coin := $x.coin.prax($min);\n  $newstate := {\n    'ended': false,\n    'owner': $action.ledger,\n    'coin': $coin,\n    'tags': $action.tags,\n    'view': {\n      'title': $form.title,\n      'subtitle': $form.subtitle,\n      'description': $form.description,\n      'msgs': ['earn started']\n    }\n  };\n  \n  $out := $x.output($action.ledger, [], $form.title, $form.subtitle, 'Send this output to the contract when you want to end it', $action.tags);\n  $x.result($newstate, [$out])\n)\n",
+					"language": "jsonata"
+				},
+				{
+					"type": "end",
+					"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 0, 'do not send coins, just send the start output');\n\n  $newstate := $merge([$state, { 'ended': true }]);\n  $x.result($newstate)\n)\n",
+					"language": "jsonata"
+				},
+				{
+					"type": "simpleAdvice",
+					"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 1, 'please only send me one coin');\n  $coin := $o.coins[0];\n  $mycoin := $state.coin;\n  $x.assert.isTrue($x.coin.same($coin, $mycoin), 'only send me ' & $mycoin.symbol);\n  $x.assert.isTrue($x.coin.greaterThanOrEqual($coin, $mycoin), 'sorry, you must send me at least ' & $x.toDisplay($mycoin) & ' ' & $mycoin.symbol);\n  \n  $msg := 'simpleAdvice ' & $x.toDisplay($coin) & ' ' & $coin.symbol & ' from ' & $action.ledger;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'description': $state.view.description,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $data := {\n    'replyTo': $action.ledger,\n    'tags': $action.tags,\n    'earnType': 'simpleAdvice'\n  };\n  $out := $x.output($state.owner, $o.coins, $form.title, $form.subtitle, $form.description, $state.tags, $data);\n  $x.result($newState, [$out])\n)\n",
+					"language": "jsonata"
+				},
+				{
+					"type": "reply",
+					"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n\n  $i := $inputs[0];\n  $o := $i.output;\n  $data := $o.data;\n  $replyTo := $data.replyTo;\n  $earnType := $data.earnType;\n  $x.assert.isOk($replyTo, 'no replyTo ledger');\n  \n  $msg := $earnType & ' reply to ' & $replyTo;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $out := $x.output($replyTo, [], $form.title, $form.subtitle, $form.description, $data.tags);\n  $outMe := $x.output($state.owner, $o.coins, $form.outputTitle, $form.outputSubtitle, '', $action.tags);\n  $x.result($newState, [$out, $outMe])\n)\n",
+					"language": "jsonata"
+				}
+			]
+		}
+	],
+	"templateSel": 0,
+	"reducerSel": 2,
+	"outputs": [
+		{
+			"name": "simpleAdvice",
+			"json": "{\n\t\"tags\": [],\n\t\"ledger\": \"Bob\",\n\t\"data\": {},\n\t\"title\": \"\",\n\t\"subtitle\": \"\",\n\t\"description\": \"\",\n\t\"msgs\": [],\n\t\"coins\": [\n\t  {\n\t\t\t\"amount\": \"100000000\",\n\t\t\t\"symbol\": \"PRAX\",\n\t\t\t\"mint\": \"854e09acdaae89b21e9cc7c14f599028628e6a97dd6514d5260622a9a1adc553\",\n\t\t\t\"other\": {},\n\t\t\t\"decimals\": 8\n\t\t}\n  ]\n}",
+			"output": {
+				"tags": [],
+				"ledger": "Bob",
+				"data": {},
+				"title": "",
+				"subtitle": "",
+				"description": "",
+				"msgs": [],
+				"coins": [
+					{
+						"amount": "100000000",
+						"symbol": "PRAX",
+						"mint": "854e09acdaae89b21e9cc7c14f599028628e6a97dd6514d5260622a9a1adc553",
+						"other": {},
+						"decimals": 8
+					}
+				]
+			}
+		},
+		{
+			"name": "reply",
+			"json": "{\n\t\"ledger\": \"Alice\",\n\t\"data\": {\n\t  \"replyTo\": \"Bob\",\n\t\t\"earnType\": \"simpleAdvice\"\n\t},\n\t\"coins\": [\n\t\t{\n\t\t\t\"amount\": \"100000000\",\n\t\t\t\"symbol\": \"PRAX\",\n\t\t\t\"other\": {},\n\t\t\t\"mint\": \"854e09acdaae89b21e9cc7c14f599028628e6a97dd6514d5260622a9a1adc553\",\n\t\t\t\"decimals\": 8\n\t\t}\n\t],\n\t\"tags\": [],\n\t\"msgs\": [],\n\t\"title\": \"Can you help me out Alice?\",\n\t\"subtitle\": \"Something terrible has happened\",\n\t\"description\": \"You won't believe it if I tell you.\"\n}",
+			"output": {
+				"ledger": "Alice",
+				"data": {
+					"replyTo": "Bob",
+					"earnType": "simpleAdvice"
+				},
+				"coins": [
+					{
+						"amount": "100000000",
+						"symbol": "PRAX",
+						"other": {},
+						"mint": "854e09acdaae89b21e9cc7c14f599028628e6a97dd6514d5260622a9a1adc553",
+						"decimals": 8
+					}
+				],
+				"tags": [],
+				"msgs": [],
+				"title": "Can you help me out Alice?",
+				"subtitle": "Something terrible has happened",
+				"description": "You won't believe it if I tell you."
+			}
+		}
+	],
+	"outputSel": 1,
+	"actions": [
+		{
+			"name": "start",
+			"json": "{\n\t\"template\": \"incentum-earn\",\n\t\"form\": {\n\t  \"title\": \"Send me some PRAX and a problem and I'll give you some advice\",\n    \"subtitle\": \"Send me some PRAX and a problem for some advice\",\n\t  \"description\": \"### Simple Advice Only\\n\\nSend me some PRAX and I'll give you some quick advice. Simple problems only. \",\n\t  \"min\": \"1\"\n  },\n\t\"ledger\": \"Alice\",\n\t\"type\": \"start\",\n\t\"inputs\": []\n}",
+			"action": {
+				"template": "incentum-earn",
+				"form": {
+					"title": "Send me some PRAX and a problem and I'll give you some advice",
+					"subtitle": "Send me some PRAX and a problem for some advice",
+					"description": "### Simple Advice Only\n\nSend me some PRAX and I'll give you some quick advice. Simple problems only. ",
+					"min": "1"
+				},
+				"ledger": "Alice",
+				"type": "start",
+				"inputs": []
+			},
+			"template": ""
+		},
+		{
+			"name": "simpleAdvice",
+			"json": "{\n\t\"template\": \"incentum-earn\",\n\t\"form\": {\n\t  \"title\": \"Can you help me out Alice?\",\n\t  \"subtitle\": \"Something terrible has happened\",\n\t  \"description\": \"You won't believe it if I tell you.\"\n  },\n\t\"ledger\": \"Bob\",\n\t\"type\": \"simpleAdvice\",\n\t\"inputs\": [\n\t  \"simpleAdvice\"\n\t]\n}",
+			"action": {
+				"template": "incentum-earn",
+				"form": {
+					"title": "Can you help me out Alice?",
+					"subtitle": "Something terrible has happened",
+					"description": "You won't believe it if I tell you."
+				},
+				"ledger": "Bob",
+				"type": "simpleAdvice",
+				"inputs": [
+					"simpleAdvice"
+				]
+			},
+			"template": ""
+		},
+		{
+			"name": "reply",
+			"json": "{\n\t\"template\": \"incentum-earn\",\n\t\"form\": {\n\t  \"title\": \"Sure, I can help\",\n\t  \"subtitle\": \"Sounds serious\",\n\t  \"description\": \"You forgot to ask me your question. Thanks for the PRAX!\"\n\t},\n\t\"ledger\": \"Alice\",\n\t\"type\": \"reply\",\n\t\"inputs\": [\n\t  \"reply\"\n\t]\n}",
+			"action": {
+				"template": "incentum-earn",
+				"form": {
+					"title": "Sure, I can help",
+					"subtitle": "Sounds serious",
+					"description": "You forgot to ask me your question. Thanks for the PRAX!"
+				},
+				"ledger": "Alice",
+				"type": "reply",
+				"inputs": [
+					"reply"
+				]
+			},
+			"template": ""
+		}
+	],
+	"actionSel": 1,
+	"states": [
+		{
+			"name": "start",
+			"json": "{\n\t\"coins\": [],\n\t\"state\": {}\n}"
+		},
+		{
+			"name": "simpleAdvice",
+			"json": "{\n\t\"state\": {\n\t\t\"ended\": false,\n\t\t\"owner\": \"Alice\",\n\t\t\"coin\": {\n\t\t\t\"amount\": \"100000000\",\n\t\t\t\"symbol\": \"PRAX\",\n\t\t\t\"mint\": \"854e09acdaae89b21e9cc7c14f599028628e6a97dd6514d5260622a9a1adc553\",\n\t\t\t\"other\": {},\n\t\t\t\"decimals\": 8\n\t\t},\n\t\t\"view\": {\n\t\t\t\"title\": \"Send me some PRAX and a problem and I'll give you some advice\",\n\t\t\t\"subtitle\": \"Send me some PRAX and a problem for some advice\",\n\t\t\t\"description\": \"### Simple Advice Only\\n\\nSend me some PRAX and I'll give you some quick advice. Simple problems only. \",\n\t\t\t\"msgs\": [\n\t\t\t\t\"earn started\"\n\t\t\t]\n\t\t}\n\t},\n\t\"coins\": []\n}"
+		},
+		{
+			"name": "reply",
+			"json": "{\n\t\"state\": {\n\t\t\"ended\": false,\n\t\t\"owner\": \"Alice\",\n\t\t\"coin\": {\n\t\t\t\"amount\": \"100000000\",\n\t\t\t\"symbol\": \"PRAX\",\n\t\t\t\"mint\": \"854e09acdaae89b21e9cc7c14f599028628e6a97dd6514d5260622a9a1adc553\",\n\t\t\t\"other\": {},\n\t\t\t\"decimals\": 8\n\t\t},\n\t\t\"view\": {\n\t\t\t\"title\": \"Send me some PRAX and a problem and I'll give you some advice\",\n\t\t\t\"subtitle\": \"Send me some PRAX and a problem for some advice\",\n\t\t\t\"description\": \"### Simple Advice Only\\n\\nSend me some PRAX and I'll give you some quick advice. Simple problems only. \",\n\t\t\t\"msgs\": [\n\t\t\t\t\"earn started\",\n\t\t\t\t\"simpleAdvice 1 PRAX from Bob\"\n\t\t\t]\n\t\t}\n\t},\n\t\"coins\": []\n}"
+		}
+	],
+	"stateSel": 2,
+	"results": [
+		{
+			"name": "start",
+			"result": {
+				"outputs": [
+					{
+						"ledger": "Alice",
+						"data": {},
+						"coins": [],
+						"tags": [],
+						"msgs": [],
+						"title": "Alices Simple Advice Earn Contract",
+						"subtitle": "For simple advice only, minumum 1 PRAX required",
+						"description": ""
+					}
+				],
+				"state": {
+					"state": {
+						"ended": false,
+						"owner": "Alice",
+						"coinSimpleAdvice": {
+							"amount": "1000000000000000000",
+							"symbol": "PRAX",
+							"mint": "9b4f478d62b902521ad0c35159ec7fe201e7858e4c7627cbb522951b49edde36",
+							"other": {},
+							"decimals": 18
+						},
+						"view": {
+							"title": "Alices Simple Advice Earn Contract",
+							"subtitle": "For simple advice only, minumum 1 PRAX required",
+							"msgs": [
+								"earn started"
+							]
+						}
+					},
+					"coins": []
+				},
+				"mint": []
+			},
+			"contract": {
+				"ledger": "Alice",
+				"template": {
+					"reducerMap": {
+						"start": {
+							"type": "start",
+							"code": "(\n  $mint := $x.hashContractKey($form.coin.owner, $form.coin.spec);\n  $min := $x.toCoinUnit($form.minSimpleAdvice, $form.coin.decimals);\n  $coinSimpleAdvise := $x.coin.new($min, $form.coin.symbol, $form.coin.decimals, $mint);\n  $newstate := {\n    'ended': false,\n    'owner': $action.ledger,\n    'coinSimpleAdvice': $coinSimpleAdvise,\n    'tags': $action.tags,\n    'view': {\n      'title': $form.title,\n      'subtitle': $form.subtitle,\n      'msgs': ['earn started']\n    }\n  };\n  \n  $out := $x.output($action.ledger, [], $form.title, $form.subtitle, '', $action.tags);\n  $x.result($newstate, [$out])\n)",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"end": {
+							"type": "end",
+							"code": "()",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"simpleAdvice": {
+							"type": "simpleAdvice",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equals($count($o.coins), 1, 'please only send me one coin');\n  $coin := $o.coins[0];\n  $mycoin := $state.coinSimpleAdvice;\n  $x.assert.isTrue($x.sameCoin($coin, $mycoin), 'only send me ' & $mycoin.symbol);\n  $x.assert.isTrue($x.greaterThanCoin($coin, $mycoin), 'sorry, you must send me ' & $x.toDisplay($mycoin) & ' ' & $mycoin.symbol);\n  \n  $msg := 'simpleAdvice ' & $x.toDisplay($coin) & ' ' & $coin.symbol & ' from ' & $action.ledger;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $data := {\n    'replyTo': $action.ledger,\n    'tags': $action.tags,\n    'earnType': 'simpleAdvice'\n  };\n  $out := $x.output($state.owner, $o.coins, $form.title, $form.subtitle, $form.description, $state.tags, $data);\n  $x.result($newState, [$out])\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"reply": {
+							"type": "reply",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n\n  $i := $inputs[0];\n  $o := $i.output;\n  $data := $o.data;\n  $replyTo := $data.replyTo;\n  $earnType := $data.earnType;\n  $x.assert.isOk($replyTo, 'no replyTo ledger');\n  \n  $msg := $earnType & ' reply to ' & $replyTo;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $out := $x.output($replyTo, [], $form.title, $form.subtitle, $form.description, $data.tags);\n  $outMe := $x.output($state.owner, $o.coins, $form.title, $form.subtitle, $form.description, $action.tags);\n  $x.result($newState, [$out, $outMe])\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						}
+					},
+					"name": "earn",
+					"tags": [],
+					"other": {},
+					"ledger": "Ledger",
+					"versionMajor": 1,
+					"versionMinor": 0,
+					"versionPatch": 0,
+					"reducers": [
+						{
+							"type": "start",
+							"language": "jsonata",
+							"code": "(\n  $mint := $x.hashContractKey($form.coin.owner, $form.coin.spec);\n  $min := $x.toCoinUnit($form.minSimpleAdvice, $form.coin.decimals);\n  $coin := $x.coin.new($min, $form.coin.symbol, $form.coin.decimals, $mint);\n  $newstate := {\n    'ended': false,\n    'owner': $action.ledger,\n    'coin': $coin,\n    'tags': $action.tags,\n    'view': {\n      'title': $form.title,\n      'subtitle': $form.subtitle,\n      'description': $form.description,\n      'msgs': ['earn started']\n    }\n  };\n  \n  $out := $x.output($action.ledger, [], $form.title, $form.subtitle, '', $action.tags);\n  $x.result($newstate, [$out])\n)"
+						},
+						{
+							"type": "end",
+							"language": "jsonata",
+							"code": "()"
+						},
+						{
+							"type": "simpleAdvice",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 1, 'please only send me one coin');\n  $coin := $o.coins[0];\n  $mycoin := $state.coin;\n  $x.assert.isTrue($x.coin.same($coin, $mycoin), 'only send me ' & $mycoin.symbol);\n  $x.assert.isTrue($x.coin.greaterThan($coin, $mycoin), 'sorry, you must send me at least ' & $x.toDisplay($mycoin) & ' ' & $mycoin.symbol);\n  \n  $msg := 'simpleAdvice ' & $x.toDisplay($coin) & ' ' & $coin.symbol & ' from ' & $action.ledger;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'description': $state.view.description,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $data := {\n    'replyTo': $action.ledger,\n    'tags': $action.tags,\n    'earnType': 'simpleAdvice'\n  };\n  $out := $x.output($state.owner, $o.coins, $state.view.title, $form.subtitle, $form.description, $state.tags, $data);\n  $x.result($newState, [$out])\n)\n"
+						},
+						{
+							"type": "reply",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n\n  $i := $inputs[0];\n  $o := $i.output;\n  $data := $o.data;\n  $replyTo := $data.replyTo;\n  $earnType := $data.earnType;\n  $x.assert.isOk($replyTo, 'no replyTo ledger');\n  \n  $msg := $earnType & ' reply to ' & $replyTo;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $out := $x.output($replyTo, [], $form.title, $form.subtitle, $form.description, $data.tags);\n  $outMe := $x.output($state.owner, $o.coins, $form.title, $form.subtitle, $form.description, $action.tags);\n  $x.result($newState, [$out, $outMe])\n)\n"
+						}
+					],
+					"description": "earn Description"
+				},
+				"other": {},
+				"title": "",
+				"subtitle": "",
+				"description": "",
+				"key": "4ec07c319f2e2df46f67b4168ade7ed94363fcf9e7aeae895611252b7d9c299b"
+			}
+		},
+		{
+			"name": "start",
+			"result": {
+				"outputs": [
+					{
+						"ledger": "Alice",
+						"data": {},
+						"coins": [],
+						"tags": [],
+						"msgs": [],
+						"title": "Alices Simple Advice Earn Contract",
+						"subtitle": "For simple advice only, minumum 1 PRAX required",
+						"description": ""
+					}
+				],
+				"state": {
+					"state": {
+						"ended": false,
+						"owner": "Alice",
+						"coin": {
+							"amount": "1000000000000000000",
+							"symbol": "PRAX",
+							"mint": "9b4f478d62b902521ad0c35159ec7fe201e7858e4c7627cbb522951b49edde36",
+							"other": {},
+							"decimals": 18
+						},
+						"view": {
+							"title": "Alices Simple Advice Earn Contract",
+							"subtitle": "For simple advice only, minumum 1 PRAX required",
+							"description": "### Simple Advice Warning\nIf you send me some PRAX, I might reply to your query. The more you send, the better the chance I will reply",
+							"msgs": [
+								"earn started"
+							]
+						}
+					},
+					"coins": []
+				},
+				"mint": []
+			},
+			"contract": {
+				"ledger": "Alice",
+				"template": {
+					"reducerMap": {
+						"start": {
+							"type": "start",
+							"code": "(\n  $mint := $x.hashContractKey($form.coin.owner, $form.coin.spec);\n  $min := $x.toCoinUnit($form.minSimpleAdvice, $form.coin.decimals);\n  $coin := $x.coin.new($min, $form.coin.symbol, $form.coin.decimals, $mint);\n  $newstate := {\n    'ended': false,\n    'owner': $action.ledger,\n    'coin': $coin,\n    'tags': $action.tags,\n    'view': {\n      'title': $form.title,\n      'subtitle': $form.subtitle,\n      'description': $form.description,\n      'msgs': ['earn started']\n    }\n  };\n  \n  $out := $x.output($action.ledger, [], $form.title, $form.subtitle, '', $action.tags);\n  $x.result($newstate, [$out])\n)",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"end": {
+							"type": "end",
+							"code": "()",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"simpleAdvice": {
+							"type": "simpleAdvice",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equals($count($o.coins), 1, 'please only send me one coin');\n  $coin := $o.coins[0];\n  $mycoin := $state.coin;\n  $x.assert.isTrue($x.sameCoin($coin, $mycoin), 'only send me ' & $mycoin.symbol);\n  $x.assert.isTrue($x.greaterThanCoin($coin, $mycoin), 'sorry, you must send me at least ' & $x.toDisplay($mycoin) & ' ' & $mycoin.symbol);\n  \n  $msg := 'simpleAdvice ' & $x.toDisplay($coin) & ' ' & $coin.symbol & ' from ' & $action.ledger;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $data := {\n    'replyTo': $action.ledger,\n    'tags': $action.tags,\n    'earnType': 'simpleAdvice'\n  };\n  $out := $x.output($state.owner, $o.coins, $form.title, $form.subtitle, $form.description, $state.tags, $data);\n  $x.result($newState, [$out])\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"reply": {
+							"type": "reply",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n\n  $i := $inputs[0];\n  $o := $i.output;\n  $data := $o.data;\n  $replyTo := $data.replyTo;\n  $earnType := $data.earnType;\n  $x.assert.isOk($replyTo, 'no replyTo ledger');\n  \n  $msg := $earnType & ' reply to ' & $replyTo;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $out := $x.output($replyTo, [], $form.title, $form.subtitle, $form.description, $data.tags);\n  $outMe := $x.output($state.owner, $o.coins, $form.title, $form.subtitle, $form.description, $action.tags);\n  $x.result($newState, [$out, $outMe])\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						}
+					},
+					"name": "earn",
+					"tags": [],
+					"other": {},
+					"ledger": "Ledger",
+					"versionMajor": 1,
+					"versionMinor": 0,
+					"versionPatch": 0,
+					"reducers": [
+						{
+							"type": "start",
+							"language": "jsonata",
+							"code": "(\n  $mint := $x.hashContractKey($form.coin.owner, $form.coin.spec);\n  $min := $x.toCoinUnit($form.minSimpleAdvice, $form.coin.decimals);\n  $coin := $x.coin.new($min, $form.coin.symbol, $form.coin.decimals, $mint);\n  $newstate := {\n    'ended': false,\n    'owner': $action.ledger,\n    'coin': $coin,\n    'tags': $action.tags,\n    'view': {\n      'title': $form.title,\n      'subtitle': $form.subtitle,\n      'description': $form.description,\n      'msgs': ['earn started']\n    }\n  };\n  \n  $out := $x.output($action.ledger, [], $form.title, $form.subtitle, '', $action.tags);\n  $x.result($newstate, [$out])\n)"
+						},
+						{
+							"type": "end",
+							"language": "jsonata",
+							"code": "()"
+						},
+						{
+							"type": "simpleAdvice",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 1, 'please only send me one coin');\n  $coin := $o.coins[0];\n  $mycoin := $state.coin;\n  $x.assert.isTrue($x.coin.same($coin, $mycoin), 'only send me ' & $mycoin.symbol);\n  $x.assert.isTrue($x.coin.greaterThan($coin, $mycoin), 'sorry, you must send me at least ' & $x.toDisplay($mycoin) & ' ' & $mycoin.symbol);\n  \n  $msg := 'simpleAdvice ' & $x.toDisplay($coin) & ' ' & $coin.symbol & ' from ' & $action.ledger;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'description': $state.view.description,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $data := {\n    'replyTo': $action.ledger,\n    'tags': $action.tags,\n    'earnType': 'simpleAdvice'\n  };\n  $out := $x.output($state.owner, $o.coins, $state.view.title, $form.subtitle, $form.description, $state.tags, $data);\n  $x.result($newState, [$out])\n)\n"
+						},
+						{
+							"type": "reply",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n\n  $i := $inputs[0];\n  $o := $i.output;\n  $data := $o.data;\n  $replyTo := $data.replyTo;\n  $earnType := $data.earnType;\n  $x.assert.isOk($replyTo, 'no replyTo ledger');\n  \n  $msg := $earnType & ' reply to ' & $replyTo;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $out := $x.output($replyTo, [], $form.title, $form.subtitle, $form.description, $data.tags);\n  $outMe := $x.output($state.owner, $o.coins, $form.title, $form.subtitle, $form.description, $action.tags);\n  $x.result($newState, [$out, $outMe])\n)\n"
+						}
+					],
+					"description": "earn Description"
+				},
+				"other": {},
+				"title": "",
+				"subtitle": "",
+				"description": "",
+				"key": "4ec07c319f2e2df46f67b4168ade7ed94363fcf9e7aeae895611252b7d9c299b"
+			}
+		},
+		{
+			"name": "start",
+			"result": {
+				"outputs": [
+					{
+						"ledger": "Alice",
+						"data": {},
+						"coins": [],
+						"tags": [],
+						"msgs": [],
+						"title": "Alices Simple Advice Earn Contract",
+						"subtitle": "For simple advice only, minumum 1 PRAX required",
+						"description": ""
+					}
+				],
+				"state": {
+					"state": {
+						"ended": false,
+						"owner": "Alice",
+						"coin": {
+							"amount": "1000000000000000000",
+							"symbol": "PRAX",
+							"mint": "9b4f478d62b902521ad0c35159ec7fe201e7858e4c7627cbb522951b49edde36",
+							"other": {},
+							"decimals": 18
+						},
+						"view": {
+							"title": "Alices Simple Advice Earn Contract",
+							"subtitle": "For simple advice only, minumum 1 PRAX required",
+							"description": "### Simple Advice Warning\nIf you send me some PRAX, I might reply to your query. The more you send, the better the chance I will reply",
+							"msgs": [
+								"earn started"
+							]
+						}
+					},
+					"coins": []
+				},
+				"mint": []
+			},
+			"contract": {
+				"ledger": "Alice",
+				"template": {
+					"reducerMap": {
+						"start": {
+							"type": "start",
+							"code": "(\n  $mint := $x.hashContractKey($form.coin.owner, $form.coin.spec);\n  $min := $x.toCoinUnit($form.minSimpleAdvice, $form.coin.decimals);\n  $coin := $x.coin.new($min, $form.coin.symbol, $form.coin.decimals, $mint);\n  $newstate := {\n    'ended': false,\n    'owner': $action.ledger,\n    'coin': $coin,\n    'tags': $action.tags,\n    'view': {\n      'title': $form.title,\n      'subtitle': $form.subtitle,\n      'description': $form.description,\n      'msgs': ['earn started']\n    }\n  };\n  \n  $out := $x.output($action.ledger, [], $form.title, $form.subtitle, '', $action.tags);\n  $x.result($newstate, [$out])\n)",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"end": {
+							"type": "end",
+							"code": "()",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"simpleAdvice": {
+							"type": "simpleAdvice",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equals($count($o.coins), 1, 'please only send me one coin');\n  $coin := $o.coins[0];\n  $mycoin := $state.coin;\n  $x.assert.isTrue($x.sameCoin($coin, $mycoin), 'only send me ' & $mycoin.symbol);\n  $x.assert.isTrue($x.greaterThanCoin($coin, $mycoin), 'sorry, you must send me at least ' & $x.toDisplay($mycoin) & ' ' & $mycoin.symbol);\n  \n  $msg := 'simpleAdvice ' & $x.toDisplay($coin) & ' ' & $coin.symbol & ' from ' & $action.ledger;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'description': $state.view.description,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $data := {\n    'replyTo': $action.ledger,\n    'tags': $action.tags,\n    'earnType': 'simpleAdvice'\n  };\n  $out := $x.output($state.owner, $o.coins, $form.title, $form.subtitle, $form.description, $state.tags, $data);\n  $x.result($newState, [$out])\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"reply": {
+							"type": "reply",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n\n  $i := $inputs[0];\n  $o := $i.output;\n  $data := $o.data;\n  $replyTo := $data.replyTo;\n  $earnType := $data.earnType;\n  $x.assert.isOk($replyTo, 'no replyTo ledger');\n  \n  $msg := $earnType & ' reply to ' & $replyTo;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $out := $x.output($replyTo, [], $form.title, $form.subtitle, $form.description, $data.tags);\n  $outMe := $x.output($state.owner, $o.coins, $form.title, $form.subtitle, $form.description, $action.tags);\n  $x.result($newState, [$out, $outMe])\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						}
+					},
+					"name": "earn",
+					"tags": [],
+					"other": {},
+					"ledger": "Ledger",
+					"versionMajor": 1,
+					"versionMinor": 0,
+					"versionPatch": 0,
+					"reducers": [
+						{
+							"type": "start",
+							"language": "jsonata",
+							"code": "(\n  $mint := $x.hashContractKey($form.coin.owner, $form.coin.spec);\n  $min := $x.toCoinUnit($form.minSimpleAdvice, $form.coin.decimals);\n  $coin := $x.coin.new($min, $form.coin.symbol, $form.coin.decimals, $mint);\n  $newstate := {\n    'ended': false,\n    'owner': $action.ledger,\n    'coin': $coin,\n    'tags': $action.tags,\n    'view': {\n      'title': $form.title,\n      'subtitle': $form.subtitle,\n      'description': $form.description,\n      'msgs': ['earn started']\n    }\n  };\n  \n  $out := $x.output($action.ledger, [], $form.title, $form.subtitle, '', $action.tags);\n  $x.result($newstate, [$out])\n)"
+						},
+						{
+							"type": "end",
+							"language": "jsonata",
+							"code": "()"
+						},
+						{
+							"type": "simpleAdvice",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 1, 'please only send me one coin');\n  $coin := $o.coins[0];\n  $mycoin := $state.coin;\n  $x.assert.isTrue($x.coin.same($coin, $mycoin), 'only send me ' & $mycoin.symbol);\n  $x.assert.isTrue($x.coin.greaterThan($coin, $mycoin), 'sorry, you must send me at least ' & $x.toDisplay($mycoin) & ' ' & $mycoin.symbol);\n  \n  $msg := 'simpleAdvice ' & $x.toDisplay($coin) & ' ' & $coin.symbol & ' from ' & $action.ledger;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'description': $state.view.description,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $data := {\n    'replyTo': $action.ledger,\n    'tags': $action.tags,\n    'earnType': 'simpleAdvice'\n  };\n  $out := $x.output($state.owner, $o.coins, $state.view.title, $form.subtitle, $form.description, $state.tags, $data);\n  $x.result($newState, [$out])\n)\n"
+						},
+						{
+							"type": "reply",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n\n  $i := $inputs[0];\n  $o := $i.output;\n  $data := $o.data;\n  $replyTo := $data.replyTo;\n  $earnType := $data.earnType;\n  $x.assert.isOk($replyTo, 'no replyTo ledger');\n  \n  $msg := $earnType & ' reply to ' & $replyTo;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $out := $x.output($replyTo, [], $form.title, $form.subtitle, $form.description, $data.tags);\n  $outMe := $x.output($state.owner, $o.coins, $form.title, $form.subtitle, $form.description, $action.tags);\n  $x.result($newState, [$out, $outMe])\n)\n"
+						}
+					],
+					"description": "earn Description"
+				},
+				"other": {},
+				"title": "",
+				"subtitle": "",
+				"description": "",
+				"key": "4ec07c319f2e2df46f67b4168ade7ed94363fcf9e7aeae895611252b7d9c299b"
+			}
+		},
+		{
+			"name": "simpleAdvice",
+			"result": {
+				"outputs": [
+					{
+						"ledger": "Alice",
+						"data": {
+							"replyTo": "Bob",
+							"earnType": "simpleAdvice"
+						},
+						"coins": [
+							{
+								"amount": "1000000000000000000",
+								"symbol": "PRAX",
+								"other": {},
+								"mint": "9b4f478d62b902521ad0c35159ec7fe201e7858e4c7627cbb522951b49edde36",
+								"decimals": 18
+							}
+						],
+						"tags": [],
+						"msgs": [],
+						"title": "Alices Simple Advice Earn Contract",
+						"subtitle": "Please respond, urgent",
+						"description": "### Please respond, I am desparate - this is life or death"
+					}
+				],
+				"state": {
+					"state": {
+						"ended": false,
+						"owner": "Alice",
+						"coin": {
+							"amount": "1000000000000000000",
+							"symbol": "PRAX",
+							"mint": "9b4f478d62b902521ad0c35159ec7fe201e7858e4c7627cbb522951b49edde36",
+							"other": {},
+							"decimals": 18
+						},
+						"view": {
+							"title": "Alices Simple Advice Earn Contract",
+							"subtitle": "For simple advice only, minumum 1 PRAX required",
+							"description": "### Simple Advice Warning\nIf you send me some PRAX, I might reply to your query. The more you send, the better the chance I will reply",
+							"msgs": [
+								"earn started",
+								"simpleAdvice 1 PRAX from Bob"
+							]
+						}
+					},
+					"coins": []
+				},
+				"mint": []
+			},
+			"contract": {
+				"ledger": "Bob",
+				"template": {
+					"reducerMap": {
+						"start": {
+							"type": "start",
+							"code": "(\n  $mint := $x.hashContractKey($form.coin.owner, $form.coin.spec);\n  $min := $x.toCoinUnit($form.minSimpleAdvice, $form.coin.decimals);\n  $coin := $x.coin.new($min, $form.coin.symbol, $form.coin.decimals, $mint);\n  $newstate := {\n    'ended': false,\n    'owner': $action.ledger,\n    'coin': $coin,\n    'tags': $action.tags,\n    'view': {\n      'title': $form.title,\n      'subtitle': $form.subtitle,\n      'description': $form.description,\n      'msgs': ['earn started']\n    }\n  };\n  \n  $out := $x.output($action.ledger, [], $form.title, $form.subtitle, '', $action.tags);\n  $x.result($newstate, [$out])\n)",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"end": {
+							"type": "end",
+							"code": "()",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"simpleAdvice": {
+							"type": "simpleAdvice",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 1, 'please only send me one coin');\n  $coin := $o.coins[0];\n  $mycoin := $state.coin;\n  $x.assert.isTrue($x.coin.same($coin, $mycoin), 'only send me ' & $mycoin.symbol);\n  $x.assert.isTrue($x.coin.greaterThanOrEqual($coin, $mycoin), 'sorry, you must send me at least ' & $x.toDisplay($mycoin) & ' ' & $mycoin.symbol);\n  \n  $msg := 'simpleAdvice ' & $x.toDisplay($coin) & ' ' & $coin.symbol & ' from ' & $action.ledger;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'description': $state.view.description,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $data := {\n    'replyTo': $action.ledger,\n    'tags': $action.tags,\n    'earnType': 'simpleAdvice'\n  };\n  $out := $x.output($state.owner, $o.coins, $state.view.title, $form.subtitle, $form.description, $state.tags, $data);\n  $x.result($newState, [$out])\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"reply": {
+							"type": "reply",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n\n  $i := $inputs[0];\n  $o := $i.output;\n  $data := $o.data;\n  $replyTo := $data.replyTo;\n  $earnType := $data.earnType;\n  $x.assert.isOk($replyTo, 'no replyTo ledger');\n  \n  $msg := $earnType & ' reply to ' & $replyTo;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $out := $x.output($replyTo, [], $form.title, $form.subtitle, $form.description, $data.tags);\n  $outMe := $x.output($state.owner, $o.coins, $form.title, $form.subtitle, $form.description, $action.tags);\n  $x.result($newState, [$out, $outMe])\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						}
+					},
+					"name": "earn",
+					"tags": [],
+					"other": {},
+					"ledger": "Ledger",
+					"versionMajor": 1,
+					"versionMinor": 0,
+					"versionPatch": 0,
+					"reducers": [
+						{
+							"type": "start",
+							"language": "jsonata",
+							"code": "(\n  $mint := $x.hashContractKey($form.coin.owner, $form.coin.spec);\n  $min := $x.toCoinUnit($form.min, $form.coin.decimals);\n  $coin := $x.coin.new($min, $form.coin.symbol, $form.coin.decimals, $mint);\n  $newstate := {\n    'ended': false,\n    'owner': $action.ledger,\n    'coin': $coin,\n    'tags': $action.tags,\n    'view': {\n      'title': $form.title,\n      'subtitle': $form.subtitle,\n      'description': $form.description,\n      'msgs': ['earn started']\n    }\n  };\n  \n  $out := $x.output($action.ledger, [], $form.title, $form.subtitle, '', $action.tags);\n  $x.result($newstate, [$out])\n)"
+						},
+						{
+							"type": "end",
+							"language": "jsonata",
+							"code": "()"
+						},
+						{
+							"type": "simpleAdvice",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 1, 'please only send me one coin');\n  $coin := $o.coins[0];\n  $mycoin := $state.coin;\n  $x.assert.isTrue($x.coin.same($coin, $mycoin), 'only send me ' & $mycoin.symbol);\n  $x.assert.isTrue($x.coin.greaterThanOrEqual($coin, $mycoin), 'sorry, you must send me at least ' & $x.toDisplay($mycoin) & ' ' & $mycoin.symbol);\n  \n  $msg := 'simpleAdvice ' & $x.toDisplay($coin) & ' ' & $coin.symbol & ' from ' & $action.ledger;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'description': $state.view.description,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $data := {\n    'replyTo': $action.ledger,\n    'tags': $action.tags,\n    'earnType': 'simpleAdvice'\n  };\n  $out := $x.output($state.owner, $o.coins, $state.view.title, $form.subtitle, $form.description, $state.tags, $data);\n  $x.result($newState, [$out])\n)\n"
+						},
+						{
+							"type": "reply",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n\n  $i := $inputs[0];\n  $o := $i.output;\n  $data := $o.data;\n  $replyTo := $data.replyTo;\n  $earnType := $data.earnType;\n  $x.assert.isOk($replyTo, 'no replyTo ledger');\n  \n  $msg := $earnType & ' reply to ' & $replyTo;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $out := $x.output($replyTo, [], $form.title, $form.subtitle, $form.description, $data.tags);\n  $outMe := $x.output($state.owner, $o.coins, $form.title, $form.subtitle, $form.description, $action.tags);\n  $x.result($newState, [$out, $outMe])\n)\n"
+						}
+					],
+					"description": "earn Description"
+				},
+				"other": {},
+				"title": "",
+				"subtitle": "",
+				"description": "",
+				"key": "1bb8676bc430d6014cf445dd69153385f3ad80e0f41082266684cd0b04ba7b19"
+			}
+		},
+		{
+			"name": "reply",
+			"result": {
+				"outputs": [
+					{
+						"ledger": "Bob",
+						"data": {},
+						"coins": [],
+						"tags": [],
+						"msgs": [],
+						"title": "Wow, life or death?",
+						"subtitle": "Sounds serious",
+						"description": "You forgot to ask me your question. Too busy begging for a reply. Thanks for the PRAX!"
+					},
+					{
+						"ledger": "Alice",
+						"data": {},
+						"coins": [
+							{
+								"amount": "1000000000000000000",
+								"symbol": "PRAX",
+								"other": {},
+								"mint": "9b4f478d62b902521ad0c35159ec7fe201e7858e4c7627cbb522951b49edde36",
+								"decimals": 18
+							}
+						],
+						"tags": [],
+						"msgs": [],
+						"title": "Wow, life or death?",
+						"subtitle": "Sounds serious",
+						"description": "You forgot to ask me your question. Too busy begging for a reply. Thanks for the PRAX!"
+					}
+				],
+				"state": {
+					"state": {
+						"ended": false,
+						"owner": "Alice",
+						"coin": {
+							"amount": "1000000000000000000",
+							"symbol": "PRAX",
+							"mint": "9b4f478d62b902521ad0c35159ec7fe201e7858e4c7627cbb522951b49edde36",
+							"other": {},
+							"decimals": 18
+						},
+						"view": {
+							"title": "Alices Simple Advice Earn Contract",
+							"subtitle": "For simple advice only, minumum 1 PRAX required",
+							"msgs": [
+								"earn started",
+								"simpleAdvice 1 PRAX from Bob",
+								"simpleAdvice reply to Bob"
+							]
+						}
+					},
+					"coins": []
+				},
+				"mint": []
+			},
+			"contract": {
+				"ledger": "Alice",
+				"template": {
+					"reducerMap": {
+						"start": {
+							"type": "start",
+							"code": "(\n  $mint := $x.hashContractKey($form.coin.owner, $form.coin.spec);\n  $min := $x.toCoinUnit($form.minSimpleAdvice, $form.coin.decimals);\n  $coin := $x.coin.new($min, $form.coin.symbol, $form.coin.decimals, $mint);\n  $newstate := {\n    'ended': false,\n    'owner': $action.ledger,\n    'coin': $coin,\n    'tags': $action.tags,\n    'view': {\n      'title': $form.title,\n      'subtitle': $form.subtitle,\n      'description': $form.description,\n      'msgs': ['earn started']\n    }\n  };\n  \n  $out := $x.output($action.ledger, [], $form.title, $form.subtitle, '', $action.tags);\n  $x.result($newstate, [$out])\n)",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"end": {
+							"type": "end",
+							"code": "()",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"simpleAdvice": {
+							"type": "simpleAdvice",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 1, 'please only send me one coin');\n  $coin := $o.coins[0];\n  $mycoin := $state.coin;\n  $x.assert.isTrue($x.coin.same($coin, $mycoin), 'only send me ' & $mycoin.symbol);\n  $x.assert.isTrue($x.coin.greaterThanOrEqual($coin, $mycoin), 'sorry, you must send me at least ' & $x.toDisplay($mycoin) & ' ' & $mycoin.symbol);\n  \n  $msg := 'simpleAdvice ' & $x.toDisplay($coin) & ' ' & $coin.symbol & ' from ' & $action.ledger;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'description': $state.view.description,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $data := {\n    'replyTo': $action.ledger,\n    'tags': $action.tags,\n    'earnType': 'simpleAdvice'\n  };\n  $out := $x.output($state.owner, $o.coins, $state.view.title, $form.subtitle, $form.description, $state.tags, $data);\n  $x.result($newState, [$out])\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"reply": {
+							"type": "reply",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n\n  $i := $inputs[0];\n  $o := $i.output;\n  $data := $o.data;\n  $replyTo := $data.replyTo;\n  $earnType := $data.earnType;\n  $x.assert.isOk($replyTo, 'no replyTo ledger');\n  \n  $msg := $earnType & ' reply to ' & $replyTo;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $out := $x.output($replyTo, [], $form.title, $form.subtitle, $form.description, $data.tags);\n  $outMe := $x.output($state.owner, $o.coins, $form.title, $form.subtitle, $form.description, $action.tags);\n  $x.result($newState, [$out, $outMe])\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						}
+					},
+					"name": "earn",
+					"tags": [],
+					"other": {},
+					"ledger": "Ledger",
+					"versionMajor": 1,
+					"versionMinor": 0,
+					"versionPatch": 0,
+					"reducers": [
+						{
+							"type": "start",
+							"language": "jsonata",
+							"code": "(\n  $mint := $x.hashContractKey($form.coin.owner, $form.coin.spec);\n  $min := $x.toCoinUnit($form.min, $form.coin.decimals);\n  $coin := $x.coin.new($min, $form.coin.symbol, $form.coin.decimals, $mint);\n  $newstate := {\n    'ended': false,\n    'owner': $action.ledger,\n    'coin': $coin,\n    'tags': $action.tags,\n    'view': {\n      'title': $form.title,\n      'subtitle': $form.subtitle,\n      'description': $form.description,\n      'msgs': ['earn started']\n    }\n  };\n  \n  $out := $x.output($action.ledger, [], $form.title, $form.subtitle, '', $action.tags);\n  $x.result($newstate, [$out])\n)"
+						},
+						{
+							"type": "end",
+							"language": "jsonata",
+							"code": "()"
+						},
+						{
+							"type": "simpleAdvice",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 1, 'please only send me one coin');\n  $coin := $o.coins[0];\n  $mycoin := $state.coin;\n  $x.assert.isTrue($x.coin.same($coin, $mycoin), 'only send me ' & $mycoin.symbol);\n  $x.assert.isTrue($x.coin.greaterThanOrEqual($coin, $mycoin), 'sorry, you must send me at least ' & $x.toDisplay($mycoin) & ' ' & $mycoin.symbol);\n  \n  $msg := 'simpleAdvice ' & $x.toDisplay($coin) & ' ' & $coin.symbol & ' from ' & $action.ledger;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'description': $state.view.description,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $data := {\n    'replyTo': $action.ledger,\n    'tags': $action.tags,\n    'earnType': 'simpleAdvice'\n  };\n  $out := $x.output($state.owner, $o.coins, $state.view.title, $form.subtitle, $form.description, $state.tags, $data);\n  $x.result($newState, [$out])\n)\n"
+						},
+						{
+							"type": "reply",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n\n  $i := $inputs[0];\n  $o := $i.output;\n  $data := $o.data;\n  $replyTo := $data.replyTo;\n  $earnType := $data.earnType;\n  $x.assert.isOk($replyTo, 'no replyTo ledger');\n  \n  $msg := $earnType & ' reply to ' & $replyTo;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $out := $x.output($replyTo, [], $form.title, $form.subtitle, $form.description, $data.tags);\n  $outMe := $x.output($state.owner, $o.coins, $form.title, $form.subtitle, $form.description, $action.tags);\n  $x.result($newState, [$out, $outMe])\n)\n"
+						}
+					],
+					"description": "earn Description"
+				},
+				"other": {},
+				"title": "",
+				"subtitle": "",
+				"description": "",
+				"key": "4ec07c319f2e2df46f67b4168ade7ed94363fcf9e7aeae895611252b7d9c299b"
+			}
+		},
+		{
+			"name": "start",
+			"result": {
+				"outputs": [
+					{
+						"ledger": "Alice",
+						"data": {},
+						"coins": [],
+						"tags": [],
+						"msgs": [],
+						"title": "Alices Simple Advice Earn Contract",
+						"subtitle": "For simple advice only, minumum 1 PRAX required",
+						"description": ""
+					}
+				],
+				"state": {
+					"state": {
+						"ended": false,
+						"owner": "Alice",
+						"coin": {
+							"amount": "1000000000000000000",
+							"symbol": "PRAX",
+							"mint": "9b4f478d62b902521ad0c35159ec7fe201e7858e4c7627cbb522951b49edde36",
+							"other": {},
+							"decimals": 18
+						},
+						"view": {
+							"title": "Alices Simple Advice Earn Contract",
+							"subtitle": "For simple advice only, minumum 1 PRAX required",
+							"description": "### Simple Advice Warning\nIf you send me some PRAX, I might reply to your query. The more you send, the better the chance I will reply. Take a chance, I am worth it!",
+							"msgs": [
+								"earn started"
+							]
+						}
+					},
+					"coins": []
+				},
+				"mint": []
+			},
+			"contract": {
+				"ledger": "Alice",
+				"template": {
+					"reducerMap": {
+						"start": {
+							"type": "start",
+							"code": "(\n  $mint := $x.hashContractKey($form.coin.owner, $form.coin.spec);\n  $min := $x.toCoinUnit($form.minSimpleAdvice, $form.coin.decimals);\n  $coin := $x.coin.new($min, $form.coin.symbol, $form.coin.decimals, $mint);\n  $newstate := {\n    'ended': false,\n    'owner': $action.ledger,\n    'coin': $coin,\n    'tags': $action.tags,\n    'view': {\n      'title': $form.title,\n      'subtitle': $form.subtitle,\n      'description': $form.description,\n      'msgs': ['earn started']\n    }\n  };\n  \n  $out := $x.output($action.ledger, [], $form.title, $form.subtitle, '', $action.tags);\n  $x.result($newstate, [$out])\n)",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"end": {
+							"type": "end",
+							"code": "()",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"simpleAdvice": {
+							"type": "simpleAdvice",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 1, 'please only send me one coin');\n  $coin := $o.coins[0];\n  $mycoin := $state.coin;\n  $x.assert.isTrue($x.coin.same($coin, $mycoin), 'only send me ' & $mycoin.symbol);\n  $x.assert.isTrue($x.coin.greaterThanOrEqual($coin, $mycoin), 'sorry, you must send me at least ' & $x.toDisplay($mycoin) & ' ' & $mycoin.symbol);\n  \n  $msg := 'simpleAdvice ' & $x.toDisplay($coin) & ' ' & $coin.symbol & ' from ' & $action.ledger;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'description': $state.view.description,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $data := {\n    'replyTo': $action.ledger,\n    'tags': $action.tags,\n    'earnType': 'simpleAdvice'\n  };\n  $out := $x.output($state.owner, $o.coins, $state.view.title, $form.subtitle, $form.description, $state.tags, $data);\n  $x.result($newState, [$out])\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"reply": {
+							"type": "reply",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n\n  $i := $inputs[0];\n  $o := $i.output;\n  $data := $o.data;\n  $replyTo := $data.replyTo;\n  $earnType := $data.earnType;\n  $x.assert.isOk($replyTo, 'no replyTo ledger');\n  \n  $msg := $earnType & ' reply to ' & $replyTo;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $out := $x.output($replyTo, [], $form.title, $form.subtitle, $form.description, $data.tags);\n  $outMe := $x.output($state.owner, $o.coins, $form.title, $form.subtitle, $form.description, $action.tags);\n  $x.result($newState, [$out, $outMe])\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						}
+					},
+					"name": "incentum-simple-advice",
+					"tags": [],
+					"other": {},
+					"ledger": "Ledger",
+					"versionMajor": 1,
+					"versionMinor": 0,
+					"versionPatch": 0,
+					"reducers": [
+						{
+							"type": "start",
+							"language": "jsonata",
+							"code": "(\n  $mint := $x.hashContractKey($form.coin.owner, $form.coin.spec);\n  $min := $x.toCoinUnit($form.min, $form.coin.decimals);\n  $coin := $x.coin.new($min, $form.coin.symbol, $form.coin.decimals, $mint);\n  $newstate := {\n    'ended': false,\n    'owner': $action.ledger,\n    'coin': $coin,\n    'tags': $action.tags,\n    'view': {\n      'title': $form.title,\n      'subtitle': $form.subtitle,\n      'description': $form.description,\n      'msgs': ['earn started']\n    }\n  };\n  \n  $out := $x.output($action.ledger, [], $form.title, $form.subtitle, '', $action.tags);\n  $x.result($newstate, [$out])\n)"
+						},
+						{
+							"type": "end",
+							"language": "jsonata",
+							"code": "()"
+						},
+						{
+							"type": "simpleAdvice",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 1, 'please only send me one coin');\n  $coin := $o.coins[0];\n  $mycoin := $state.coin;\n  $x.assert.isTrue($x.coin.same($coin, $mycoin), 'only send me ' & $mycoin.symbol);\n  $x.assert.isTrue($x.coin.greaterThanOrEqual($coin, $mycoin), 'sorry, you must send me at least ' & $x.toDisplay($mycoin) & ' ' & $mycoin.symbol);\n  \n  $msg := 'simpleAdvice ' & $x.toDisplay($coin) & ' ' & $coin.symbol & ' from ' & $action.ledger;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'description': $state.view.description,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $data := {\n    'replyTo': $action.ledger,\n    'tags': $action.tags,\n    'earnType': 'simpleAdvice'\n  };\n  $out := $x.output($state.owner, $o.coins, $state.view.title, $form.subtitle, $form.description, $state.tags, $data);\n  $x.result($newState, [$out])\n)\n"
+						},
+						{
+							"type": "reply",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n\n  $i := $inputs[0];\n  $o := $i.output;\n  $data := $o.data;\n  $replyTo := $data.replyTo;\n  $earnType := $data.earnType;\n  $x.assert.isOk($replyTo, 'no replyTo ledger');\n  \n  $msg := $earnType & ' reply to ' & $replyTo;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $out := $x.output($replyTo, [], $form.title, $form.subtitle, $form.description, $data.tags);\n  $outMe := $x.output($state.owner, $o.coins, $form.title, $form.subtitle, $form.description, $action.tags);\n  $x.result($newState, [$out, $outMe])\n)\n"
+						}
+					],
+					"description": "earn Description"
+				},
+				"other": {},
+				"title": "",
+				"subtitle": "",
+				"description": "",
+				"key": "4ec07c319f2e2df46f67b4168ade7ed94363fcf9e7aeae895611252b7d9c299b"
+			}
+		},
+		{
+			"name": "simpleAdvice",
+			"result": {
+				"outputs": [
+					{
+						"ledger": "Alice",
+						"data": {
+							"replyTo": "Bob",
+							"earnType": "simpleAdvice"
+						},
+						"coins": [
+							{
+								"amount": "1000000000000000000",
+								"symbol": "PRAX",
+								"other": {},
+								"mint": "9b4f478d62b902521ad0c35159ec7fe201e7858e4c7627cbb522951b49edde36",
+								"decimals": 18
+							}
+						],
+						"tags": [],
+						"msgs": [],
+						"title": "Alices Simple Advice Earn Contract",
+						"subtitle": "Please respond, urgent",
+						"description": "### Please respond, I am desparate - this is life or death"
+					}
+				],
+				"state": {
+					"state": {
+						"ended": false,
+						"owner": "Alice",
+						"coin": {
+							"amount": "1000000000000000000",
+							"symbol": "PRAX",
+							"mint": "9b4f478d62b902521ad0c35159ec7fe201e7858e4c7627cbb522951b49edde36",
+							"other": {},
+							"decimals": 18
+						},
+						"view": {
+							"title": "Alices Simple Advice Earn Contract",
+							"subtitle": "For simple advice only, minumum 1 PRAX required",
+							"description": "### Simple Advice Warning\nIf you send me some PRAX, I might reply to your query. The more you send, the better the chance I will reply",
+							"msgs": [
+								"earn started",
+								"simpleAdvice 1 PRAX from Bob"
+							]
+						}
+					},
+					"coins": []
+				},
+				"mint": []
+			},
+			"contract": {
+				"ledger": "Bob",
+				"template": {
+					"reducerMap": {
+						"start": {
+							"type": "start",
+							"code": "(\n  $mint := $x.hashContractKey($form.coin.owner, $form.coin.spec);\n  $min := $x.toCoinUnit($form.minSimpleAdvice, $form.coin.decimals);\n  $coin := $x.coin.new($min, $form.coin.symbol, $form.coin.decimals, $mint);\n  $newstate := {\n    'ended': false,\n    'owner': $action.ledger,\n    'coin': $coin,\n    'tags': $action.tags,\n    'view': {\n      'title': $form.title,\n      'subtitle': $form.subtitle,\n      'description': $form.description,\n      'msgs': ['earn started']\n    }\n  };\n  \n  $out := $x.output($action.ledger, [], $form.title, $form.subtitle, '', $action.tags);\n  $x.result($newstate, [$out])\n)",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"end": {
+							"type": "end",
+							"code": "()",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"simpleAdvice": {
+							"type": "simpleAdvice",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 1, 'please only send me one coin');\n  $coin := $o.coins[0];\n  $mycoin := $state.coin;\n  $x.assert.isTrue($x.coin.same($coin, $mycoin), 'only send me ' & $mycoin.symbol);\n  $x.assert.isTrue($x.coin.greaterThanOrEqual($coin, $mycoin), 'sorry, you must send me at least ' & $x.toDisplay($mycoin) & ' ' & $mycoin.symbol);\n  \n  $msg := 'simpleAdvice ' & $x.toDisplay($coin) & ' ' & $coin.symbol & ' from ' & $action.ledger;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'description': $state.view.description,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $data := {\n    'replyTo': $action.ledger,\n    'tags': $action.tags,\n    'earnType': 'simpleAdvice'\n  };\n  $out := $x.output($state.owner, $o.coins, $state.view.title, $form.subtitle, $form.description, $state.tags, $data);\n  $x.result($newState, [$out])\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"reply": {
+							"type": "reply",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n\n  $i := $inputs[0];\n  $o := $i.output;\n  $data := $o.data;\n  $replyTo := $data.replyTo;\n  $earnType := $data.earnType;\n  $x.assert.isOk($replyTo, 'no replyTo ledger');\n  \n  $msg := $earnType & ' reply to ' & $replyTo;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $out := $x.output($replyTo, [], $form.title, $form.subtitle, $form.description, $data.tags);\n  $outMe := $x.output($state.owner, $o.coins, $form.title, $form.subtitle, $form.description, $action.tags);\n  $x.result($newState, [$out, $outMe])\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						}
+					},
+					"name": "incentum-simple-advice",
+					"tags": [],
+					"other": {},
+					"ledger": "Ledger",
+					"versionMajor": 1,
+					"versionMinor": 0,
+					"versionPatch": 0,
+					"reducers": [
+						{
+							"type": "start",
+							"language": "jsonata",
+							"code": "(\n  $mint := $x.hashContractKey($form.coin.owner, $form.coin.spec);\n  $min := $x.toCoinUnit($form.min, $form.coin.decimals);\n  $coin := $x.coin.new($min, $form.coin.symbol, $form.coin.decimals, $mint);\n  $newstate := {\n    'ended': false,\n    'owner': $action.ledger,\n    'coin': $coin,\n    'tags': $action.tags,\n    'view': {\n      'title': $form.title,\n      'subtitle': $form.subtitle,\n      'description': $form.description,\n      'msgs': ['earn started']\n    }\n  };\n  \n  $out := $x.output($action.ledger, [], $form.title, $form.subtitle, '', $action.tags);\n  $x.result($newstate, [$out])\n)"
+						},
+						{
+							"type": "end",
+							"language": "jsonata",
+							"code": "()"
+						},
+						{
+							"type": "simpleAdvice",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 1, 'please only send me one coin');\n  $coin := $o.coins[0];\n  $mycoin := $state.coin;\n  $x.assert.isTrue($x.coin.same($coin, $mycoin), 'only send me ' & $mycoin.symbol);\n  $x.assert.isTrue($x.coin.greaterThanOrEqual($coin, $mycoin), 'sorry, you must send me at least ' & $x.toDisplay($mycoin) & ' ' & $mycoin.symbol);\n  \n  $msg := 'simpleAdvice ' & $x.toDisplay($coin) & ' ' & $coin.symbol & ' from ' & $action.ledger;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'description': $state.view.description,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $data := {\n    'replyTo': $action.ledger,\n    'tags': $action.tags,\n    'earnType': 'simpleAdvice'\n  };\n  $out := $x.output($state.owner, $o.coins, $state.view.title, $form.subtitle, $form.description, $state.tags, $data);\n  $x.result($newState, [$out])\n)\n"
+						},
+						{
+							"type": "reply",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n\n  $i := $inputs[0];\n  $o := $i.output;\n  $data := $o.data;\n  $replyTo := $data.replyTo;\n  $earnType := $data.earnType;\n  $x.assert.isOk($replyTo, 'no replyTo ledger');\n  \n  $msg := $earnType & ' reply to ' & $replyTo;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $out := $x.output($replyTo, [], $form.title, $form.subtitle, $form.description, $data.tags);\n  $outMe := $x.output($state.owner, $o.coins, $form.title, $form.subtitle, $form.description, $action.tags);\n  $x.result($newState, [$out, $outMe])\n)\n"
+						}
+					],
+					"description": "earn Description"
+				},
+				"other": {},
+				"title": "",
+				"subtitle": "",
+				"description": "",
+				"key": "1bb8676bc430d6014cf445dd69153385f3ad80e0f41082266684cd0b04ba7b19"
+			}
+		},
+		{
+			"name": "reply",
+			"result": {
+				"outputs": [
+					{
+						"ledger": "Bob",
+						"data": {},
+						"coins": [],
+						"tags": [],
+						"msgs": [],
+						"title": "Wow, life or death?",
+						"subtitle": "Sounds serious",
+						"description": "You forgot to ask me your question. Too busy begging for a reply. Thanks for the PRAX!"
+					},
+					{
+						"ledger": "Alice",
+						"data": {},
+						"coins": [
+							{
+								"amount": "1000000000000000000",
+								"symbol": "PRAX",
+								"other": {},
+								"mint": "9b4f478d62b902521ad0c35159ec7fe201e7858e4c7627cbb522951b49edde36",
+								"decimals": 18
+							}
+						],
+						"tags": [],
+						"msgs": [],
+						"title": "Wow, life or death?",
+						"subtitle": "Sounds serious",
+						"description": "You forgot to ask me your question. Too busy begging for a reply. Thanks for the PRAX!"
+					}
+				],
+				"state": {
+					"state": {
+						"ended": false,
+						"owner": "Alice",
+						"coin": {
+							"amount": "1000000000000000000",
+							"symbol": "PRAX",
+							"mint": "9b4f478d62b902521ad0c35159ec7fe201e7858e4c7627cbb522951b49edde36",
+							"other": {},
+							"decimals": 18
+						},
+						"view": {
+							"title": "Alices Simple Advice Earn Contract",
+							"subtitle": "For simple advice only, minumum 1 PRAX required",
+							"msgs": [
+								"earn started",
+								"simpleAdvice 1 PRAX from Bob",
+								"simpleAdvice reply to Bob"
+							]
+						}
+					},
+					"coins": []
+				},
+				"mint": []
+			},
+			"contract": {
+				"ledger": "Alice",
+				"template": {
+					"reducerMap": {
+						"start": {
+							"type": "start",
+							"code": "(\n  $mint := $x.hashContractKey($form.coin.owner, $form.coin.spec);\n  $min := $x.toCoinUnit($form.minSimpleAdvice, $form.coin.decimals);\n  $coin := $x.coin.new($min, $form.coin.symbol, $form.coin.decimals, $mint);\n  $newstate := {\n    'ended': false,\n    'owner': $action.ledger,\n    'coin': $coin,\n    'tags': $action.tags,\n    'view': {\n      'title': $form.title,\n      'subtitle': $form.subtitle,\n      'description': $form.description,\n      'msgs': ['earn started']\n    }\n  };\n  \n  $out := $x.output($action.ledger, [], $form.title, $form.subtitle, '', $action.tags);\n  $x.result($newstate, [$out])\n)",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"end": {
+							"type": "end",
+							"code": "()",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"simpleAdvice": {
+							"type": "simpleAdvice",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 1, 'please only send me one coin');\n  $coin := $o.coins[0];\n  $mycoin := $state.coin;\n  $x.assert.isTrue($x.coin.same($coin, $mycoin), 'only send me ' & $mycoin.symbol);\n  $x.assert.isTrue($x.coin.greaterThanOrEqual($coin, $mycoin), 'sorry, you must send me at least ' & $x.toDisplay($mycoin) & ' ' & $mycoin.symbol);\n  \n  $msg := 'simpleAdvice ' & $x.toDisplay($coin) & ' ' & $coin.symbol & ' from ' & $action.ledger;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'description': $state.view.description,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $data := {\n    'replyTo': $action.ledger,\n    'tags': $action.tags,\n    'earnType': 'simpleAdvice'\n  };\n  $out := $x.output($state.owner, $o.coins, $state.view.title, $form.subtitle, $form.description, $state.tags, $data);\n  $x.result($newState, [$out])\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"reply": {
+							"type": "reply",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n\n  $i := $inputs[0];\n  $o := $i.output;\n  $data := $o.data;\n  $replyTo := $data.replyTo;\n  $earnType := $data.earnType;\n  $x.assert.isOk($replyTo, 'no replyTo ledger');\n  \n  $msg := $earnType & ' reply to ' & $replyTo;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $out := $x.output($replyTo, [], $form.title, $form.subtitle, $form.description, $data.tags);\n  $outMe := $x.output($state.owner, $o.coins, $form.title, $form.subtitle, $form.description, $action.tags);\n  $x.result($newState, [$out, $outMe])\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						}
+					},
+					"name": "incentum-simple-advice",
+					"tags": [],
+					"other": {},
+					"ledger": "Ledger",
+					"versionMajor": 1,
+					"versionMinor": 0,
+					"versionPatch": 0,
+					"reducers": [
+						{
+							"type": "start",
+							"language": "jsonata",
+							"code": "(\n  $mint := $x.hashContractKey($form.coin.owner, $form.coin.spec);\n  $min := $x.toCoinUnit($form.min, $form.coin.decimals);\n  $coin := $x.coin.new($min, $form.coin.symbol, $form.coin.decimals, $mint);\n  $newstate := {\n    'ended': false,\n    'owner': $action.ledger,\n    'coin': $coin,\n    'tags': $action.tags,\n    'view': {\n      'title': $form.title,\n      'subtitle': $form.subtitle,\n      'description': $form.description,\n      'msgs': ['earn started']\n    }\n  };\n  \n  $out := $x.output($action.ledger, [], $form.title, $form.subtitle, '', $action.tags);\n  $x.result($newstate, [$out])\n)"
+						},
+						{
+							"type": "end",
+							"language": "jsonata",
+							"code": "()"
+						},
+						{
+							"type": "simpleAdvice",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 1, 'please only send me one coin');\n  $coin := $o.coins[0];\n  $mycoin := $state.coin;\n  $x.assert.isTrue($x.coin.same($coin, $mycoin), 'only send me ' & $mycoin.symbol);\n  $x.assert.isTrue($x.coin.greaterThanOrEqual($coin, $mycoin), 'sorry, you must send me at least ' & $x.toDisplay($mycoin) & ' ' & $mycoin.symbol);\n  \n  $msg := 'simpleAdvice ' & $x.toDisplay($coin) & ' ' & $coin.symbol & ' from ' & $action.ledger;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'description': $state.view.description,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $data := {\n    'replyTo': $action.ledger,\n    'tags': $action.tags,\n    'earnType': 'simpleAdvice'\n  };\n  $out := $x.output($state.owner, $o.coins, $state.view.title, $form.subtitle, $form.description, $state.tags, $data);\n  $x.result($newState, [$out])\n)\n"
+						},
+						{
+							"type": "reply",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n\n  $i := $inputs[0];\n  $o := $i.output;\n  $data := $o.data;\n  $replyTo := $data.replyTo;\n  $earnType := $data.earnType;\n  $x.assert.isOk($replyTo, 'no replyTo ledger');\n  \n  $msg := $earnType & ' reply to ' & $replyTo;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $out := $x.output($replyTo, [], $form.title, $form.subtitle, $form.description, $data.tags);\n  $outMe := $x.output($state.owner, $o.coins, $form.title, $form.subtitle, $form.description, $action.tags);\n  $x.result($newState, [$out, $outMe])\n)\n"
+						}
+					],
+					"description": "earn Description"
+				},
+				"other": {},
+				"title": "",
+				"subtitle": "",
+				"description": "",
+				"key": "4ec07c319f2e2df46f67b4168ade7ed94363fcf9e7aeae895611252b7d9c299b"
+			}
+		},
+		{
+			"name": "start",
+			"result": {
+				"outputs": [
+					{
+						"ledger": "Alice",
+						"data": {},
+						"coins": [],
+						"tags": [],
+						"msgs": [],
+						"title": "Alices Simple Advice Earn Contract",
+						"subtitle": "For simple advice only, minumum 1 PRAX required",
+						"description": ""
+					}
+				],
+				"state": {
+					"state": {
+						"ended": false,
+						"owner": "Alice",
+						"coin": {
+							"amount": "1000000000000000000",
+							"symbol": "PRAX",
+							"mint": "9b4f478d62b902521ad0c35159ec7fe201e7858e4c7627cbb522951b49edde36",
+							"other": {},
+							"decimals": 18
+						},
+						"view": {
+							"title": "Alices Simple Advice Earn Contract",
+							"subtitle": "For simple advice only, minumum 1 PRAX required",
+							"description": "### Simple Advice Warning\nIf you send me some PRAX, I might reply to your query. The more you send, the better the chance I will reply. Take a chance, I am worth it!",
+							"msgs": [
+								"earn started"
+							]
+						}
+					},
+					"coins": []
+				},
+				"mint": []
+			},
+			"contract": {
+				"ledger": "Alice",
+				"template": {
+					"reducerMap": {
+						"start": {
+							"type": "start",
+							"code": "(\n  $mint := $x.hashContractKey($form.coin.owner, $form.coin.spec);\n  $min := $x.toCoinUnit($form.min, $form.coin.decimals);\n  $coin := $x.coin.new($min, $form.coin.symbol, $form.coin.decimals, $mint);\n  $newstate := {\n    'ended': false,\n    'owner': $action.ledger,\n    'coin': $coin,\n    'tags': $action.tags,\n    'view': {\n      'title': $form.title,\n      'subtitle': $form.subtitle,\n      'description': $form.description,\n      'msgs': ['earn started']\n    }\n  };\n  \n  $out := $x.output($action.ledger, [], $form.title, $form.subtitle, '', $action.tags);\n  $x.result($newstate, [$out])\n)",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"end": {
+							"type": "end",
+							"code": "()",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"simpleAdvice": {
+							"type": "simpleAdvice",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 1, 'please only send me one coin');\n  $coin := $o.coins[0];\n  $mycoin := $state.coin;\n  $x.assert.isTrue($x.coin.same($coin, $mycoin), 'only send me ' & $mycoin.symbol);\n  $x.assert.isTrue($x.coin.greaterThanOrEqual($coin, $mycoin), 'sorry, you must send me at least ' & $x.toDisplay($mycoin) & ' ' & $mycoin.symbol);\n  \n  $msg := 'simpleAdvice ' & $x.toDisplay($coin) & ' ' & $coin.symbol & ' from ' & $action.ledger;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'description': $state.view.description,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $data := {\n    'replyTo': $action.ledger,\n    'tags': $action.tags,\n    'earnType': 'simpleAdvice'\n  };\n  $out := $x.output($state.owner, $o.coins, $state.view.title, $form.subtitle, $form.description, $state.tags, $data);\n  $x.result($newState, [$out])\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"reply": {
+							"type": "reply",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n\n  $i := $inputs[0];\n  $o := $i.output;\n  $data := $o.data;\n  $replyTo := $data.replyTo;\n  $earnType := $data.earnType;\n  $x.assert.isOk($replyTo, 'no replyTo ledger');\n  \n  $msg := $earnType & ' reply to ' & $replyTo;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $out := $x.output($replyTo, [], $form.title, $form.subtitle, $form.description, $data.tags);\n  $outMe := $x.output($state.owner, $o.coins, $form.title, $form.subtitle, $form.description, $action.tags);\n  $x.result($newState, [$out, $outMe])\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						}
+					},
+					"name": "incentum-simple-advice",
+					"tags": [],
+					"other": {},
+					"ledger": "Ledger",
+					"versionMajor": 1,
+					"versionMinor": 0,
+					"versionPatch": 0,
+					"reducers": [
+						{
+							"type": "start",
+							"language": "jsonata",
+							"code": "(\n  $mint := $x.hashContractKey($form.coin.owner, $form.coin.spec);\n  $min := $x.toCoinUnit($form.min, $form.coin.decimals);\n  $coin := $x.coin.new($min, $form.coin.symbol, $form.coin.decimals, $mint);\n  $newstate := {\n    'ended': false,\n    'owner': $action.ledger,\n    'coin': $coin,\n    'tags': $action.tags,\n    'view': {\n      'title': $form.title,\n      'subtitle': $form.subtitle,\n      'description': $form.description,\n      'msgs': ['earn started']\n    }\n  };\n  \n  $out := $x.output($action.ledger, [], $form.title, $form.subtitle, '', $action.tags);\n  $x.result($newstate, [$out])\n)"
+						},
+						{
+							"type": "end",
+							"language": "jsonata",
+							"code": "()"
+						},
+						{
+							"type": "simpleAdvice",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 1, 'please only send me one coin');\n  $coin := $o.coins[0];\n  $mycoin := $state.coin;\n  $x.assert.isTrue($x.coin.same($coin, $mycoin), 'only send me ' & $mycoin.symbol);\n  $x.assert.isTrue($x.coin.greaterThanOrEqual($coin, $mycoin), 'sorry, you must send me at least ' & $x.toDisplay($mycoin) & ' ' & $mycoin.symbol);\n  \n  $msg := 'simpleAdvice ' & $x.toDisplay($coin) & ' ' & $coin.symbol & ' from ' & $action.ledger;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'description': $state.view.description,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $data := {\n    'replyTo': $action.ledger,\n    'tags': $action.tags,\n    'earnType': 'simpleAdvice'\n  };\n  $out := $x.output($state.owner, $o.coins, $state.view.title, $form.subtitle, $form.description, $state.tags, $data);\n  $x.result($newState, [$out])\n)\n"
+						},
+						{
+							"type": "reply",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n\n  $i := $inputs[0];\n  $o := $i.output;\n  $data := $o.data;\n  $replyTo := $data.replyTo;\n  $earnType := $data.earnType;\n  $x.assert.isOk($replyTo, 'no replyTo ledger');\n  \n  $msg := $earnType & ' reply to ' & $replyTo;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $out := $x.output($replyTo, [], $form.title, $form.subtitle, $form.description, $data.tags);\n  $outMe := $x.output($state.owner, $o.coins, $form.title, $form.subtitle, $form.description, $action.tags);\n  $x.result($newState, [$out, $outMe])\n)\n"
+						}
+					],
+					"description": "earn Description"
+				},
+				"other": {},
+				"title": "",
+				"subtitle": "",
+				"description": "",
+				"key": "4ec07c319f2e2df46f67b4168ade7ed94363fcf9e7aeae895611252b7d9c299b"
+			}
+		},
+		{
+			"name": "start",
+			"result": {
+				"outputs": [
+					{
+						"ledger": "Alice",
+						"data": {},
+						"coins": [],
+						"tags": [],
+						"msgs": [],
+						"title": "Send me some PRAX and a query",
+						"subtitle": "Send some PRAX and a query and I'll answer",
+						"description": ""
+					}
+				],
+				"state": {
+					"state": {
+						"ended": false,
+						"owner": "Alice",
+						"coin": {
+							"amount": "1000000000000000000",
+							"symbol": "PRAX",
+							"mint": "a4afb9790c8f9ae5c94851d0b412e3f544ff377ff9373611a47875e2eeea7fb4",
+							"other": {},
+							"decimals": "18"
+						},
+						"view": {
+							"title": "Send me some PRAX and a query",
+							"subtitle": "Send some PRAX and a query and I'll answer",
+							"description": "Maybe I will, maybe I will not. Take your chances, I am worth it.",
+							"msgs": [
+								"earn started"
+							]
+						}
+					},
+					"coins": []
+				},
+				"mint": []
+			},
+			"contract": {
+				"ledger": "Alice",
+				"template": {
+					"reducerMap": {
+						"start": {
+							"type": "start",
+							"code": "(\n  $mint := $x.hashContractKey($form.coin.owner, $form.coin.spec);\n  $min := $x.toCoinUnit($form.min, $form.coin.decimals);\n  $coin := $x.coin.new($min, $form.coin.symbol, $form.coin.decimals, $mint);\n  $newstate := {\n    'ended': false,\n    'owner': $action.ledger,\n    'coin': $coin,\n    'tags': $action.tags,\n    'view': {\n      'title': $form.title,\n      'subtitle': $form.subtitle,\n      'description': $form.description,\n      'msgs': ['earn started']\n    }\n  };\n  \n  $out := $x.output($action.ledger, [], $form.title, $form.subtitle, '', $action.tags);\n  $x.result($newstate, [$out])\n)",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"end": {
+							"type": "end",
+							"code": "()",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"simpleAdvice": {
+							"type": "simpleAdvice",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 1, 'please only send me one coin');\n  $coin := $o.coins[0];\n  $mycoin := $state.coin;\n  $x.assert.isTrue($x.coin.same($coin, $mycoin), 'only send me ' & $mycoin.symbol);\n  $x.assert.isTrue($x.coin.greaterThanOrEqual($coin, $mycoin), 'sorry, you must send me at least ' & $x.toDisplay($mycoin) & ' ' & $mycoin.symbol);\n  \n  $msg := 'simpleAdvice ' & $x.toDisplay($coin) & ' ' & $coin.symbol & ' from ' & $action.ledger;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'description': $state.view.description,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $data := {\n    'replyTo': $action.ledger,\n    'tags': $action.tags,\n    'earnType': 'simpleAdvice'\n  };\n  $out := $x.output($state.owner, $o.coins, $state.view.title, $form.subtitle, $form.description, $state.tags, $data);\n  $x.result($newState, [$out])\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"reply": {
+							"type": "reply",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n\n  $i := $inputs[0];\n  $o := $i.output;\n  $data := $o.data;\n  $replyTo := $data.replyTo;\n  $earnType := $data.earnType;\n  $x.assert.isOk($replyTo, 'no replyTo ledger');\n  \n  $msg := $earnType & ' reply to ' & $replyTo;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $out := $x.output($replyTo, [], $form.title, $form.subtitle, $form.description, $data.tags);\n  $outMe := $x.output($state.owner, $o.coins, $form.title, $form.subtitle, $form.description, $action.tags);\n  $x.result($newState, [$out, $outMe])\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						}
+					},
+					"name": "incentum-simple-advice",
+					"tags": [],
+					"other": {},
+					"ledger": "Ledger",
+					"versionMajor": 1,
+					"versionMinor": 0,
+					"versionPatch": 0,
+					"reducers": [
+						{
+							"type": "start",
+							"language": "jsonata",
+							"code": "(\n  $mint := $x.hashContractKey($form.coin.owner, $form.coin.spec);\n  $min := $x.toCoinUnit($form.min, $form.coin.decimals);\n  $coin := $x.coin.new($min, $form.coin.symbol, $form.coin.decimals, $mint);\n  $newstate := {\n    'ended': false,\n    'owner': $action.ledger,\n    'coin': $coin,\n    'tags': $action.tags,\n    'view': {\n      'title': $form.title,\n      'subtitle': $form.subtitle,\n      'description': $form.description,\n      'msgs': ['earn started']\n    }\n  };\n  \n  $out := $x.output($action.ledger, [], $form.title, $form.subtitle, '', $action.tags);\n  $x.result($newstate, [$out])\n)"
+						},
+						{
+							"type": "end",
+							"language": "jsonata",
+							"code": "()"
+						},
+						{
+							"type": "simpleAdvice",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 1, 'please only send me one coin');\n  $coin := $o.coins[0];\n  $mycoin := $state.coin;\n  $x.assert.isTrue($x.coin.same($coin, $mycoin), 'only send me ' & $mycoin.symbol);\n  $x.assert.isTrue($x.coin.greaterThanOrEqual($coin, $mycoin), 'sorry, you must send me at least ' & $x.toDisplay($mycoin) & ' ' & $mycoin.symbol);\n  \n  $msg := 'simpleAdvice ' & $x.toDisplay($coin) & ' ' & $coin.symbol & ' from ' & $action.ledger;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'description': $state.view.description,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $data := {\n    'replyTo': $action.ledger,\n    'tags': $action.tags,\n    'earnType': 'simpleAdvice'\n  };\n  $out := $x.output($state.owner, $o.coins, $state.view.title, $form.subtitle, $form.description, $state.tags, $data);\n  $x.result($newState, [$out])\n)\n"
+						},
+						{
+							"type": "reply",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n\n  $i := $inputs[0];\n  $o := $i.output;\n  $data := $o.data;\n  $replyTo := $data.replyTo;\n  $earnType := $data.earnType;\n  $x.assert.isOk($replyTo, 'no replyTo ledger');\n  \n  $msg := $earnType & ' reply to ' & $replyTo;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $out := $x.output($replyTo, [], $form.title, $form.subtitle, $form.description, $data.tags);\n  $outMe := $x.output($state.owner, $o.coins, $form.title, $form.subtitle, $form.description, $action.tags);\n  $x.result($newState, [$out, $outMe])\n)\n"
+						}
+					],
+					"description": "earn Description"
+				},
+				"other": {},
+				"title": "",
+				"subtitle": "",
+				"description": "",
+				"key": "4ec07c319f2e2df46f67b4168ade7ed94363fcf9e7aeae895611252b7d9c299b"
+			}
+		},
+		{
+			"name": "start",
+			"result": {
+				"outputs": [
+					{
+						"ledger": "Alice",
+						"data": {},
+						"coins": [],
+						"tags": [],
+						"msgs": [],
+						"title": "Send me some PRAX and a query",
+						"subtitle": "Send some PRAX and a query and I'll answer",
+						"description": ""
+					}
+				],
+				"state": {
+					"state": {
+						"ended": false,
+						"owner": "Alice",
+						"coin": {
+							"amount": "100000000",
+							"symbol": "PRAX",
+							"mint": "a4afb9790c8f9ae5c94851d0b412e3f544ff377ff9373611a47875e2eeea7fb4",
+							"other": {},
+							"decimals": "8"
+						},
+						"view": {
+							"title": "Send me some PRAX and a query",
+							"subtitle": "Send some PRAX and a query and I'll answer",
+							"description": "Maybe I will, maybe I will not. Take your chances, I am worth it.",
+							"msgs": [
+								"earn started"
+							]
+						}
+					},
+					"coins": []
+				},
+				"mint": []
+			},
+			"contract": {
+				"ledger": "Alice",
+				"template": {
+					"reducerMap": {
+						"start": {
+							"type": "start",
+							"code": "(\n  $mint := $x.hashContractKey($form.coin.owner, $form.coin.spec);\n  $min := $x.toCoinUnit($form.min, $form.coin.decimals);\n  $coin := $x.coin.new($min, $form.coin.symbol, $form.coin.decimals, $mint);\n  $newstate := {\n    'ended': false,\n    'owner': $action.ledger,\n    'coin': $coin,\n    'tags': $action.tags,\n    'view': {\n      'title': $form.title,\n      'subtitle': $form.subtitle,\n      'description': $form.description,\n      'msgs': ['earn started']\n    }\n  };\n  \n  $out := $x.output($action.ledger, [], $form.title, $form.subtitle, '', $action.tags);\n  $x.result($newstate, [$out])\n)",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"end": {
+							"type": "end",
+							"code": "()",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"simpleAdvice": {
+							"type": "simpleAdvice",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 1, 'please only send me one coin');\n  $coin := $o.coins[0];\n  $mycoin := $state.coin;\n  $x.assert.isTrue($x.coin.same($coin, $mycoin), 'only send me ' & $mycoin.symbol);\n  $x.assert.isTrue($x.coin.greaterThanOrEqual($coin, $mycoin), 'sorry, you must send me at least ' & $x.toDisplay($mycoin) & ' ' & $mycoin.symbol);\n  \n  $msg := 'simpleAdvice ' & $x.toDisplay($coin) & ' ' & $coin.symbol & ' from ' & $action.ledger;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'description': $state.view.description,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $data := {\n    'replyTo': $action.ledger,\n    'tags': $action.tags,\n    'earnType': 'simpleAdvice'\n  };\n  $out := $x.output($state.owner, $o.coins, $state.view.title, $form.subtitle, $form.description, $state.tags, $data);\n  $x.result($newState, [$out])\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"reply": {
+							"type": "reply",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n\n  $i := $inputs[0];\n  $o := $i.output;\n  $data := $o.data;\n  $replyTo := $data.replyTo;\n  $earnType := $data.earnType;\n  $x.assert.isOk($replyTo, 'no replyTo ledger');\n  \n  $msg := $earnType & ' reply to ' & $replyTo;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $out := $x.output($replyTo, [], $form.title, $form.subtitle, $form.description, $data.tags);\n  $outMe := $x.output($state.owner, $o.coins, $form.title, $form.subtitle, $form.description, $action.tags);\n  $x.result($newState, [$out, $outMe])\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						}
+					},
+					"name": "incentum-simple-advice",
+					"tags": [],
+					"other": {},
+					"ledger": "Ledger",
+					"versionMajor": 1,
+					"versionMinor": 0,
+					"versionPatch": 0,
+					"reducers": [
+						{
+							"type": "start",
+							"language": "jsonata",
+							"code": "(\n  $mint := $x.hashContractKey($form.coin.owner, $form.coin.spec);\n  $min := $x.toCoinUnit($form.min, $form.coin.decimals);\n  $coin := $x.coin.new($min, $form.coin.symbol, $form.coin.decimals, $mint);\n  $newstate := {\n    'ended': false,\n    'owner': $action.ledger,\n    'coin': $coin,\n    'tags': $action.tags,\n    'view': {\n      'title': $form.title,\n      'subtitle': $form.subtitle,\n      'description': $form.description,\n      'msgs': ['earn started']\n    }\n  };\n  \n  $out := $x.output($action.ledger, [], $form.title, $form.subtitle, '', $action.tags);\n  $x.result($newstate, [$out])\n)"
+						},
+						{
+							"type": "end",
+							"language": "jsonata",
+							"code": "()"
+						},
+						{
+							"type": "simpleAdvice",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 1, 'please only send me one coin');\n  $coin := $o.coins[0];\n  $mycoin := $state.coin;\n  $x.assert.isTrue($x.coin.same($coin, $mycoin), 'only send me ' & $mycoin.symbol);\n  $x.assert.isTrue($x.coin.greaterThanOrEqual($coin, $mycoin), 'sorry, you must send me at least ' & $x.toDisplay($mycoin) & ' ' & $mycoin.symbol);\n  \n  $msg := 'simpleAdvice ' & $x.toDisplay($coin) & ' ' & $coin.symbol & ' from ' & $action.ledger;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'description': $state.view.description,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $data := {\n    'replyTo': $action.ledger,\n    'tags': $action.tags,\n    'earnType': 'simpleAdvice'\n  };\n  $out := $x.output($state.owner, $o.coins, $state.view.title, $form.subtitle, $form.description, $state.tags, $data);\n  $x.result($newState, [$out])\n)\n"
+						},
+						{
+							"type": "reply",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n\n  $i := $inputs[0];\n  $o := $i.output;\n  $data := $o.data;\n  $replyTo := $data.replyTo;\n  $earnType := $data.earnType;\n  $x.assert.isOk($replyTo, 'no replyTo ledger');\n  \n  $msg := $earnType & ' reply to ' & $replyTo;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $out := $x.output($replyTo, [], $form.title, $form.subtitle, $form.description, $data.tags);\n  $outMe := $x.output($state.owner, $o.coins, $form.title, $form.subtitle, $form.description, $action.tags);\n  $x.result($newState, [$out, $outMe])\n)\n"
+						}
+					],
+					"description": "earn Description"
+				},
+				"other": {},
+				"title": "",
+				"subtitle": "",
+				"description": "",
+				"key": "4ec07c319f2e2df46f67b4168ade7ed94363fcf9e7aeae895611252b7d9c299b"
+			}
+		},
+		{
+			"name": "simpleAdvice",
+			"result": {
+				"outputs": [
+					{
+						"ledger": "Alice",
+						"data": {
+							"replyTo": "Bob",
+							"earnType": "simpleAdvice"
+						},
+						"coins": [
+							{
+								"amount": "100000000",
+								"symbol": "PRAX",
+								"other": {},
+								"mint": "a4afb9790c8f9ae5c94851d0b412e3f544ff377ff9373611a47875e2eeea7fb4",
+								"decimals": 8
+							}
+						],
+						"tags": [],
+						"msgs": [],
+						"title": "Alices Simple Advice Earn Contract",
+						"subtitle": "Please respond, urgent",
+						"description": "### Please respond, I am desparate - this is life or death"
+					}
+				],
+				"state": {
+					"state": {
+						"ended": false,
+						"owner": "Alice",
+						"coin": {
+							"amount": "100000000",
+							"symbol": "PRAX",
+							"mint": "a4afb9790c8f9ae5c94851d0b412e3f544ff377ff9373611a47875e2eeea7fb4",
+							"other": {},
+							"decimals": 8
+						},
+						"view": {
+							"title": "Alices Simple Advice Earn Contract",
+							"subtitle": "For simple advice only, minumum 1 PRAX required",
+							"description": "### Simple Advice Warning\nIf you send me some PRAX, I might reply to your query. The more you send, the better the chance I will reply",
+							"msgs": [
+								"earn started",
+								"simpleAdvice 1 PRAX from Bob"
+							]
+						}
+					},
+					"coins": []
+				},
+				"mint": []
+			},
+			"contract": {
+				"ledger": "Bob",
+				"template": {
+					"reducerMap": {
+						"start": {
+							"type": "start",
+							"code": "(\n  $mint := $x.hashContractKey($form.coin.owner, $form.coin.spec);\n  $min := $x.toCoinUnit($form.min, $form.coin.decimals);\n  $coin := $x.coin.new($min, $form.coin.symbol, $form.coin.decimals, $mint);\n  $newstate := {\n    'ended': false,\n    'owner': $action.ledger,\n    'coin': $coin,\n    'tags': $action.tags,\n    'view': {\n      'title': $form.title,\n      'subtitle': $form.subtitle,\n      'description': $form.description,\n      'msgs': ['earn started']\n    }\n  };\n  \n  $out := $x.output($action.ledger, [], $form.title, $form.subtitle, '', $action.tags);\n  $x.result($newstate, [$out])\n)",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"end": {
+							"type": "end",
+							"code": "()",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"simpleAdvice": {
+							"type": "simpleAdvice",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 1, 'please only send me one coin');\n  $coin := $o.coins[0];\n  $mycoin := $state.coin;\n  $x.log('mycoin', $mycoin);\n  $x.log('coin', $coin);\n  $x.assert.isTrue($x.coin.same($coin, $mycoin), 'only send me ' & $mycoin.symbol);\n  $x.assert.isTrue($x.coin.greaterThanOrEqual($coin, $mycoin), 'sorry, you must send me at least ' & $x.toDisplay($mycoin) & ' ' & $mycoin.symbol);\n  \n  $msg := 'simpleAdvice ' & $x.toDisplay($coin) & ' ' & $coin.symbol & ' from ' & $action.ledger;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'description': $state.view.description,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $data := {\n    'replyTo': $action.ledger,\n    'tags': $action.tags,\n    'earnType': 'simpleAdvice'\n  };\n  $out := $x.output($state.owner, $o.coins, $state.view.title, $form.subtitle, $form.description, $state.tags, $data);\n  $x.result($newState, [$out])\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"reply": {
+							"type": "reply",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n\n  $i := $inputs[0];\n  $o := $i.output;\n  $data := $o.data;\n  $replyTo := $data.replyTo;\n  $earnType := $data.earnType;\n  $x.assert.isOk($replyTo, 'no replyTo ledger');\n  \n  $msg := $earnType & ' reply to ' & $replyTo;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $out := $x.output($replyTo, [], $form.title, $form.subtitle, $form.description, $data.tags);\n  $outMe := $x.output($state.owner, $o.coins, $form.title, $form.subtitle, $form.description, $action.tags);\n  $x.result($newState, [$out, $outMe])\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						}
+					},
+					"name": "incentum-simple-advice",
+					"tags": [],
+					"other": {},
+					"ledger": "Ledger",
+					"versionMajor": 1,
+					"versionMinor": 0,
+					"versionPatch": 0,
+					"reducers": [
+						{
+							"type": "start",
+							"language": "jsonata",
+							"code": "(\n  $mint := $x.hashContractKey($form.coin.owner, $form.coin.spec);\n  $min := $x.toCoinUnit($form.min, $form.coin.decimals);\n  $coin := $x.coin.new($min, $form.coin.symbol, $form.coin.decimals, $mint);\n  $newstate := {\n    'ended': false,\n    'owner': $action.ledger,\n    'coin': $coin,\n    'tags': $action.tags,\n    'view': {\n      'title': $form.title,\n      'subtitle': $form.subtitle,\n      'description': $form.description,\n      'msgs': ['earn started']\n    }\n  };\n  \n  $out := $x.output($action.ledger, [], $form.title, $form.subtitle, '', $action.tags);\n  $x.result($newstate, [$out])\n)"
+						},
+						{
+							"type": "end",
+							"language": "jsonata",
+							"code": "()"
+						},
+						{
+							"type": "simpleAdvice",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 1, 'please only send me one coin');\n  $coin := $o.coins[0];\n  $mycoin := $state.coin;\n  $x.assert.isTrue($x.coin.same($coin, $mycoin), 'only send me ' & $mycoin.symbol);\n  $x.assert.isTrue($x.coin.greaterThanOrEqual($coin, $mycoin), 'sorry, you must send me at least ' & $x.toDisplay($mycoin) & ' ' & $mycoin.symbol);\n  \n  $msg := 'simpleAdvice ' & $x.toDisplay($coin) & ' ' & $coin.symbol & ' from ' & $action.ledger;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'description': $state.view.description,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $data := {\n    'replyTo': $action.ledger,\n    'tags': $action.tags,\n    'earnType': 'simpleAdvice'\n  };\n  $out := $x.output($state.owner, $o.coins, $state.view.title, $form.subtitle, $form.description, $state.tags, $data);\n  $x.result($newState, [$out])\n)\n"
+						},
+						{
+							"type": "reply",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n\n  $i := $inputs[0];\n  $o := $i.output;\n  $data := $o.data;\n  $replyTo := $data.replyTo;\n  $earnType := $data.earnType;\n  $x.assert.isOk($replyTo, 'no replyTo ledger');\n  \n  $msg := $earnType & ' reply to ' & $replyTo;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $out := $x.output($replyTo, [], $form.title, $form.subtitle, $form.description, $data.tags);\n  $outMe := $x.output($state.owner, $o.coins, $form.title, $form.subtitle, $form.description, $action.tags);\n  $x.result($newState, [$out, $outMe])\n)\n"
+						}
+					],
+					"description": "earn Description"
+				},
+				"other": {},
+				"title": "",
+				"subtitle": "",
+				"description": "",
+				"key": "1bb8676bc430d6014cf445dd69153385f3ad80e0f41082266684cd0b04ba7b19"
+			}
+		},
+		{
+			"name": "reply",
+			"result": {
+				"outputs": [
+					{
+						"ledger": "Bob",
+						"data": {},
+						"coins": [],
+						"tags": [],
+						"msgs": [],
+						"title": "Wow, life or death?",
+						"subtitle": "Sounds serious",
+						"description": "You forgot to ask me your question. Too busy begging for a reply. Thanks for the PRAX!"
+					},
+					{
+						"ledger": "Alice",
+						"data": {},
+						"coins": [
+							{
+								"amount": "100000000",
+								"symbol": "PRAX",
+								"other": {},
+								"mint": "a4afb9790c8f9ae5c94851d0b412e3f544ff377ff9373611a47875e2eeea7fb4",
+								"decimals": 8
+							}
+						],
+						"tags": [],
+						"msgs": [],
+						"title": "Wow, life or death?",
+						"subtitle": "Sounds serious",
+						"description": "You forgot to ask me your question. Too busy begging for a reply. Thanks for the PRAX!"
+					}
+				],
+				"state": {
+					"state": {
+						"ended": false,
+						"owner": "Alice",
+						"coin": {
+							"amount": "1000000000000000000",
+							"symbol": "PRAX",
+							"mint": "a4afb9790c8f9ae5c94851d0b412e3f544ff377ff9373611a47875e2eeea7fb4",
+							"other": {},
+							"decimals": 18
+						},
+						"view": {
+							"title": "Alices Simple Advice Earn Contract",
+							"subtitle": "For simple advice only, minumum 1 PRAX required",
+							"msgs": [
+								"earn started",
+								"simpleAdvice 1 PRAX from Bob",
+								"simpleAdvice reply to Bob"
+							]
+						}
+					},
+					"coins": []
+				},
+				"mint": []
+			},
+			"contract": {
+				"ledger": "Alice",
+				"template": {
+					"reducerMap": {
+						"start": {
+							"type": "start",
+							"code": "(\n  $mint := $x.hashContractKey($form.coin.owner, $form.coin.spec);\n  $min := $x.toCoinUnit($form.min, $form.coin.decimals);\n  $coin := $x.coin.new($min, $form.coin.symbol, $form.coin.decimals, $mint);\n  $newstate := {\n    'ended': false,\n    'owner': $action.ledger,\n    'coin': $coin,\n    'tags': $action.tags,\n    'view': {\n      'title': $form.title,\n      'subtitle': $form.subtitle,\n      'description': $form.description,\n      'msgs': ['earn started']\n    }\n  };\n  \n  $out := $x.output($action.ledger, [], $form.title, $form.subtitle, '', $action.tags);\n  $x.result($newstate, [$out])\n)",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"end": {
+							"type": "end",
+							"code": "()",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"simpleAdvice": {
+							"type": "simpleAdvice",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 1, 'please only send me one coin');\n  $coin := $o.coins[0];\n  $mycoin := $state.coin;\n  $x.log('mycoin', $mycoin);\n  $x.log('coin', $coin);\n  $x.assert.isTrue($x.coin.same($coin, $mycoin), 'only send me ' & $mycoin.symbol);\n  $x.assert.isTrue($x.coin.greaterThanOrEqual($coin, $mycoin), 'sorry, you must send me at least ' & $x.toDisplay($mycoin) & ' ' & $mycoin.symbol);\n  \n  $msg := 'simpleAdvice ' & $x.toDisplay($coin) & ' ' & $coin.symbol & ' from ' & $action.ledger;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'description': $state.view.description,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $data := {\n    'replyTo': $action.ledger,\n    'tags': $action.tags,\n    'earnType': 'simpleAdvice'\n  };\n  $out := $x.output($state.owner, $o.coins, $state.view.title, $form.subtitle, $form.description, $state.tags, $data);\n  $x.result($newState, [$out])\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"reply": {
+							"type": "reply",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n\n  $i := $inputs[0];\n  $o := $i.output;\n  $data := $o.data;\n  $replyTo := $data.replyTo;\n  $earnType := $data.earnType;\n  $x.assert.isOk($replyTo, 'no replyTo ledger');\n  \n  $msg := $earnType & ' reply to ' & $replyTo;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $out := $x.output($replyTo, [], $form.title, $form.subtitle, $form.description, $data.tags);\n  $outMe := $x.output($state.owner, $o.coins, $form.title, $form.subtitle, $form.description, $action.tags);\n  $x.result($newState, [$out, $outMe])\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						}
+					},
+					"name": "incentum-simple-advice",
+					"tags": [],
+					"other": {},
+					"ledger": "Ledger",
+					"versionMajor": 1,
+					"versionMinor": 0,
+					"versionPatch": 0,
+					"reducers": [
+						{
+							"type": "start",
+							"language": "jsonata",
+							"code": "(\n  $mint := $x.hashContractKey($form.coin.owner, $form.coin.spec);\n  $min := $x.toCoinUnit($form.min, $form.coin.decimals);\n  $coin := $x.coin.new($min, $form.coin.symbol, $form.coin.decimals, $mint);\n  $newstate := {\n    'ended': false,\n    'owner': $action.ledger,\n    'coin': $coin,\n    'tags': $action.tags,\n    'view': {\n      'title': $form.title,\n      'subtitle': $form.subtitle,\n      'description': $form.description,\n      'msgs': ['earn started']\n    }\n  };\n  \n  $out := $x.output($action.ledger, [], $form.title, $form.subtitle, '', $action.tags);\n  $x.result($newstate, [$out])\n)"
+						},
+						{
+							"type": "end",
+							"language": "jsonata",
+							"code": "()"
+						},
+						{
+							"type": "simpleAdvice",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 1, 'please only send me one coin');\n  $coin := $o.coins[0];\n  $mycoin := $state.coin;\n  $x.assert.isTrue($x.coin.same($coin, $mycoin), 'only send me ' & $mycoin.symbol);\n  $x.assert.isTrue($x.coin.greaterThanOrEqual($coin, $mycoin), 'sorry, you must send me at least ' & $x.toDisplay($mycoin) & ' ' & $mycoin.symbol);\n  \n  $msg := 'simpleAdvice ' & $x.toDisplay($coin) & ' ' & $coin.symbol & ' from ' & $action.ledger;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'description': $state.view.description,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $data := {\n    'replyTo': $action.ledger,\n    'tags': $action.tags,\n    'earnType': 'simpleAdvice'\n  };\n  $out := $x.output($state.owner, $o.coins, $state.view.title, $form.subtitle, $form.description, $state.tags, $data);\n  $x.result($newState, [$out])\n)\n"
+						},
+						{
+							"type": "reply",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n\n  $i := $inputs[0];\n  $o := $i.output;\n  $data := $o.data;\n  $replyTo := $data.replyTo;\n  $earnType := $data.earnType;\n  $x.assert.isOk($replyTo, 'no replyTo ledger');\n  \n  $msg := $earnType & ' reply to ' & $replyTo;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $out := $x.output($replyTo, [], $form.title, $form.subtitle, $form.description, $data.tags);\n  $outMe := $x.output($state.owner, $o.coins, $form.title, $form.subtitle, $form.description, $action.tags);\n  $x.result($newState, [$out, $outMe])\n)\n"
+						}
+					],
+					"description": "earn Description"
+				},
+				"other": {},
+				"title": "",
+				"subtitle": "",
+				"description": "",
+				"key": "4ec07c319f2e2df46f67b4168ade7ed94363fcf9e7aeae895611252b7d9c299b"
+			}
+		},
+		{
+			"name": "reply",
+			"result": {
+				"outputs": [
+					{
+						"ledger": "Bob",
+						"data": {},
+						"coins": [],
+						"tags": [],
+						"msgs": [],
+						"title": "Wow, life or death?",
+						"subtitle": "Sounds serious",
+						"description": "You forgot to ask me your question. Too busy begging for a reply. Thanks for the PRAX!"
+					},
+					{
+						"ledger": "Alice",
+						"data": {},
+						"coins": [
+							{
+								"amount": "100000000",
+								"symbol": "PRAX",
+								"other": {},
+								"mint": "a4afb9790c8f9ae5c94851d0b412e3f544ff377ff9373611a47875e2eeea7fb4",
+								"decimals": 8
+							}
+						],
+						"tags": [],
+						"msgs": [],
+						"title": "Wow, life or death?",
+						"subtitle": "Sounds serious",
+						"description": "You forgot to ask me your question. Too busy begging for a reply. Thanks for the PRAX!"
+					}
+				],
+				"state": {
+					"state": {
+						"ended": false,
+						"owner": "Alice",
+						"coin": {
+							"amount": "100000000",
+							"symbol": "PRAX",
+							"mint": "a4afb9790c8f9ae5c94851d0b412e3f544ff377ff9373611a47875e2eeea7fb4",
+							"other": {},
+							"decimals": 8
+						},
+						"view": {
+							"title": "Alices Simple Advice Earn Contract",
+							"subtitle": "For simple advice only, minumum 1 PRAX required",
+							"msgs": [
+								"earn started",
+								"simpleAdvice 1 PRAX from Bob",
+								"simpleAdvice reply to Bob"
+							]
+						}
+					},
+					"coins": []
+				},
+				"mint": []
+			},
+			"contract": {
+				"ledger": "Alice",
+				"template": {
+					"reducerMap": {
+						"start": {
+							"type": "start",
+							"code": "(\n  $mint := $x.hashContractKey($form.coin.owner, $form.coin.spec);\n  $min := $x.toCoinUnit($form.min, $form.coin.decimals);\n  $coin := $x.coin.new($min, $form.coin.symbol, $form.coin.decimals, $mint);\n  $newstate := {\n    'ended': false,\n    'owner': $action.ledger,\n    'coin': $coin,\n    'tags': $action.tags,\n    'view': {\n      'title': $form.title,\n      'subtitle': $form.subtitle,\n      'description': $form.description,\n      'msgs': ['earn started']\n    }\n  };\n  \n  $out := $x.output($action.ledger, [], $form.title, $form.subtitle, '', $action.tags);\n  $x.result($newstate, [$out])\n)",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"end": {
+							"type": "end",
+							"code": "()",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"simpleAdvice": {
+							"type": "simpleAdvice",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 1, 'please only send me one coin');\n  $coin := $o.coins[0];\n  $mycoin := $state.coin;\n  $x.log('mycoin', $mycoin);\n  $x.log('coin', $coin);\n  $x.assert.isTrue($x.coin.same($coin, $mycoin), 'only send me ' & $mycoin.symbol);\n  $x.assert.isTrue($x.coin.greaterThanOrEqual($coin, $mycoin), 'sorry, you must send me at least ' & $x.toDisplay($mycoin) & ' ' & $mycoin.symbol);\n  \n  $msg := 'simpleAdvice ' & $x.toDisplay($coin) & ' ' & $coin.symbol & ' from ' & $action.ledger;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'description': $state.view.description,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $data := {\n    'replyTo': $action.ledger,\n    'tags': $action.tags,\n    'earnType': 'simpleAdvice'\n  };\n  $out := $x.output($state.owner, $o.coins, $state.view.title, $form.subtitle, $form.description, $state.tags, $data);\n  $x.result($newState, [$out])\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"reply": {
+							"type": "reply",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n\n  $i := $inputs[0];\n  $o := $i.output;\n  $data := $o.data;\n  $replyTo := $data.replyTo;\n  $earnType := $data.earnType;\n  $x.assert.isOk($replyTo, 'no replyTo ledger');\n  \n  $msg := $earnType & ' reply to ' & $replyTo;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $out := $x.output($replyTo, [], $form.title, $form.subtitle, $form.description, $data.tags);\n  $outMe := $x.output($state.owner, $o.coins, $form.title, $form.subtitle, $form.description, $action.tags);\n  $x.result($newState, [$out, $outMe])\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						}
+					},
+					"name": "incentum-simple-advice",
+					"tags": [],
+					"other": {},
+					"ledger": "Ledger",
+					"versionMajor": 1,
+					"versionMinor": 0,
+					"versionPatch": 0,
+					"reducers": [
+						{
+							"type": "start",
+							"language": "jsonata",
+							"code": "(\n  $mint := $x.hashContractKey($form.coin.owner, $form.coin.spec);\n  $min := $x.toCoinUnit($form.min, $form.coin.decimals);\n  $coin := $x.coin.new($min, $form.coin.symbol, $form.coin.decimals, $mint);\n  $newstate := {\n    'ended': false,\n    'owner': $action.ledger,\n    'coin': $coin,\n    'tags': $action.tags,\n    'view': {\n      'title': $form.title,\n      'subtitle': $form.subtitle,\n      'description': $form.description,\n      'msgs': ['earn started']\n    }\n  };\n  \n  $out := $x.output($action.ledger, [], $form.title, $form.subtitle, '', $action.tags);\n  $x.result($newstate, [$out])\n)"
+						},
+						{
+							"type": "end",
+							"language": "jsonata",
+							"code": "()"
+						},
+						{
+							"type": "simpleAdvice",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 1, 'please only send me one coin');\n  $coin := $o.coins[0];\n  $mycoin := $state.coin;\n  $x.assert.isTrue($x.coin.same($coin, $mycoin), 'only send me ' & $mycoin.symbol);\n  $x.assert.isTrue($x.coin.greaterThanOrEqual($coin, $mycoin), 'sorry, you must send me at least ' & $x.toDisplay($mycoin) & ' ' & $mycoin.symbol);\n  \n  $msg := 'simpleAdvice ' & $x.toDisplay($coin) & ' ' & $coin.symbol & ' from ' & $action.ledger;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'description': $state.view.description,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $data := {\n    'replyTo': $action.ledger,\n    'tags': $action.tags,\n    'earnType': 'simpleAdvice'\n  };\n  $out := $x.output($state.owner, $o.coins, $state.view.title, $form.subtitle, $form.description, $state.tags, $data);\n  $x.result($newState, [$out])\n)\n"
+						},
+						{
+							"type": "reply",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n\n  $i := $inputs[0];\n  $o := $i.output;\n  $data := $o.data;\n  $replyTo := $data.replyTo;\n  $earnType := $data.earnType;\n  $x.assert.isOk($replyTo, 'no replyTo ledger');\n  \n  $msg := $earnType & ' reply to ' & $replyTo;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $out := $x.output($replyTo, [], $form.title, $form.subtitle, $form.description, $data.tags);\n  $outMe := $x.output($state.owner, $o.coins, $form.title, $form.subtitle, $form.description, $action.tags);\n  $x.result($newState, [$out, $outMe])\n)\n"
+						}
+					],
+					"description": "earn Description"
+				},
+				"other": {},
+				"title": "",
+				"subtitle": "",
+				"description": "",
+				"key": "4ec07c319f2e2df46f67b4168ade7ed94363fcf9e7aeae895611252b7d9c299b"
+			}
+		},
+		{
+			"name": "start",
+			"result": {
+				"outputs": [
+					{
+						"ledger": "Alice",
+						"data": {},
+						"coins": [],
+						"tags": [],
+						"msgs": [],
+						"title": "Send me some PRAX and a problem and I'll give you some advice",
+						"subtitle": "Send me some PRAX and a problem for some advice",
+						"description": ""
+					}
+				],
+				"state": {
+					"state": {
+						"ended": false,
+						"owner": "Alice",
+						"coin": {
+							"amount": "100000000",
+							"symbol": "PRAX",
+							"mint": "DBAgvThPiCKBpBCCFBHQaGwRkevSXbBGFp",
+							"other": {},
+							"decimals": 8
+						},
+						"view": {
+							"title": "Send me some PRAX and a problem and I'll give you some advice",
+							"subtitle": "Send me some PRAX and a problem for some advice",
+							"description": "### Simple Advice Only\n\nSend me some PRAX and I'll give you some quick advice. Simple problems only. ",
+							"msgs": [
+								"earn started"
+							]
+						}
+					},
+					"coins": []
+				},
+				"mint": []
+			},
+			"contract": {
+				"ledger": "Alice",
+				"template": {
+					"reducerMap": {
+						"start": {
+							"type": "start",
+							"code": "(\n  $x.assert.isNotNaN($form.min, 'min isNaN');\n  $x.assert.isAtLeast($number($form.min), 0, 'min must be >= 0');\n  \n  $min := $x.toCoinUnit($form.min, $x.coin.praxDecimals);\n  $coin := $x.coin.prax($min);\n  $newstate := {\n    'ended': false,\n    'owner': $action.ledger,\n    'coin': $coin,\n    'tags': $action.tags,\n    'view': {\n      'title': $form.title,\n      'subtitle': $form.subtitle,\n      'description': $form.description,\n      'msgs': ['earn started']\n    }\n  };\n  \n  $out := $x.output($action.ledger, [], $form.title, $form.subtitle, '', $action.tags);\n  $x.result($newstate, [$out])\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"end": {
+							"type": "end",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.isEqual($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 0, 'do not send coins, just send the start output');\n\n  $newstate := $merge([$state, { 'ended': true }]);\n  $x.result($newstate)\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"simpleAdvice": {
+							"type": "simpleAdvice",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 1, 'please only send me one coin');\n  $coin := $o.coins[0];\n  $mycoin := $state.coin;\n  $x.assert.isTrue($x.coin.same($coin, $mycoin), 'only send me ' & $mycoin.symbol);\n  $x.assert.isTrue($x.coin.greaterThanOrEqual($coin, $mycoin), 'sorry, you must send me at least ' & $x.toDisplay($mycoin) & ' ' & $mycoin.symbol);\n  \n  $msg := 'simpleAdvice ' & $x.toDisplay($coin) & ' ' & $coin.symbol & ' from ' & $action.ledger;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'description': $state.view.description,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $data := {\n    'replyTo': $action.ledger,\n    'tags': $action.tags,\n    'earnType': 'simpleAdvice'\n  };\n  $out := $x.output($state.owner, $o.coins, $form.title, $form.subtitle, $form.description, $state.tags, $data);\n  $x.result($newState, [$out])\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"reply": {
+							"type": "reply",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n\n  $i := $inputs[0];\n  $o := $i.output;\n  $data := $o.data;\n  $replyTo := $data.replyTo;\n  $earnType := $data.earnType;\n  $x.assert.isOk($replyTo, 'no replyTo ledger');\n  \n  $msg := $earnType & ' reply to ' & $replyTo;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $out := $x.output($replyTo, [], $form.title, $form.subtitle, $form.description, $data.tags);\n  $outMe := $x.output($state.owner, $o.coins, $form.title, $form.subtitle, $form.description, $action.tags);\n  $x.result($newState, [$out, $outMe])\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						}
+					},
+					"name": "incentum-simple-advice",
+					"tags": [],
+					"other": {},
+					"ledger": "Ledger",
+					"versionMajor": 1,
+					"versionMinor": 0,
+					"versionPatch": 0,
+					"reducers": [
+						{
+							"type": "start",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isNotNaN($form.min, 'min isNaN');\n  $x.assert.isAtLeast($number($form.min), 0, 'min must be >= 0');\n  \n  $min := $x.toCoinUnit($form.min, $x.coin.praxDecimals);\n  $coin := $x.coin.prax($min);\n  $newstate := {\n    'ended': false,\n    'owner': $action.ledger,\n    'coin': $coin,\n    'tags': $action.tags,\n    'view': {\n      'title': $form.title,\n      'subtitle': $form.subtitle,\n      'description': $form.description,\n      'msgs': ['earn started']\n    }\n  };\n  \n  $out := $x.output($action.ledger, [], $form.title, $form.subtitle, 'Send this output to the contract when you want to end it', $action.tags);\n  $x.result($newstate, [$out])\n)\n"
+						},
+						{
+							"type": "end",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.isEqual($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 0, 'do not send coins, just send the start output');\n\n  $newstate := $merge([$state, { 'ended': true }]);\n  $x.result($newstate)\n)\n"
+						},
+						{
+							"type": "simpleAdvice",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 1, 'please only send me one coin');\n  $coin := $o.coins[0];\n  $mycoin := $state.coin;\n  $x.assert.isTrue($x.coin.same($coin, $mycoin), 'only send me ' & $mycoin.symbol);\n  $x.assert.isTrue($x.coin.greaterThanOrEqual($coin, $mycoin), 'sorry, you must send me at least ' & $x.toDisplay($mycoin) & ' ' & $mycoin.symbol);\n  \n  $msg := 'simpleAdvice ' & $x.toDisplay($coin) & ' ' & $coin.symbol & ' from ' & $action.ledger;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'description': $state.view.description,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $data := {\n    'replyTo': $action.ledger,\n    'tags': $action.tags,\n    'earnType': 'simpleAdvice'\n  };\n  $out := $x.output($state.owner, $o.coins, $form.title, $form.subtitle, $form.description, $state.tags, $data);\n  $x.result($newState, [$out])\n)\n"
+						},
+						{
+							"type": "reply",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n\n  $i := $inputs[0];\n  $o := $i.output;\n  $data := $o.data;\n  $replyTo := $data.replyTo;\n  $earnType := $data.earnType;\n  $x.assert.isOk($replyTo, 'no replyTo ledger');\n  \n  $msg := $earnType & ' reply to ' & $replyTo;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $out := $x.output($replyTo, [], $form.title, $form.subtitle, $form.description, $data.tags);\n  $outMe := $x.output($state.owner, $o.coins, $form.title, $form.subtitle, $form.description, $action.tags);\n  $x.result($newState, [$out, $outMe])\n)\n"
+						}
+					],
+					"description": "earn Description"
+				},
+				"other": {},
+				"title": "",
+				"subtitle": "",
+				"description": "",
+				"key": "4ec07c319f2e2df46f67b4168ade7ed94363fcf9e7aeae895611252b7d9c299b"
+			}
+		},
+		{
+			"name": "start",
+			"result": {
+				"outputs": [
+					{
+						"ledger": "Alice",
+						"data": {},
+						"coins": [],
+						"tags": [],
+						"msgs": [],
+						"title": "Send me some PRAX and a problem and I'll give you some advice",
+						"subtitle": "Send me some PRAX and a problem for some advice",
+						"description": "Send this output to the contract when you want to end it"
+					}
+				],
+				"state": {
+					"state": {
+						"ended": false,
+						"owner": "Alice",
+						"coin": {
+							"amount": "100000000",
+							"symbol": "PRAX",
+							"mint": "DBAgvThPiCKBpBCCFBHQaGwRkevSXbBGFp",
+							"other": {},
+							"decimals": 8
+						},
+						"view": {
+							"title": "Send me some PRAX and a problem and I'll give you some advice",
+							"subtitle": "Send me some PRAX and a problem for some advice",
+							"description": "### Simple Advice Only\n\nSend me some PRAX and I'll give you some quick advice. Simple problems only. ",
+							"msgs": [
+								"earn started"
+							]
+						}
+					},
+					"coins": []
+				},
+				"mint": []
+			},
+			"contract": {
+				"ledger": "Alice",
+				"template": {
+					"reducerMap": {
+						"start": {
+							"type": "start",
+							"code": "(\n  $x.assert.isNotNaN($form.min, 'min isNaN');\n  $x.assert.isAtLeast($number($form.min), 0, 'min must be >= 0');\n  \n  $min := $x.toCoinUnit($form.min, $x.coin.praxDecimals);\n  $coin := $x.coin.prax($min);\n  $newstate := {\n    'ended': false,\n    'owner': $action.ledger,\n    'coin': $coin,\n    'tags': $action.tags,\n    'view': {\n      'title': $form.title,\n      'subtitle': $form.subtitle,\n      'description': $form.description,\n      'msgs': ['earn started']\n    }\n  };\n  \n  $out := $x.output($action.ledger, [], $form.title, $form.subtitle, 'Send this output to the contract when you want to end it', $action.tags);\n  $x.result($newstate, [$out])\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"end": {
+							"type": "end",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.isEqual($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 0, 'do not send coins, just send the start output');\n\n  $newstate := $merge([$state, { 'ended': true }]);\n  $x.result($newstate)\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"simpleAdvice": {
+							"type": "simpleAdvice",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 1, 'please only send me one coin');\n  $coin := $o.coins[0];\n  $mycoin := $state.coin;\n  $x.assert.isTrue($x.coin.same($coin, $mycoin), 'only send me ' & $mycoin.symbol);\n  $x.assert.isTrue($x.coin.greaterThanOrEqual($coin, $mycoin), 'sorry, you must send me at least ' & $x.toDisplay($mycoin) & ' ' & $mycoin.symbol);\n  \n  $msg := 'simpleAdvice ' & $x.toDisplay($coin) & ' ' & $coin.symbol & ' from ' & $action.ledger;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'description': $state.view.description,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $data := {\n    'replyTo': $action.ledger,\n    'tags': $action.tags,\n    'earnType': 'simpleAdvice'\n  };\n  $out := $x.output($state.owner, $o.coins, $form.title, $form.subtitle, $form.description, $state.tags, $data);\n  $x.result($newState, [$out])\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"reply": {
+							"type": "reply",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n\n  $i := $inputs[0];\n  $o := $i.output;\n  $data := $o.data;\n  $replyTo := $data.replyTo;\n  $earnType := $data.earnType;\n  $x.assert.isOk($replyTo, 'no replyTo ledger');\n  \n  $msg := $earnType & ' reply to ' & $replyTo;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $out := $x.output($replyTo, [], $form.title, $form.subtitle, $form.description, $data.tags);\n  $outMe := $x.output($state.owner, $o.coins, $form.title, $form.subtitle, $form.description, $action.tags);\n  $x.result($newState, [$out, $outMe])\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						}
+					},
+					"name": "incentum-simple-advice",
+					"tags": [],
+					"other": {},
+					"ledger": "Ledger",
+					"versionMajor": 1,
+					"versionMinor": 0,
+					"versionPatch": 0,
+					"reducers": [
+						{
+							"type": "start",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isNotNaN($form.min, 'min isNaN');\n  $x.assert.isAtLeast($number($form.min), 0, 'min must be >= 0');\n  \n  $min := $x.toCoinUnit($form.min, $x.coin.praxDecimals);\n  $coin := $x.coin.prax($min);\n  $newstate := {\n    'ended': false,\n    'owner': $action.ledger,\n    'coin': $coin,\n    'tags': $action.tags,\n    'view': {\n      'title': $form.title,\n      'subtitle': $form.subtitle,\n      'description': $form.description,\n      'msgs': ['earn started']\n    }\n  };\n  \n  $out := $x.output($action.ledger, [], $form.title, $form.subtitle, 'Send this output to the contract when you want to end it', $action.tags);\n  $x.result($newstate, [$out])\n)\n"
+						},
+						{
+							"type": "end",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.isEqual($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 0, 'do not send coins, just send the start output');\n\n  $newstate := $merge([$state, { 'ended': true }]);\n  $x.result($newstate)\n)\n"
+						},
+						{
+							"type": "simpleAdvice",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 1, 'please only send me one coin');\n  $coin := $o.coins[0];\n  $mycoin := $state.coin;\n  $x.assert.isTrue($x.coin.same($coin, $mycoin), 'only send me ' & $mycoin.symbol);\n  $x.assert.isTrue($x.coin.greaterThanOrEqual($coin, $mycoin), 'sorry, you must send me at least ' & $x.toDisplay($mycoin) & ' ' & $mycoin.symbol);\n  \n  $msg := 'simpleAdvice ' & $x.toDisplay($coin) & ' ' & $coin.symbol & ' from ' & $action.ledger;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'description': $state.view.description,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $data := {\n    'replyTo': $action.ledger,\n    'tags': $action.tags,\n    'earnType': 'simpleAdvice'\n  };\n  $out := $x.output($state.owner, $o.coins, $form.title, $form.subtitle, $form.description, $state.tags, $data);\n  $x.result($newState, [$out])\n)\n"
+						},
+						{
+							"type": "reply",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n\n  $i := $inputs[0];\n  $o := $i.output;\n  $data := $o.data;\n  $replyTo := $data.replyTo;\n  $earnType := $data.earnType;\n  $x.assert.isOk($replyTo, 'no replyTo ledger');\n  \n  $msg := $earnType & ' reply to ' & $replyTo;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $out := $x.output($replyTo, [], $form.title, $form.subtitle, $form.description, $data.tags);\n  $outMe := $x.output($state.owner, $o.coins, $form.title, $form.subtitle, $form.description, $action.tags);\n  $x.result($newState, [$out, $outMe])\n)\n"
+						}
+					],
+					"description": "earn Description"
+				},
+				"other": {},
+				"title": "",
+				"subtitle": "",
+				"description": "",
+				"key": "4ec07c319f2e2df46f67b4168ade7ed94363fcf9e7aeae895611252b7d9c299b"
+			}
+		},
+		{
+			"name": "start",
+			"result": {
+				"outputs": [
+					{
+						"ledger": "Alice",
+						"data": {},
+						"coins": [],
+						"tags": [],
+						"msgs": [],
+						"title": "Send me some PRAX and a problem and I'll give you some advice",
+						"subtitle": "Send me some PRAX and a problem for some advice",
+						"description": "Send this output to the contract when you want to end it"
+					}
+				],
+				"state": {
+					"state": {
+						"ended": false,
+						"owner": "Alice",
+						"coin": {
+							"amount": "100000000",
+							"symbol": "PRAX",
+							"mint": "854e09acdaae89b21e9cc7c14f599028628e6a97dd6514d5260622a9a1adc553",
+							"other": {},
+							"decimals": 8
+						},
+						"view": {
+							"title": "Send me some PRAX and a problem and I'll give you some advice",
+							"subtitle": "Send me some PRAX and a problem for some advice",
+							"description": "### Simple Advice Only\n\nSend me some PRAX and I'll give you some quick advice. Simple problems only. ",
+							"msgs": [
+								"earn started"
+							]
+						}
+					},
+					"coins": []
+				},
+				"mint": []
+			},
+			"contract": {
+				"ledger": "Alice",
+				"template": {
+					"reducerMap": {
+						"start": {
+							"type": "start",
+							"code": "(\n  $x.assert.isNotNaN($form.min, 'min isNaN');\n  $x.assert.isAtLeast($number($form.min), 0, 'min must be >= 0');\n  \n  $min := $x.toCoinUnit($form.min, $x.coin.praxDecimals);\n  $coin := $x.coin.prax($min);\n  $newstate := {\n    'ended': false,\n    'owner': $action.ledger,\n    'coin': $coin,\n    'tags': $action.tags,\n    'view': {\n      'title': $form.title,\n      'subtitle': $form.subtitle,\n      'description': $form.description,\n      'msgs': ['earn started']\n    }\n  };\n  \n  $out := $x.output($action.ledger, [], $form.title, $form.subtitle, 'Send this output to the contract when you want to end it', $action.tags);\n  $x.result($newstate, [$out])\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"end": {
+							"type": "end",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.isEqual($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 0, 'do not send coins, just send the start output');\n\n  $newstate := $merge([$state, { 'ended': true }]);\n  $x.result($newstate)\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"simpleAdvice": {
+							"type": "simpleAdvice",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 1, 'please only send me one coin');\n  $coin := $o.coins[0];\n  $mycoin := $state.coin;\n  $x.assert.isTrue($x.coin.same($coin, $mycoin), 'only send me ' & $mycoin.symbol);\n  $x.assert.isTrue($x.coin.greaterThanOrEqual($coin, $mycoin), 'sorry, you must send me at least ' & $x.toDisplay($mycoin) & ' ' & $mycoin.symbol);\n  \n  $msg := 'simpleAdvice ' & $x.toDisplay($coin) & ' ' & $coin.symbol & ' from ' & $action.ledger;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'description': $state.view.description,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $data := {\n    'replyTo': $action.ledger,\n    'tags': $action.tags,\n    'earnType': 'simpleAdvice'\n  };\n  $out := $x.output($state.owner, $o.coins, $form.title, $form.subtitle, $form.description, $state.tags, $data);\n  $x.result($newState, [$out])\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"reply": {
+							"type": "reply",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n\n  $i := $inputs[0];\n  $o := $i.output;\n  $data := $o.data;\n  $replyTo := $data.replyTo;\n  $earnType := $data.earnType;\n  $x.assert.isOk($replyTo, 'no replyTo ledger');\n  \n  $msg := $earnType & ' reply to ' & $replyTo;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $out := $x.output($replyTo, [], $form.title, $form.subtitle, $form.description, $data.tags);\n  $outMe := $x.output($state.owner, $o.coins, $form.title, $form.subtitle, $form.description, $action.tags);\n  $x.result($newState, [$out, $outMe])\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						}
+					},
+					"name": "incentum-simple-advice",
+					"tags": [],
+					"other": {},
+					"ledger": "Ledger",
+					"versionMajor": 1,
+					"versionMinor": 0,
+					"versionPatch": 0,
+					"reducers": [
+						{
+							"type": "start",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isNotNaN($form.min, 'min isNaN');\n  $x.assert.isAtLeast($number($form.min), 0, 'min must be >= 0');\n  \n  $min := $x.toCoinUnit($form.min, $x.coin.praxDecimals);\n  $coin := $x.coin.prax($min);\n  $newstate := {\n    'ended': false,\n    'owner': $action.ledger,\n    'coin': $coin,\n    'tags': $action.tags,\n    'view': {\n      'title': $form.title,\n      'subtitle': $form.subtitle,\n      'description': $form.description,\n      'msgs': ['earn started']\n    }\n  };\n  \n  $out := $x.output($action.ledger, [], $form.title, $form.subtitle, 'Send this output to the contract when you want to end it', $action.tags);\n  $x.result($newstate, [$out])\n)\n"
+						},
+						{
+							"type": "end",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.isEqual($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 0, 'do not send coins, just send the start output');\n\n  $newstate := $merge([$state, { 'ended': true }]);\n  $x.result($newstate)\n)\n"
+						},
+						{
+							"type": "simpleAdvice",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 1, 'please only send me one coin');\n  $coin := $o.coins[0];\n  $mycoin := $state.coin;\n  $x.assert.isTrue($x.coin.same($coin, $mycoin), 'only send me ' & $mycoin.symbol);\n  $x.assert.isTrue($x.coin.greaterThanOrEqual($coin, $mycoin), 'sorry, you must send me at least ' & $x.toDisplay($mycoin) & ' ' & $mycoin.symbol);\n  \n  $msg := 'simpleAdvice ' & $x.toDisplay($coin) & ' ' & $coin.symbol & ' from ' & $action.ledger;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'description': $state.view.description,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $data := {\n    'replyTo': $action.ledger,\n    'tags': $action.tags,\n    'earnType': 'simpleAdvice'\n  };\n  $out := $x.output($state.owner, $o.coins, $form.title, $form.subtitle, $form.description, $state.tags, $data);\n  $x.result($newState, [$out])\n)\n"
+						},
+						{
+							"type": "reply",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n\n  $i := $inputs[0];\n  $o := $i.output;\n  $data := $o.data;\n  $replyTo := $data.replyTo;\n  $earnType := $data.earnType;\n  $x.assert.isOk($replyTo, 'no replyTo ledger');\n  \n  $msg := $earnType & ' reply to ' & $replyTo;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $out := $x.output($replyTo, [], $form.title, $form.subtitle, $form.description, $data.tags);\n  $outMe := $x.output($state.owner, $o.coins, $form.title, $form.subtitle, $form.description, $action.tags);\n  $x.result($newState, [$out, $outMe])\n)\n"
+						}
+					],
+					"description": "earn Description"
+				},
+				"other": {},
+				"title": "",
+				"subtitle": "",
+				"description": "",
+				"key": "4ec07c319f2e2df46f67b4168ade7ed94363fcf9e7aeae895611252b7d9c299b"
+			}
+		},
+		{
+			"name": "simpleAdvice",
+			"result": {
+				"outputs": [
+					{
+						"ledger": "Alice",
+						"data": {
+							"replyTo": "Bob",
+							"earnType": "simpleAdvice"
+						},
+						"coins": [
+							{
+								"amount": "100000000",
+								"symbol": "PRAX",
+								"other": {},
+								"mint": "854e09acdaae89b21e9cc7c14f599028628e6a97dd6514d5260622a9a1adc553",
+								"decimals": 8
+							}
+						],
+						"tags": [],
+						"msgs": [],
+						"title": "Can you help me out Alice?",
+						"subtitle": "Something terrible has happened",
+						"description": "You won't believe it if I tell you."
+					}
+				],
+				"state": {
+					"state": {
+						"ended": false,
+						"owner": "Alice",
+						"coin": {
+							"amount": "100000000",
+							"symbol": "PRAX",
+							"mint": "854e09acdaae89b21e9cc7c14f599028628e6a97dd6514d5260622a9a1adc553",
+							"other": {},
+							"decimals": 8
+						},
+						"view": {
+							"title": "Send me some PRAX and a problem and I'll give you some advice",
+							"subtitle": "Send me some PRAX and a problem for some advice",
+							"description": "### Simple Advice Only\n\nSend me some PRAX and I'll give you some quick advice. Simple problems only. ",
+							"msgs": [
+								"earn started",
+								"simpleAdvice 1 PRAX from Bob"
+							]
+						}
+					},
+					"coins": []
+				},
+				"mint": []
+			},
+			"contract": {
+				"ledger": "Bob",
+				"template": {
+					"reducerMap": {
+						"start": {
+							"type": "start",
+							"code": "(\n  $x.assert.isNotNaN($form.min, 'min isNaN');\n  $x.assert.isAtLeast($number($form.min), 0, 'min must be >= 0');\n  \n  $min := $x.toCoinUnit($form.min, $x.coin.praxDecimals);\n  $coin := $x.coin.prax($min);\n  $newstate := {\n    'ended': false,\n    'owner': $action.ledger,\n    'coin': $coin,\n    'tags': $action.tags,\n    'view': {\n      'title': $form.title,\n      'subtitle': $form.subtitle,\n      'description': $form.description,\n      'msgs': ['earn started']\n    }\n  };\n  \n  $out := $x.output($action.ledger, [], $form.title, $form.subtitle, 'Send this output to the contract when you want to end it', $action.tags);\n  $x.result($newstate, [$out])\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"end": {
+							"type": "end",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.isEqual($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 0, 'do not send coins, just send the start output');\n\n  $newstate := $merge([$state, { 'ended': true }]);\n  $x.result($newstate)\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"simpleAdvice": {
+							"type": "simpleAdvice",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 1, 'please only send me one coin');\n  $coin := $o.coins[0];\n  $mycoin := $state.coin;\n  $x.assert.isTrue($x.coin.same($coin, $mycoin), 'only send me ' & $mycoin.symbol);\n  $x.assert.isTrue($x.coin.greaterThanOrEqual($coin, $mycoin), 'sorry, you must send me at least ' & $x.toDisplay($mycoin) & ' ' & $mycoin.symbol);\n  \n  $msg := 'simpleAdvice ' & $x.toDisplay($coin) & ' ' & $coin.symbol & ' from ' & $action.ledger;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'description': $state.view.description,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $data := {\n    'replyTo': $action.ledger,\n    'tags': $action.tags,\n    'earnType': 'simpleAdvice'\n  };\n  $out := $x.output($state.owner, $o.coins, $form.title, $form.subtitle, $form.description, $state.tags, $data);\n  $x.result($newState, [$out])\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"reply": {
+							"type": "reply",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n\n  $i := $inputs[0];\n  $o := $i.output;\n  $data := $o.data;\n  $replyTo := $data.replyTo;\n  $earnType := $data.earnType;\n  $x.assert.isOk($replyTo, 'no replyTo ledger');\n  \n  $msg := $earnType & ' reply to ' & $replyTo;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $out := $x.output($replyTo, [], $form.title, $form.subtitle, $form.description, $data.tags);\n  $outMe := $x.output($state.owner, $o.coins, $form.title, $form.subtitle, $form.description, $action.tags);\n  $x.result($newState, [$out, $outMe])\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						}
+					},
+					"name": "incentum-simple-advice",
+					"tags": [],
+					"other": {},
+					"ledger": "Ledger",
+					"versionMajor": 1,
+					"versionMinor": 0,
+					"versionPatch": 0,
+					"reducers": [
+						{
+							"type": "start",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isNotNaN($form.min, 'min isNaN');\n  $x.assert.isAtLeast($number($form.min), 0, 'min must be >= 0');\n  \n  $min := $x.toCoinUnit($form.min, $x.coin.praxDecimals);\n  $coin := $x.coin.prax($min);\n  $newstate := {\n    'ended': false,\n    'owner': $action.ledger,\n    'coin': $coin,\n    'tags': $action.tags,\n    'view': {\n      'title': $form.title,\n      'subtitle': $form.subtitle,\n      'description': $form.description,\n      'msgs': ['earn started']\n    }\n  };\n  \n  $out := $x.output($action.ledger, [], $form.title, $form.subtitle, 'Send this output to the contract when you want to end it', $action.tags);\n  $x.result($newstate, [$out])\n)\n"
+						},
+						{
+							"type": "end",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.isEqual($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 0, 'do not send coins, just send the start output');\n\n  $newstate := $merge([$state, { 'ended': true }]);\n  $x.result($newstate)\n)\n"
+						},
+						{
+							"type": "simpleAdvice",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 1, 'please only send me one coin');\n  $coin := $o.coins[0];\n  $mycoin := $state.coin;\n  $x.assert.isTrue($x.coin.same($coin, $mycoin), 'only send me ' & $mycoin.symbol);\n  $x.assert.isTrue($x.coin.greaterThanOrEqual($coin, $mycoin), 'sorry, you must send me at least ' & $x.toDisplay($mycoin) & ' ' & $mycoin.symbol);\n  \n  $msg := 'simpleAdvice ' & $x.toDisplay($coin) & ' ' & $coin.symbol & ' from ' & $action.ledger;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'description': $state.view.description,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $data := {\n    'replyTo': $action.ledger,\n    'tags': $action.tags,\n    'earnType': 'simpleAdvice'\n  };\n  $out := $x.output($state.owner, $o.coins, $form.title, $form.subtitle, $form.description, $state.tags, $data);\n  $x.result($newState, [$out])\n)\n"
+						},
+						{
+							"type": "reply",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n\n  $i := $inputs[0];\n  $o := $i.output;\n  $data := $o.data;\n  $replyTo := $data.replyTo;\n  $earnType := $data.earnType;\n  $x.assert.isOk($replyTo, 'no replyTo ledger');\n  \n  $msg := $earnType & ' reply to ' & $replyTo;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $out := $x.output($replyTo, [], $form.title, $form.subtitle, $form.description, $data.tags);\n  $outMe := $x.output($state.owner, $o.coins, $form.title, $form.subtitle, $form.description, $action.tags);\n  $x.result($newState, [$out, $outMe])\n)\n"
+						}
+					],
+					"description": "earn Description"
+				},
+				"other": {},
+				"title": "",
+				"subtitle": "",
+				"description": "",
+				"key": "1bb8676bc430d6014cf445dd69153385f3ad80e0f41082266684cd0b04ba7b19"
+			}
+		},
+		{
+			"name": "reply",
+			"result": {
+				"outputs": [
+					{
+						"ledger": "Bob",
+						"data": {},
+						"coins": [],
+						"tags": [],
+						"msgs": [],
+						"title": "Sure, I can help",
+						"subtitle": "Sounds serious",
+						"description": "You forgot to ask me your question. Thanks for the PRAX!"
+					},
+					{
+						"ledger": "Alice",
+						"data": {},
+						"coins": [
+							{
+								"amount": "100000000",
+								"symbol": "PRAX",
+								"other": {},
+								"mint": "854e09acdaae89b21e9cc7c14f599028628e6a97dd6514d5260622a9a1adc553",
+								"decimals": 8
+							}
+						],
+						"tags": [],
+						"msgs": [],
+						"title": "Sure, I can help",
+						"subtitle": "Sounds serious",
+						"description": "You forgot to ask me your question. Thanks for the PRAX!"
+					}
+				],
+				"state": {
+					"state": {
+						"ended": false,
+						"owner": "Alice",
+						"coin": {
+							"amount": "100000000",
+							"symbol": "PRAX",
+							"mint": "854e09acdaae89b21e9cc7c14f599028628e6a97dd6514d5260622a9a1adc553",
+							"other": {},
+							"decimals": 8
+						},
+						"view": {
+							"title": "Send me some PRAX and a problem and I'll give you some advice",
+							"subtitle": "Send me some PRAX and a problem for some advice",
+							"msgs": [
+								"earn started",
+								"simpleAdvice 1 PRAX from Bob",
+								"simpleAdvice reply to Bob"
+							]
+						}
+					},
+					"coins": []
+				},
+				"mint": []
+			},
+			"contract": {
+				"ledger": "Alice",
+				"template": {
+					"reducerMap": {
+						"start": {
+							"type": "start",
+							"code": "(\n  $x.assert.isNotNaN($form.min, 'min isNaN');\n  $x.assert.isAtLeast($number($form.min), 0, 'min must be >= 0');\n  \n  $min := $x.toCoinUnit($form.min, $x.coin.praxDecimals);\n  $coin := $x.coin.prax($min);\n  $newstate := {\n    'ended': false,\n    'owner': $action.ledger,\n    'coin': $coin,\n    'tags': $action.tags,\n    'view': {\n      'title': $form.title,\n      'subtitle': $form.subtitle,\n      'description': $form.description,\n      'msgs': ['earn started']\n    }\n  };\n  \n  $out := $x.output($action.ledger, [], $form.title, $form.subtitle, 'Send this output to the contract when you want to end it', $action.tags);\n  $x.result($newstate, [$out])\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"end": {
+							"type": "end",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.isEqual($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 0, 'do not send coins, just send the start output');\n\n  $newstate := $merge([$state, { 'ended': true }]);\n  $x.result($newstate)\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"simpleAdvice": {
+							"type": "simpleAdvice",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 1, 'please only send me one coin');\n  $coin := $o.coins[0];\n  $mycoin := $state.coin;\n  $x.assert.isTrue($x.coin.same($coin, $mycoin), 'only send me ' & $mycoin.symbol);\n  $x.assert.isTrue($x.coin.greaterThanOrEqual($coin, $mycoin), 'sorry, you must send me at least ' & $x.toDisplay($mycoin) & ' ' & $mycoin.symbol);\n  \n  $msg := 'simpleAdvice ' & $x.toDisplay($coin) & ' ' & $coin.symbol & ' from ' & $action.ledger;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'description': $state.view.description,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $data := {\n    'replyTo': $action.ledger,\n    'tags': $action.tags,\n    'earnType': 'simpleAdvice'\n  };\n  $out := $x.output($state.owner, $o.coins, $form.title, $form.subtitle, $form.description, $state.tags, $data);\n  $x.result($newState, [$out])\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"reply": {
+							"type": "reply",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n\n  $i := $inputs[0];\n  $o := $i.output;\n  $data := $o.data;\n  $replyTo := $data.replyTo;\n  $earnType := $data.earnType;\n  $x.assert.isOk($replyTo, 'no replyTo ledger');\n  \n  $msg := $earnType & ' reply to ' & $replyTo;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $out := $x.output($replyTo, [], $form.title, $form.subtitle, $form.description, $data.tags);\n  $outMe := $x.output($state.owner, $o.coins, $form.title, $form.subtitle, $form.description, $action.tags);\n  $x.result($newState, [$out, $outMe])\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						}
+					},
+					"name": "incentum-simple-advice",
+					"tags": [],
+					"other": {},
+					"ledger": "Ledger",
+					"versionMajor": 1,
+					"versionMinor": 0,
+					"versionPatch": 0,
+					"reducers": [
+						{
+							"type": "start",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isNotNaN($form.min, 'min isNaN');\n  $x.assert.isAtLeast($number($form.min), 0, 'min must be >= 0');\n  \n  $min := $x.toCoinUnit($form.min, $x.coin.praxDecimals);\n  $coin := $x.coin.prax($min);\n  $newstate := {\n    'ended': false,\n    'owner': $action.ledger,\n    'coin': $coin,\n    'tags': $action.tags,\n    'view': {\n      'title': $form.title,\n      'subtitle': $form.subtitle,\n      'description': $form.description,\n      'msgs': ['earn started']\n    }\n  };\n  \n  $out := $x.output($action.ledger, [], $form.title, $form.subtitle, 'Send this output to the contract when you want to end it', $action.tags);\n  $x.result($newstate, [$out])\n)\n"
+						},
+						{
+							"type": "end",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.isEqual($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 0, 'do not send coins, just send the start output');\n\n  $newstate := $merge([$state, { 'ended': true }]);\n  $x.result($newstate)\n)\n"
+						},
+						{
+							"type": "simpleAdvice",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 1, 'please only send me one coin');\n  $coin := $o.coins[0];\n  $mycoin := $state.coin;\n  $x.assert.isTrue($x.coin.same($coin, $mycoin), 'only send me ' & $mycoin.symbol);\n  $x.assert.isTrue($x.coin.greaterThanOrEqual($coin, $mycoin), 'sorry, you must send me at least ' & $x.toDisplay($mycoin) & ' ' & $mycoin.symbol);\n  \n  $msg := 'simpleAdvice ' & $x.toDisplay($coin) & ' ' & $coin.symbol & ' from ' & $action.ledger;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'description': $state.view.description,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $data := {\n    'replyTo': $action.ledger,\n    'tags': $action.tags,\n    'earnType': 'simpleAdvice'\n  };\n  $out := $x.output($state.owner, $o.coins, $form.title, $form.subtitle, $form.description, $state.tags, $data);\n  $x.result($newState, [$out])\n)\n"
+						},
+						{
+							"type": "reply",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n\n  $i := $inputs[0];\n  $o := $i.output;\n  $data := $o.data;\n  $replyTo := $data.replyTo;\n  $earnType := $data.earnType;\n  $x.assert.isOk($replyTo, 'no replyTo ledger');\n  \n  $msg := $earnType & ' reply to ' & $replyTo;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $out := $x.output($replyTo, [], $form.title, $form.subtitle, $form.description, $data.tags);\n  $outMe := $x.output($state.owner, $o.coins, $form.title, $form.subtitle, $form.description, $action.tags);\n  $x.result($newState, [$out, $outMe])\n)\n"
+						}
+					],
+					"description": "earn Description"
+				},
+				"other": {},
+				"title": "",
+				"subtitle": "",
+				"description": "",
+				"key": "4ec07c319f2e2df46f67b4168ade7ed94363fcf9e7aeae895611252b7d9c299b"
+			}
+		}
+	],
+	"resultSel": 0,
+	"jsonSchemas": [
+		{
+			"name": "start",
+			"json": "{\n  \"title\": \"Start an Earn Contract\",\n  \"type\": \"object\",\n  \"required\": [\n    \"title\",\n    \"subtitle\",\n    \"description\",\n    \"min\"\n  ],\n  \"properties\": {\n    \"title\": {\n      \"type\": \"string\",\n      \"title\": \"Title\"\n    },\n    \"subtitle\": {\n      \"type\": \"string\",\n      \"title\": \"Subtitle\"\n    },\n    \"description\": {\n      \"type\": \"string\",\n      \"title\": \"Description\",\n      \"description\": \"Can be markdown\"\n    },\n    \"min\": {\n      \"type\": \"integer\",\n      \"title\": \"Minimum Amount\"\n    }\n  }\n}"
+		},
+		{
+			"name": "end",
+			"json": "{\n  \"title\": \"End a Simple Advice Contract\",\n  \"type\": \"object\",\n  \"required\": [\n    \"output:end\"\n  ],\n  \"properties\": {\n    \"output:end\": {\n      \"type\": \"string\",\n      \"title\": \"Output\"\n    }\n  }\n}\n"
+		},
+		{
+			"name": "simpleAdvice",
+			"json": "{\n  \"title\": \"Ask for some simple advice\",\n  \"type\": \"object\",\n  \"required\": [\n    \"title\",\n    \"subtitle\",\n    \"description\",\n    \"output:payment\"\n  ],\n  \"properties\": {\n    \"title\": {\n      \"type\": \"string\",\n      \"title\": \"Title\"\n    },\n    \"subtitle\": {\n      \"type\": \"string\",\n      \"title\": \"Subtitle\"\n    },\n    \"description\": {\n      \"type\": \"string\",\n      \"title\": \"Description\",\n      \"description\": \"Can be markdown\"\n    },\n    \"output:payment\": {\n      \"type\": \"string\",\n      \"title\": \"Payment\"\n    }\n  }\n}"
+		},
+		{
+			"name": "reply",
+			"json": "{\n  \"title\": \"Reply to a Request\",\n  \"type\": \"object\",\n  \"required\": [\n    \"title\",\n    \"subtitle\",\n    \"description\",\n    \"output:request\",\n    \"outputTitle\",\n    \"outputSubtitle\"\n  ],\n  \"properties\": {\n    \"title\": {\n      \"type\": \"string\",\n      \"title\": \"Reply Title\"\n    },\n    \"subtitle\": {\n      \"type\": \"string\",\n      \"title\": \"Reply Subtitle\"\n    },\n    \"description\": {\n      \"type\": \"string\",\n      \"title\": \"Reply Description\",\n      \"description\": \"Can be markdown\"\n    },\n    \"output:request\": {\n      \"type\": \"string\",\n      \"title\": \"Request\"\n    },\n    \"outputTitle\": {\n      \"type\": \"string\",\n      \"title\": \"Output Title\"\n    },\n    \"outputSubtitle\": {\n      \"type\": \"string\",\n      \"title\": \"Output Subtitle\"\n    }\n  }\n}"
+		}
+	],
+	"uiSchemas": [
+		{
+			"name": "start",
+			"json": "{\n  \"description\": {\n      \"ui:widget\": \"textarea\",\n      \"ui:options\": {\n        \"rows\": 5\n      }\n    }\n}"
+		},
+		{
+			"name": "end",
+			"json": "{\n  \"output:end\": {\n    \"ui:widget\": \"praxOutputs\"\n  }\n}"
+		},
+		{
+			"name": "simpleAdvice",
+			"json": "{\n  \"output:payment\": {\n    \"ui:widget\": \"praxOutputs\"\n  },\n  \"description\": {\n    \"ui:widget\": \"textarea\",\n    \"ui:options\": {\n      \"rows\": 5\n    }\n  }\n}"
+		},
+		{
+			"name": "reply",
+			"json": "{\n  \"output:request\": {\n    \"ui:widget\": \"praxOutputs\"\n  },\n  \"description\": {\n    \"ui:widget\": \"textarea\",\n    \"ui:options\": {\n      \"rows\": 5\n    }\n  }\n}"
+		}
+	],
+	"markdown": [
+		{
+			"name": "start",
+			"json": "### Start an Earn Contract\n\nThis contract can be used to earn tokens\nin various ways. \n\nOne way is with the simpleAdvice method.\nAn arbitrary person can send a request \nwith some minimum amount of PRAX and ask\nfor a reply."
+		},
+		{
+			"name": "end",
+			"json": "### End Simple Advice Contract\n\nSend in the output you recieved from\nthe start method to end this contract."
+		},
+		{
+			"name": "simpleAdvice",
+			"json": "### Simple Advice Method\n\nSend an output with some coin, and\nuse the title, subtitle, and \ndescription to describe your query.\n"
+		},
+		{
+			"name": "reply",
+			"json": "### Reply to an Earn Request\n\nSend the output containing the \nrequest along with the title, subtitle,\nand description with the reply.\n\nThis method will send back the coins \nin an output back to you with the \nOutput Title and Output Subtitle that \nyou supply."
+		}
+	],
+	"formData": "{\n\t\"title\": \"asdf\",\n\t\"subtitle\": \"adf\",\n\t\"description\": \"adf\",\n\t\"output:request\": \"reply\",\n\t\"outputTitle\": \"asdf\",\n\t\"outputSubtitle\": \"asdf\"\n}",
+	"jsonSchemaObject": {
+		"title": "End a Simple Advice Contract",
+		"type": "object",
+		"required": [
+			"output:end"
+		],
+		"properties": {
+			"output:end": {
+				"type": "string",
+				"title": "Output"
+			}
+		}
+	},
+	"uiSchemaObject": {
+		"output:end": {
+			"ui:widget": "praxOutputs"
+		}
+	},
+	"showSaveTemplateForm": false,
+	"showSaveSchemasForm": false,
+	"formSegment": 0,
+	"schemaSel": 2,
+	"markdownSel": 2,
+	"uiSchemaSel": 2,
+	"jsonSchemaSel": 2
+}

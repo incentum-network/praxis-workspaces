@@ -1,0 +1,2191 @@
+{
+	"name": "stash",
+	"segment": 6,
+	"templates": [
+		{
+			"other": {},
+			"name": "incentum-stash",
+			"ledger": "THWJcWwvAGCqGgzpqxwDH9DgaXSwrtJWBm",
+			"versionMajor": 1,
+			"versionMinor": 0,
+			"versionPatch": 1,
+			"description": "Stash Outputs",
+			"tags": [],
+			"reducers": [
+				{
+					"type": "start",
+					"code": "(\n  $newstate := {\n    'ended': false,\n    'owner': $action.ledger,\n    'stashed': {},\n    'view': {\n      'title': $form.title,\n      'subtitle': $form.subtitle,\n      'msgs': ['stash started']\n    }\n  };\n  \n  $out := $x.output($action.ledger, [], $form.title, $form.subtitle, 'Send this output to the contract when you want to end it', $action.tags);\n  $x.result($newstate, [$out])\n)",
+					"language": "jsonata"
+				},
+				{
+					"type": "end",
+					"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 0, 'do not send coins, just send the start output');\n\n  $newstate := $merge([$state, { 'ended': true }]);\n  $x.result($newstate)\n)\n",
+					"language": "jsonata"
+				},
+				{
+					"type": "stash",
+					"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $x.assert.isOk($form.key, 'please supply a key');\n  $found := $lookup($state.stashed, $form.key);\n  $x.assert.isNotOk($found, 'key already stashed');\n  \n  $i := $inputs[0];\n  $o := $i.output;\n  $stashed := $merge([$state.stashed, { $form.key: $o }]);\n  \n  $msg := 'stash ' & $form.key;\n  $view := {\n    'stashed': $stashed,\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $x.result($newState)\n)",
+					"language": "jsonata"
+				},
+				{
+					"type": "unstash",
+					"code": "(\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 0, 'no inputs are allowed');\n  $x.assert.isOk($form.key, 'please supply a key');\n  $found := $lookup($state.stashed, $form.key);\n  $x.assert.isOk($found, 'key not found in stash');\n  \n  $stashed := $sift($state.stashed, function($v, $k, $o) { $k != $form.key });\n  $msg := 'unstash ' & $form.key;\n  $view := {\n    'stashed': $stashed ? $stashed : {},\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $out := $x.output($state.owner, $found.coins, $found.title, $found.subtitle, $found.description, $found.tags, $found.data);\n  $x.result($newState, [$out])\n)",
+					"language": "jsonata"
+				}
+			]
+		}
+	],
+	"templateSel": 0,
+	"reducerSel": 3,
+	"outputs": [
+		{
+			"name": "stash",
+			"json": "{\n\t\"tags\": [],\n\t\"ledger\": \"Alice\",\n\t\"data\": {},\n\t\"title\": \"Stashed Message\",\n\t\"subtitle\": \"Stashed Message\",\n\t\"msgs\": [],\n\t\"description\": \"\",\n\t\"coins\": []\n}",
+			"output": {
+				"tags": [],
+				"ledger": "Alice",
+				"data": {},
+				"title": "Stashed Message",
+				"subtitle": "Stashed Message",
+				"msgs": [],
+				"description": "",
+				"coins": []
+			}
+		}
+	],
+	"outputSel": 0,
+	"actions": [
+		{
+			"name": "start",
+			"json": "{\n\t\"template\": \"incentum-stash\",\n\t\"form\": {\n\t  \"title\": \"Stash Items\",\n\t  \"subtitle\": \"Stash for Misc.\"\n\t},\n\t\"ledger\": \"Alice\",\n\t\"type\": \"start\",\n\t\"inputs\": []\n}",
+			"action": {
+				"template": "incentum-stash",
+				"form": {
+					"title": "Stash Items",
+					"subtitle": "Stash for Misc."
+				},
+				"ledger": "Alice",
+				"type": "start",
+				"inputs": []
+			},
+			"template": ""
+		},
+		{
+			"name": "stash",
+			"json": "{\n\t\"template\": \"incentum-stash\",\n\t\"form\": {\n\t  \"key\": \"message\"\n\t},\n\t\"ledger\": \"Alice\",\n\t\"type\": \"stash\",\n\t\"inputs\": [\n\t\t\"stash\"\n\t]\n}",
+			"action": {
+				"template": "incentum-stash",
+				"form": {
+					"key": "message"
+				},
+				"ledger": "Alice",
+				"type": "stash",
+				"inputs": [
+					"stash"
+				]
+			},
+			"template": ""
+		},
+		{
+			"name": "unstash",
+			"json": "{\n\t\"template\": \"incentum-stash\",\n\t\"form\": {\n\t  \"key\": \"message\"\n\t},\n\t\"ledger\": \"Alice\",\n\t\"type\": \"unstash\",\n\t\"inputs\": []\n}",
+			"action": {
+				"template": "incentum-stash",
+				"form": {
+					"key": "message"
+				},
+				"ledger": "Alice",
+				"type": "unstash",
+				"inputs": []
+			},
+			"template": ""
+		}
+	],
+	"actionSel": 2,
+	"states": [
+		{
+			"name": "start",
+			"json": "{\n\t\"coins\": [],\n\t\"state\": {}\n}"
+		},
+		{
+			"name": "stash",
+			"json": "{\n\t\"state\": {\n\t\t\"ended\": false,\n\t\t\"owner\": \"Alice\",\n\t\t\"stashed\": {},\n\t\t\"view\": {\n\t\t\t\"title\": \"Stash Items\",\n\t\t\t\"subtitle\": \"Stash for Misc.\",\n\t\t\t\"msgs\": [\n\t\t\t\t\"stash started\"\n\t\t\t]\n\t\t}\n\t},\n\t\"coins\": []\n}"
+		},
+		{
+			"name": "unstash",
+			"json": "{\n\t\"state\": {\n\t\t\"ended\": false,\n\t\t\"owner\": \"Alice\",\n\t\t\"stashed\": {\n\t\t\t\"message\": {\n\t\t\t\t\"actionKey\": \"\",\n\t\t\t\t\"key\": \"stash\",\n\t\t\t\t\"ledger\": \"Alice\",\n\t\t\t\t\"data\": {},\n\t\t\t\t\"tags\": [],\n\t\t\t\t\"title\": \"Stashed Message\",\n\t\t\t\t\"subtitle\": \"Stashed Message\",\n\t\t\t\t\"description\": \"\",\n\t\t\t\t\"msgs\": [],\n\t\t\t\t\"coins\": []\n\t\t\t}\n\t\t},\n\t\t\"view\": {\n\t\t\t\"title\": \"Stash Items\",\n\t\t\t\"subtitle\": \"Stash for Misc.\",\n\t\t\t\"msgs\": [\n\t\t\t\t\"stash started\",\n\t\t\t\t\"stash message\"\n\t\t\t]\n\t\t}\n\t},\n\t\"coins\": []\n}"
+		}
+	],
+	"stateSel": 2,
+	"results": [
+		{
+			"name": "start",
+			"result": {
+				"outputs": [
+					{
+						"ledger": "Alice",
+						"data": {},
+						"coins": [],
+						"tags": [],
+						"msgs": [],
+						"title": "Stash Items",
+						"subtitle": "Stash for Misc.",
+						"description": "Send this output to the contract when you want to end it"
+					}
+				],
+				"state": {
+					"state": {
+						"ended": false,
+						"owner": "Alice",
+						"stashed": {},
+						"view": {
+							"title": "Stash Items",
+							"subtitle": "Stash for Misc.",
+							"msgs": [
+								"stash started"
+							]
+						}
+					},
+					"coins": []
+				},
+				"mint": []
+			},
+			"contract": {
+				"ledger": "Alice",
+				"template": {
+					"reducerMap": {
+						"start": {
+							"type": "start",
+							"code": "(\n  $newstate := {\n    'ended': false,\n    'owner': $action.ledger,\n    'stashed': {},\n    'view': {\n      'title': $form.title,\n      'subtitle': $form.subtitle,\n      'msgs': ['stash started']\n    }\n  };\n  \n  $out := $x.output($action.ledger, [], $form.title, $form.subtitle, 'Send this output to the contract when you want to end it', $action.tags);\n  $x.result($newstate, [$out])\n)",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"end": {
+							"type": "end",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 0, 'do not send coins, just send the start output');\n\n  $newstate := $merge([$state, { 'ended': true }]);\n  $x.result($newstate)\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"stash": {
+							"type": "stash",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $x.assert.isOk($form.key, 'please supply a key');\n  $found := $lookup($state.stashed, $form.key);\n  $x.assert.isNotOk($found, 'key already stashed');\n  \n  $i := $inputs[0];\n  $o := $i.output;\n  $stashed := $merge([$state.stashed, { $form.key: $o }]);\n  \n  $newstate := $merge([$state, { 'stashed': $stashed }]);\n  $x.result($newstate)\n)",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"unstash": {
+							"type": "unstash",
+							"code": "(\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 0, 'no inputs are allowed');\n  $x.assert.isOk($form.key, 'please supply a key');\n  $found := $lookup($state.stashed, $form.key);\n  $x.assert.isOk($found, 'key not found in stash');\n  \n  $stashed := $sift($state.stashed, function($v, $k) { $k != $form.key });\n  $newstate := $merge([$state, { 'stashed': $stashed }]);\n  $out := $x.output($state.owner, $found.coins, $found.title, $found.subtitle, $found.description, $found.tags, $found.data);\n  $x.result($newstate, [$out])\n)",
+							"language": "jsonata",
+							"expr": {}
+						}
+					},
+					"name": "incentum-stash",
+					"tags": [],
+					"other": {},
+					"ledger": "Ledger",
+					"versionMajor": 1,
+					"versionMinor": 0,
+					"versionPatch": 0,
+					"reducers": [
+						{
+							"type": "start",
+							"language": "jsonata",
+							"code": "(\n  $newstate := {\n    'ended': false,\n    'owner': $action.ledger,\n    'stashed': {},\n    'view': {\n      'title': $form.title,\n      'subtitle': $form.subtitle,\n      'msgs': ['stash started']\n    }\n  };\n  \n  $out := $x.output($action.ledger, [], $form.title, $form.subtitle, 'Send this output to the contract when you want to end it', $action.tags);\n  $x.result($newstate, [$out])\n)"
+						},
+						{
+							"type": "end",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 0, 'do not send coins, just send the start output');\n\n  $newstate := $merge([$state, { 'ended': true }]);\n  $x.result($newstate)\n)\n"
+						},
+						{
+							"type": "stash",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $x.assert.isOk($form.key, 'please supply a key');\n  $found := $lookup($state.stashed, $form.key);\n  $x.assert.isNotOk($found, 'key already stashed');\n  \n  $i := $inputs[0];\n  $o := $i.output;\n  $stashed := $merge([$state.stashed, { $form.key: $o }]);\n  \n  $newstate := $merge([$state, { 'stashed': $stashed }]);\n  $x.result($newstate)\n)"
+						},
+						{
+							"type": "unstash",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 0, 'no inputs are allowed');\n  $x.assert.isOk($form.key, 'please supply a key');\n  $found := $lookup($state.stashed, $form.key);\n  $x.assert.isOk($found, 'key not found in stash');\n  \n  $stashed := $sift($state.stashed, function($v, $k, $o) { $k != $form.key });\n  $newstate := $merge([$state, { 'stashed': ($stashed or {}) }]);\n  $out := $x.output($state.owner, $found.coins, $found.title, $found.subtitle, $found.description, $found.tags, $found.data);\n  $x.result($newstate, [$out])\n)"
+						}
+					],
+					"description": "incentum-stash Description"
+				},
+				"other": {},
+				"title": "",
+				"subtitle": "",
+				"description": "",
+				"key": "4ec07c319f2e2df46f67b4168ade7ed94363fcf9e7aeae895611252b7d9c299b"
+			}
+		},
+		{
+			"name": "stash",
+			"result": {
+				"outputs": [],
+				"state": {
+					"state": {
+						"ended": false,
+						"owner": "Alice",
+						"stashed": {
+							"message": {
+								"actionKey": "",
+								"key": "stash",
+								"ledger": "Alice",
+								"data": {},
+								"tags": [],
+								"title": "",
+								"subtitle": "",
+								"description": "",
+								"msgs": [],
+								"coins": []
+							}
+						},
+						"view": {
+							"title": "Stash Items",
+							"subtitle": "Stash for Misc.",
+							"msgs": [
+								"stash started"
+							]
+						}
+					},
+					"coins": []
+				},
+				"mint": []
+			},
+			"contract": {
+				"ledger": "Alice",
+				"template": {
+					"reducerMap": {
+						"start": {
+							"type": "start",
+							"code": "(\n  $newstate := {\n    'ended': false,\n    'owner': $action.ledger,\n    'stashed': {},\n    'view': {\n      'title': $form.title,\n      'subtitle': $form.subtitle,\n      'msgs': ['stash started']\n    }\n  };\n  \n  $out := $x.output($action.ledger, [], $form.title, $form.subtitle, 'Send this output to the contract when you want to end it', $action.tags);\n  $x.result($newstate, [$out])\n)",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"end": {
+							"type": "end",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 0, 'do not send coins, just send the start output');\n\n  $newstate := $merge([$state, { 'ended': true }]);\n  $x.result($newstate)\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"stash": {
+							"type": "stash",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $x.assert.isOk($form.key, 'please supply a key');\n  $found := $lookup($state.stashed, $form.key);\n  $x.assert.isNotOk($found, 'key already stashed');\n  \n  $i := $inputs[0];\n  $o := $i.output;\n  $stashed := $merge([$state.stashed, { $form.key: $o }]);\n  \n  $newstate := $merge([$state, { 'stashed': $stashed }]);\n  $x.result($newstate)\n)",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"unstash": {
+							"type": "unstash",
+							"code": "(\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 0, 'no inputs are allowed');\n  $x.assert.isOk($form.key, 'please supply a key');\n  $found := $lookup($state.stashed, $form.key);\n  $x.assert.isOk($found, 'key not found in stash');\n  \n  $stashed := $sift($state.stashed, function($v, $k) { $k != $form.key });\n  $newstate := $merge([$state, { 'stashed': $stashed }]);\n  $out := $x.output($state.owner, $found.coins, $found.title, $found.subtitle, $found.description, $found.tags, $found.data);\n  $x.result($newstate, [$out])\n)",
+							"language": "jsonata",
+							"expr": {}
+						}
+					},
+					"name": "incentum-stash",
+					"tags": [],
+					"other": {},
+					"ledger": "Ledger",
+					"versionMajor": 1,
+					"versionMinor": 0,
+					"versionPatch": 0,
+					"reducers": [
+						{
+							"type": "start",
+							"language": "jsonata",
+							"code": "(\n  $newstate := {\n    'ended': false,\n    'owner': $action.ledger,\n    'stashed': {},\n    'view': {\n      'title': $form.title,\n      'subtitle': $form.subtitle,\n      'msgs': ['stash started']\n    }\n  };\n  \n  $out := $x.output($action.ledger, [], $form.title, $form.subtitle, 'Send this output to the contract when you want to end it', $action.tags);\n  $x.result($newstate, [$out])\n)"
+						},
+						{
+							"type": "end",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 0, 'do not send coins, just send the start output');\n\n  $newstate := $merge([$state, { 'ended': true }]);\n  $x.result($newstate)\n)\n"
+						},
+						{
+							"type": "stash",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $x.assert.isOk($form.key, 'please supply a key');\n  $found := $lookup($state.stashed, $form.key);\n  $x.assert.isNotOk($found, 'key already stashed');\n  \n  $i := $inputs[0];\n  $o := $i.output;\n  $stashed := $merge([$state.stashed, { $form.key: $o }]);\n  \n  $newstate := $merge([$state, { 'stashed': $stashed }]);\n  $x.result($newstate)\n)"
+						},
+						{
+							"type": "unstash",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 0, 'no inputs are allowed');\n  $x.assert.isOk($form.key, 'please supply a key');\n  $found := $lookup($state.stashed, $form.key);\n  $x.assert.isOk($found, 'key not found in stash');\n  \n  $stashed := $sift($state.stashed, function($v, $k, $o) { $k != $form.key });\n  $newstate := $merge([$state, { 'stashed': ($stashed or {}) }]);\n  $out := $x.output($state.owner, $found.coins, $found.title, $found.subtitle, $found.description, $found.tags, $found.data);\n  $x.result($newstate, [$out])\n)"
+						}
+					],
+					"description": "incentum-stash Description"
+				},
+				"other": {},
+				"title": "",
+				"subtitle": "",
+				"description": "",
+				"key": "4ec07c319f2e2df46f67b4168ade7ed94363fcf9e7aeae895611252b7d9c299b"
+			}
+		},
+		{
+			"name": "stash",
+			"result": {
+				"outputs": [],
+				"state": {
+					"state": {
+						"ended": false,
+						"owner": "Alice",
+						"stashed": {
+							"message": {
+								"actionKey": "",
+								"key": "stash",
+								"ledger": "Alice",
+								"data": {},
+								"tags": [],
+								"title": "Stashed Message",
+								"subtitle": "Stashed Message",
+								"description": "",
+								"msgs": [],
+								"coins": []
+							}
+						},
+						"view": {
+							"title": "Stash Items",
+							"subtitle": "Stash for Misc.",
+							"msgs": [
+								"stash started"
+							]
+						}
+					},
+					"coins": []
+				},
+				"mint": []
+			},
+			"contract": {
+				"ledger": "Alice",
+				"template": {
+					"reducerMap": {
+						"start": {
+							"type": "start",
+							"code": "(\n  $newstate := {\n    'ended': false,\n    'owner': $action.ledger,\n    'stashed': {},\n    'view': {\n      'title': $form.title,\n      'subtitle': $form.subtitle,\n      'msgs': ['stash started']\n    }\n  };\n  \n  $out := $x.output($action.ledger, [], $form.title, $form.subtitle, 'Send this output to the contract when you want to end it', $action.tags);\n  $x.result($newstate, [$out])\n)",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"end": {
+							"type": "end",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 0, 'do not send coins, just send the start output');\n\n  $newstate := $merge([$state, { 'ended': true }]);\n  $x.result($newstate)\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"stash": {
+							"type": "stash",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $x.assert.isOk($form.key, 'please supply a key');\n  $found := $lookup($state.stashed, $form.key);\n  $x.assert.isNotOk($found, 'key already stashed');\n  \n  $i := $inputs[0];\n  $o := $i.output;\n  $stashed := $merge([$state.stashed, { $form.key: $o }]);\n  \n  $newstate := $merge([$state, { 'stashed': $stashed }]);\n  $x.result($newstate)\n)",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"unstash": {
+							"type": "unstash",
+							"code": "(\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 0, 'no inputs are allowed');\n  $x.assert.isOk($form.key, 'please supply a key');\n  $found := $lookup($state.stashed, $form.key);\n  $x.assert.isOk($found, 'key not found in stash');\n  \n  $stashed := $sift($state.stashed, function($v, $k) { $k != $form.key });\n  $newstate := $merge([$state, { 'stashed': $stashed }]);\n  $out := $x.output($state.owner, $found.coins, $found.title, $found.subtitle, $found.description, $found.tags, $found.data);\n  $x.result($newstate, [$out])\n)",
+							"language": "jsonata",
+							"expr": {}
+						}
+					},
+					"name": "incentum-stash",
+					"tags": [],
+					"other": {},
+					"ledger": "Ledger",
+					"versionMajor": 1,
+					"versionMinor": 0,
+					"versionPatch": 0,
+					"reducers": [
+						{
+							"type": "start",
+							"language": "jsonata",
+							"code": "(\n  $newstate := {\n    'ended': false,\n    'owner': $action.ledger,\n    'stashed': {},\n    'view': {\n      'title': $form.title,\n      'subtitle': $form.subtitle,\n      'msgs': ['stash started']\n    }\n  };\n  \n  $out := $x.output($action.ledger, [], $form.title, $form.subtitle, 'Send this output to the contract when you want to end it', $action.tags);\n  $x.result($newstate, [$out])\n)"
+						},
+						{
+							"type": "end",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 0, 'do not send coins, just send the start output');\n\n  $newstate := $merge([$state, { 'ended': true }]);\n  $x.result($newstate)\n)\n"
+						},
+						{
+							"type": "stash",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $x.assert.isOk($form.key, 'please supply a key');\n  $found := $lookup($state.stashed, $form.key);\n  $x.assert.isNotOk($found, 'key already stashed');\n  \n  $i := $inputs[0];\n  $o := $i.output;\n  $stashed := $merge([$state.stashed, { $form.key: $o }]);\n  \n  $newstate := $merge([$state, { 'stashed': $stashed }]);\n  $x.result($newstate)\n)"
+						},
+						{
+							"type": "unstash",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 0, 'no inputs are allowed');\n  $x.assert.isOk($form.key, 'please supply a key');\n  $found := $lookup($state.stashed, $form.key);\n  $x.assert.isOk($found, 'key not found in stash');\n  \n  $stashed := $sift($state.stashed, function($v, $k, $o) { $k != $form.key });\n  $newstate := $merge([$state, { 'stashed': ($stashed or {}) }]);\n  $out := $x.output($state.owner, $found.coins, $found.title, $found.subtitle, $found.description, $found.tags, $found.data);\n  $x.result($newstate, [$out])\n)"
+						}
+					],
+					"description": "incentum-stash Description"
+				},
+				"other": {},
+				"title": "",
+				"subtitle": "",
+				"description": "",
+				"key": "4ec07c319f2e2df46f67b4168ade7ed94363fcf9e7aeae895611252b7d9c299b"
+			}
+		},
+		{
+			"name": "unstash",
+			"result": {
+				"outputs": [
+					{
+						"ledger": "Alice",
+						"data": {},
+						"coins": [],
+						"tags": [],
+						"msgs": [],
+						"title": "Stashed Message",
+						"subtitle": "Stashed Message",
+						"description": ""
+					}
+				],
+				"state": {
+					"state": {
+						"ended": false,
+						"owner": "Alice",
+						"stashed": {
+							"message": {
+								"actionKey": "",
+								"key": "stash",
+								"ledger": "Alice",
+								"data": {},
+								"tags": [],
+								"title": "Stashed Message",
+								"subtitle": "Stashed Message",
+								"description": "",
+								"msgs": [],
+								"coins": []
+							}
+						},
+						"view": {
+							"title": "Stash Items",
+							"subtitle": "Stash for Misc.",
+							"msgs": [
+								"stash started"
+							]
+						}
+					},
+					"coins": []
+				},
+				"mint": []
+			},
+			"contract": {
+				"ledger": "Alice",
+				"template": {
+					"reducerMap": {
+						"start": {
+							"type": "start",
+							"code": "(\n  $newstate := {\n    'ended': false,\n    'owner': $action.ledger,\n    'stashed': {},\n    'view': {\n      'title': $form.title,\n      'subtitle': $form.subtitle,\n      'msgs': ['stash started']\n    }\n  };\n  \n  $out := $x.output($action.ledger, [], $form.title, $form.subtitle, 'Send this output to the contract when you want to end it', $action.tags);\n  $x.result($newstate, [$out])\n)",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"end": {
+							"type": "end",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 0, 'do not send coins, just send the start output');\n\n  $newstate := $merge([$state, { 'ended': true }]);\n  $x.result($newstate)\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"stash": {
+							"type": "stash",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $x.assert.isOk($form.key, 'please supply a key');\n  $found := $lookup($state.stashed, $form.key);\n  $x.assert.isNotOk($found, 'key already stashed');\n  \n  $i := $inputs[0];\n  $o := $i.output;\n  $stashed := $merge([$state.stashed, { $form.key: $o }]);\n  \n  $newstate := $merge([$state, { 'stashed': $stashed }]);\n  $x.result($newstate)\n)",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"unstash": {
+							"type": "unstash",
+							"code": "(\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 0, 'no inputs are allowed');\n  $x.assert.isOk($form.key, 'please supply a key');\n  $found := $lookup($state.stashed, $form.key);\n  $x.assert.isOk($found, 'key not found in stash');\n  \n  $stashed := $sift($state.stashed, function($v, $k) { $k != $form.key });\n  $newstate := $merge([$state, { 'stashed': $stashed }]);\n  $out := $x.output($state.owner, $found.coins, $found.title, $found.subtitle, $found.description, $found.tags, $found.data);\n  $x.result($newstate, [$out])\n)",
+							"language": "jsonata",
+							"expr": {}
+						}
+					},
+					"name": "incentum-stash",
+					"tags": [],
+					"other": {},
+					"ledger": "Ledger",
+					"versionMajor": 1,
+					"versionMinor": 0,
+					"versionPatch": 0,
+					"reducers": [
+						{
+							"type": "start",
+							"language": "jsonata",
+							"code": "(\n  $newstate := {\n    'ended': false,\n    'owner': $action.ledger,\n    'stashed': {},\n    'view': {\n      'title': $form.title,\n      'subtitle': $form.subtitle,\n      'msgs': ['stash started']\n    }\n  };\n  \n  $out := $x.output($action.ledger, [], $form.title, $form.subtitle, 'Send this output to the contract when you want to end it', $action.tags);\n  $x.result($newstate, [$out])\n)"
+						},
+						{
+							"type": "end",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 0, 'do not send coins, just send the start output');\n\n  $newstate := $merge([$state, { 'ended': true }]);\n  $x.result($newstate)\n)\n"
+						},
+						{
+							"type": "stash",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $x.assert.isOk($form.key, 'please supply a key');\n  $found := $lookup($state.stashed, $form.key);\n  $x.assert.isNotOk($found, 'key already stashed');\n  \n  $i := $inputs[0];\n  $o := $i.output;\n  $stashed := $merge([$state.stashed, { $form.key: $o }]);\n  \n  $newstate := $merge([$state, { 'stashed': $stashed }]);\n  $x.result($newstate)\n)"
+						},
+						{
+							"type": "unstash",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 0, 'no inputs are allowed');\n  $x.assert.isOk($form.key, 'please supply a key');\n  $found := $lookup($state.stashed, $form.key);\n  $x.assert.isOk($found, 'key not found in stash');\n  \n  $stashed := $sift($state.stashed, function($v, $k, $o) { $k != $form.key });\n  $newstate := $merge([$state, { 'stashed': ($stashed or {}) }]);\n  $out := $x.output($state.owner, $found.coins, $found.title, $found.subtitle, $found.description, $found.tags, $found.data);\n  $x.result($newstate, [$out])\n)"
+						}
+					],
+					"description": "incentum-stash Description"
+				},
+				"other": {},
+				"title": "",
+				"subtitle": "",
+				"description": "",
+				"key": "4ec07c319f2e2df46f67b4168ade7ed94363fcf9e7aeae895611252b7d9c299b"
+			}
+		},
+		{
+			"name": "unstash",
+			"result": {
+				"outputs": [
+					{
+						"ledger": "Alice",
+						"data": {},
+						"coins": [],
+						"tags": [],
+						"msgs": [],
+						"title": "Stashed Message",
+						"subtitle": "Stashed Message",
+						"description": ""
+					}
+				],
+				"state": {
+					"state": {
+						"ended": false,
+						"owner": "Alice",
+						"stashed": {
+							"message": {
+								"actionKey": "",
+								"key": "stash",
+								"ledger": "Alice",
+								"data": {},
+								"tags": [],
+								"title": "Stashed Message",
+								"subtitle": "Stashed Message",
+								"description": "",
+								"msgs": [],
+								"coins": []
+							}
+						},
+						"view": {
+							"title": "Stash Items",
+							"subtitle": "Stash for Misc.",
+							"msgs": [
+								"stash started"
+							]
+						}
+					},
+					"coins": []
+				},
+				"mint": []
+			},
+			"contract": {
+				"ledger": "Alice",
+				"template": {
+					"reducerMap": {
+						"start": {
+							"type": "start",
+							"code": "(\n  $newstate := {\n    'ended': false,\n    'owner': $action.ledger,\n    'stashed': {},\n    'view': {\n      'title': $form.title,\n      'subtitle': $form.subtitle,\n      'msgs': ['stash started']\n    }\n  };\n  \n  $out := $x.output($action.ledger, [], $form.title, $form.subtitle, 'Send this output to the contract when you want to end it', $action.tags);\n  $x.result($newstate, [$out])\n)",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"end": {
+							"type": "end",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 0, 'do not send coins, just send the start output');\n\n  $newstate := $merge([$state, { 'ended': true }]);\n  $x.result($newstate)\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"stash": {
+							"type": "stash",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $x.assert.isOk($form.key, 'please supply a key');\n  $found := $lookup($state.stashed, $form.key);\n  $x.assert.isNotOk($found, 'key already stashed');\n  \n  $i := $inputs[0];\n  $o := $i.output;\n  $stashed := $merge([$state.stashed, { $form.key: $o }]);\n  \n  $newstate := $merge([$state, { 'stashed': $stashed }]);\n  $x.result($newstate)\n)",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"unstash": {
+							"type": "unstash",
+							"code": "(\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 0, 'no inputs are allowed');\n  $x.assert.isOk($form.key, 'please supply a key');\n  $found := $lookup($state.stashed, $form.key);\n  $x.assert.isOk($found, 'key not found in stash');\n  \n  $stashed := $sift($state.stashed, function($v, $k, $o) { $k != $form.key });\n  $x.log('sifted', $stashed);\n  $newstate := $merge([$state, { 'stashed': $stashed }]);\n  $out := $x.output($state.owner, $found.coins, $found.title, $found.subtitle, $found.description, $found.tags, $found.data);\n  $x.result($newstate, [$out])\n)",
+							"language": "jsonata",
+							"expr": {}
+						}
+					},
+					"name": "incentum-stash",
+					"tags": [],
+					"other": {},
+					"ledger": "Ledger",
+					"versionMajor": 1,
+					"versionMinor": 0,
+					"versionPatch": 0,
+					"reducers": [
+						{
+							"type": "start",
+							"language": "jsonata",
+							"code": "(\n  $newstate := {\n    'ended': false,\n    'owner': $action.ledger,\n    'stashed': {},\n    'view': {\n      'title': $form.title,\n      'subtitle': $form.subtitle,\n      'msgs': ['stash started']\n    }\n  };\n  \n  $out := $x.output($action.ledger, [], $form.title, $form.subtitle, 'Send this output to the contract when you want to end it', $action.tags);\n  $x.result($newstate, [$out])\n)"
+						},
+						{
+							"type": "end",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 0, 'do not send coins, just send the start output');\n\n  $newstate := $merge([$state, { 'ended': true }]);\n  $x.result($newstate)\n)\n"
+						},
+						{
+							"type": "stash",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $x.assert.isOk($form.key, 'please supply a key');\n  $found := $lookup($state.stashed, $form.key);\n  $x.assert.isNotOk($found, 'key already stashed');\n  \n  $i := $inputs[0];\n  $o := $i.output;\n  $stashed := $merge([$state.stashed, { $form.key: $o }]);\n  \n  $newstate := $merge([$state, { 'stashed': $stashed }]);\n  $x.result($newstate)\n)"
+						},
+						{
+							"type": "unstash",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 0, 'no inputs are allowed');\n  $x.assert.isOk($form.key, 'please supply a key');\n  $found := $lookup($state.stashed, $form.key);\n  $x.assert.isOk($found, 'key not found in stash');\n  \n  $stashed := $sift($state.stashed, function($v, $k, $o) { $k != $form.key });\n  $newstate := $merge([$state, { 'stashed': ($stashed or {}) }]);\n  $out := $x.output($state.owner, $found.coins, $found.title, $found.subtitle, $found.description, $found.tags, $found.data);\n  $x.result($newstate, [$out])\n)"
+						}
+					],
+					"description": "incentum-stash Description"
+				},
+				"other": {},
+				"title": "",
+				"subtitle": "",
+				"description": "",
+				"key": "4ec07c319f2e2df46f67b4168ade7ed94363fcf9e7aeae895611252b7d9c299b"
+			}
+		},
+		{
+			"name": "unstash",
+			"result": {
+				"outputs": [
+					{
+						"ledger": "Alice",
+						"data": {},
+						"coins": [],
+						"tags": [],
+						"msgs": [],
+						"title": "Stashed Message",
+						"subtitle": "Stashed Message",
+						"description": ""
+					}
+				],
+				"state": {
+					"state": {
+						"ended": false,
+						"owner": "Alice",
+						"stashed": {
+							"message": {
+								"actionKey": "",
+								"key": "stash",
+								"ledger": "Alice",
+								"data": {},
+								"tags": [],
+								"title": "Stashed Message",
+								"subtitle": "Stashed Message",
+								"description": "",
+								"msgs": [],
+								"coins": []
+							}
+						},
+						"view": {
+							"title": "Stash Items",
+							"subtitle": "Stash for Misc.",
+							"msgs": [
+								"stash started"
+							]
+						}
+					},
+					"coins": []
+				},
+				"mint": []
+			},
+			"contract": {
+				"ledger": "Alice",
+				"template": {
+					"reducerMap": {
+						"start": {
+							"type": "start",
+							"code": "(\n  $newstate := {\n    'ended': false,\n    'owner': $action.ledger,\n    'stashed': {},\n    'view': {\n      'title': $form.title,\n      'subtitle': $form.subtitle,\n      'msgs': ['stash started']\n    }\n  };\n  \n  $out := $x.output($action.ledger, [], $form.title, $form.subtitle, 'Send this output to the contract when you want to end it', $action.tags);\n  $x.result($newstate, [$out])\n)",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"end": {
+							"type": "end",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 0, 'do not send coins, just send the start output');\n\n  $newstate := $merge([$state, { 'ended': true }]);\n  $x.result($newstate)\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"stash": {
+							"type": "stash",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $x.assert.isOk($form.key, 'please supply a key');\n  $found := $lookup($state.stashed, $form.key);\n  $x.assert.isNotOk($found, 'key already stashed');\n  \n  $i := $inputs[0];\n  $o := $i.output;\n  $stashed := $merge([$state.stashed, { $form.key: $o }]);\n  \n  $newstate := $merge([$state, { 'stashed': $stashed }]);\n  $x.result($newstate)\n)",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"unstash": {
+							"type": "unstash",
+							"code": "(\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 0, 'no inputs are allowed');\n  $x.assert.isOk($form.key, 'please supply a key');\n  $found := $lookup($state.stashed, $form.key);\n  $x.assert.isOk($found, 'key not found in stash');\n  \n  $stashed := $sift($state.stashed, function($v, $k, $o) { $k != $form.key });\n  $x.log('sifted', $state.stashed);\n  $newstate := $merge([$state, { 'stashed': $stashed }]);\n  $out := $x.output($state.owner, $found.coins, $found.title, $found.subtitle, $found.description, $found.tags, $found.data);\n  $x.result($newstate, [$out])\n)",
+							"language": "jsonata",
+							"expr": {}
+						}
+					},
+					"name": "incentum-stash",
+					"tags": [],
+					"other": {},
+					"ledger": "Ledger",
+					"versionMajor": 1,
+					"versionMinor": 0,
+					"versionPatch": 0,
+					"reducers": [
+						{
+							"type": "start",
+							"language": "jsonata",
+							"code": "(\n  $newstate := {\n    'ended': false,\n    'owner': $action.ledger,\n    'stashed': {},\n    'view': {\n      'title': $form.title,\n      'subtitle': $form.subtitle,\n      'msgs': ['stash started']\n    }\n  };\n  \n  $out := $x.output($action.ledger, [], $form.title, $form.subtitle, 'Send this output to the contract when you want to end it', $action.tags);\n  $x.result($newstate, [$out])\n)"
+						},
+						{
+							"type": "end",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 0, 'do not send coins, just send the start output');\n\n  $newstate := $merge([$state, { 'ended': true }]);\n  $x.result($newstate)\n)\n"
+						},
+						{
+							"type": "stash",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $x.assert.isOk($form.key, 'please supply a key');\n  $found := $lookup($state.stashed, $form.key);\n  $x.assert.isNotOk($found, 'key already stashed');\n  \n  $i := $inputs[0];\n  $o := $i.output;\n  $stashed := $merge([$state.stashed, { $form.key: $o }]);\n  \n  $newstate := $merge([$state, { 'stashed': $stashed }]);\n  $x.result($newstate)\n)"
+						},
+						{
+							"type": "unstash",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 0, 'no inputs are allowed');\n  $x.assert.isOk($form.key, 'please supply a key');\n  $found := $lookup($state.stashed, $form.key);\n  $x.assert.isOk($found, 'key not found in stash');\n  \n  $stashed := $sift($state.stashed, function($v, $k, $o) { $k != $form.key });\n  $newstate := $merge([$state, { 'stashed': ($stashed or {}) }]);\n  $out := $x.output($state.owner, $found.coins, $found.title, $found.subtitle, $found.description, $found.tags, $found.data);\n  $x.result($newstate, [$out])\n)"
+						}
+					],
+					"description": "incentum-stash Description"
+				},
+				"other": {},
+				"title": "",
+				"subtitle": "",
+				"description": "",
+				"key": "4ec07c319f2e2df46f67b4168ade7ed94363fcf9e7aeae895611252b7d9c299b"
+			}
+		},
+		{
+			"name": "unstash",
+			"result": {
+				"outputs": [
+					{
+						"ledger": "Alice",
+						"data": {},
+						"coins": [],
+						"tags": [],
+						"msgs": [],
+						"title": "Stashed Message",
+						"subtitle": "Stashed Message",
+						"description": ""
+					}
+				],
+				"state": {
+					"state": {
+						"ended": false,
+						"owner": "Alice",
+						"stashed": {
+							"message": {
+								"actionKey": "",
+								"key": "stash",
+								"ledger": "Alice",
+								"data": {},
+								"tags": [],
+								"title": "Stashed Message",
+								"subtitle": "Stashed Message",
+								"description": "",
+								"msgs": [],
+								"coins": []
+							}
+						},
+						"view": {
+							"title": "Stash Items",
+							"subtitle": "Stash for Misc.",
+							"msgs": [
+								"stash started"
+							]
+						}
+					},
+					"coins": []
+				},
+				"mint": []
+			},
+			"contract": {
+				"ledger": "Alice",
+				"template": {
+					"reducerMap": {
+						"start": {
+							"type": "start",
+							"code": "(\n  $newstate := {\n    'ended': false,\n    'owner': $action.ledger,\n    'stashed': {},\n    'view': {\n      'title': $form.title,\n      'subtitle': $form.subtitle,\n      'msgs': ['stash started']\n    }\n  };\n  \n  $out := $x.output($action.ledger, [], $form.title, $form.subtitle, 'Send this output to the contract when you want to end it', $action.tags);\n  $x.result($newstate, [$out])\n)",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"end": {
+							"type": "end",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 0, 'do not send coins, just send the start output');\n\n  $newstate := $merge([$state, { 'ended': true }]);\n  $x.result($newstate)\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"stash": {
+							"type": "stash",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $x.assert.isOk($form.key, 'please supply a key');\n  $found := $lookup($state.stashed, $form.key);\n  $x.assert.isNotOk($found, 'key already stashed');\n  \n  $i := $inputs[0];\n  $o := $i.output;\n  $stashed := $merge([$state.stashed, { $form.key: $o }]);\n  \n  $newstate := $merge([$state, { 'stashed': $stashed }]);\n  $x.result($newstate)\n)",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"unstash": {
+							"type": "unstash",
+							"code": "(\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 0, 'no inputs are allowed');\n  $x.assert.isOk($form.key, 'please supply a key');\n  $found := $lookup($state.stashed, $form.key);\n  $x.assert.isOk($found, 'key not found in stash');\n  \n  $stashed := $sift($state.stashed, function($v, $k, $o) {\n    (\n    $x.log('sifting', $k);\n    $k != $form.key \n    )\n  });\n  $x.log('sifted', $stashed);\n  $newstate := $merge([$state, { 'stashed': $stashed }]);\n  $out := $x.output($state.owner, $found.coins, $found.title, $found.subtitle, $found.description, $found.tags, $found.data);\n  $x.result($newstate, [$out])\n)",
+							"language": "jsonata",
+							"expr": {}
+						}
+					},
+					"name": "incentum-stash",
+					"tags": [],
+					"other": {},
+					"ledger": "Ledger",
+					"versionMajor": 1,
+					"versionMinor": 0,
+					"versionPatch": 0,
+					"reducers": [
+						{
+							"type": "start",
+							"language": "jsonata",
+							"code": "(\n  $newstate := {\n    'ended': false,\n    'owner': $action.ledger,\n    'stashed': {},\n    'view': {\n      'title': $form.title,\n      'subtitle': $form.subtitle,\n      'msgs': ['stash started']\n    }\n  };\n  \n  $out := $x.output($action.ledger, [], $form.title, $form.subtitle, 'Send this output to the contract when you want to end it', $action.tags);\n  $x.result($newstate, [$out])\n)"
+						},
+						{
+							"type": "end",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 0, 'do not send coins, just send the start output');\n\n  $newstate := $merge([$state, { 'ended': true }]);\n  $x.result($newstate)\n)\n"
+						},
+						{
+							"type": "stash",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $x.assert.isOk($form.key, 'please supply a key');\n  $found := $lookup($state.stashed, $form.key);\n  $x.assert.isNotOk($found, 'key already stashed');\n  \n  $i := $inputs[0];\n  $o := $i.output;\n  $stashed := $merge([$state.stashed, { $form.key: $o }]);\n  \n  $newstate := $merge([$state, { 'stashed': $stashed }]);\n  $x.result($newstate)\n)"
+						},
+						{
+							"type": "unstash",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 0, 'no inputs are allowed');\n  $x.assert.isOk($form.key, 'please supply a key');\n  $found := $lookup($state.stashed, $form.key);\n  $x.assert.isOk($found, 'key not found in stash');\n  \n  $stashed := $sift($state.stashed, function($v, $k, $o) { $k != $form.key });\n  $newstate := $merge([$state, { 'stashed': ($stashed or {}) }]);\n  $out := $x.output($state.owner, $found.coins, $found.title, $found.subtitle, $found.description, $found.tags, $found.data);\n  $x.result($newstate, [$out])\n)"
+						}
+					],
+					"description": "incentum-stash Description"
+				},
+				"other": {},
+				"title": "",
+				"subtitle": "",
+				"description": "",
+				"key": "4ec07c319f2e2df46f67b4168ade7ed94363fcf9e7aeae895611252b7d9c299b"
+			}
+		},
+		{
+			"name": "unstash",
+			"result": {
+				"outputs": [
+					{
+						"ledger": "Alice",
+						"data": {},
+						"coins": [],
+						"tags": [],
+						"msgs": [],
+						"title": "Stashed Message",
+						"subtitle": "Stashed Message",
+						"description": ""
+					}
+				],
+				"state": {
+					"state": {
+						"ended": false,
+						"owner": "Alice",
+						"stashed": {
+							"message": {
+								"actionKey": "",
+								"key": "stash",
+								"ledger": "Alice",
+								"data": {},
+								"tags": [],
+								"title": "Stashed Message",
+								"subtitle": "Stashed Message",
+								"description": "",
+								"msgs": [],
+								"coins": []
+							}
+						},
+						"view": {
+							"title": "Stash Items",
+							"subtitle": "Stash for Misc.",
+							"msgs": [
+								"stash started"
+							]
+						}
+					},
+					"coins": []
+				},
+				"mint": []
+			},
+			"contract": {
+				"ledger": "Alice",
+				"template": {
+					"reducerMap": {
+						"start": {
+							"type": "start",
+							"code": "(\n  $newstate := {\n    'ended': false,\n    'owner': $action.ledger,\n    'stashed': {},\n    'view': {\n      'title': $form.title,\n      'subtitle': $form.subtitle,\n      'msgs': ['stash started']\n    }\n  };\n  \n  $out := $x.output($action.ledger, [], $form.title, $form.subtitle, 'Send this output to the contract when you want to end it', $action.tags);\n  $x.result($newstate, [$out])\n)",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"end": {
+							"type": "end",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 0, 'do not send coins, just send the start output');\n\n  $newstate := $merge([$state, { 'ended': true }]);\n  $x.result($newstate)\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"stash": {
+							"type": "stash",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $x.assert.isOk($form.key, 'please supply a key');\n  $found := $lookup($state.stashed, $form.key);\n  $x.assert.isNotOk($found, 'key already stashed');\n  \n  $i := $inputs[0];\n  $o := $i.output;\n  $stashed := $merge([$state.stashed, { $form.key: $o }]);\n  \n  $newstate := $merge([$state, { 'stashed': $stashed }]);\n  $x.result($newstate)\n)",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"unstash": {
+							"type": "unstash",
+							"code": "(\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 0, 'no inputs are allowed');\n  $x.assert.isOk($form.key, 'please supply a key');\n  $found := $lookup($state.stashed, $form.key);\n  $x.assert.isOk($found, 'key not found in stash');\n  \n  $stashed := $sift($state.stashed, function($v, $k, $o) {\n    (\n    $x.log('sifting', $k);\n    ($k != $form.key) \n    )\n  });\n  $x.log('sifted', $stashed);\n  $newstate := $merge([$state, { 'stashed': $stashed }]);\n  $out := $x.output($state.owner, $found.coins, $found.title, $found.subtitle, $found.description, $found.tags, $found.data);\n  $x.result($newstate, [$out])\n)",
+							"language": "jsonata",
+							"expr": {}
+						}
+					},
+					"name": "incentum-stash",
+					"tags": [],
+					"other": {},
+					"ledger": "Ledger",
+					"versionMajor": 1,
+					"versionMinor": 0,
+					"versionPatch": 0,
+					"reducers": [
+						{
+							"type": "start",
+							"language": "jsonata",
+							"code": "(\n  $newstate := {\n    'ended': false,\n    'owner': $action.ledger,\n    'stashed': {},\n    'view': {\n      'title': $form.title,\n      'subtitle': $form.subtitle,\n      'msgs': ['stash started']\n    }\n  };\n  \n  $out := $x.output($action.ledger, [], $form.title, $form.subtitle, 'Send this output to the contract when you want to end it', $action.tags);\n  $x.result($newstate, [$out])\n)"
+						},
+						{
+							"type": "end",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 0, 'do not send coins, just send the start output');\n\n  $newstate := $merge([$state, { 'ended': true }]);\n  $x.result($newstate)\n)\n"
+						},
+						{
+							"type": "stash",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $x.assert.isOk($form.key, 'please supply a key');\n  $found := $lookup($state.stashed, $form.key);\n  $x.assert.isNotOk($found, 'key already stashed');\n  \n  $i := $inputs[0];\n  $o := $i.output;\n  $stashed := $merge([$state.stashed, { $form.key: $o }]);\n  \n  $newstate := $merge([$state, { 'stashed': $stashed }]);\n  $x.result($newstate)\n)"
+						},
+						{
+							"type": "unstash",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 0, 'no inputs are allowed');\n  $x.assert.isOk($form.key, 'please supply a key');\n  $found := $lookup($state.stashed, $form.key);\n  $x.assert.isOk($found, 'key not found in stash');\n  \n  $stashed := $sift($state.stashed, function($v, $k, $o) { $k != $form.key });\n  $newstate := $merge([$state, { 'stashed': ($stashed or {}) }]);\n  $out := $x.output($state.owner, $found.coins, $found.title, $found.subtitle, $found.description, $found.tags, $found.data);\n  $x.result($newstate, [$out])\n)"
+						}
+					],
+					"description": "incentum-stash Description"
+				},
+				"other": {},
+				"title": "",
+				"subtitle": "",
+				"description": "",
+				"key": "4ec07c319f2e2df46f67b4168ade7ed94363fcf9e7aeae895611252b7d9c299b"
+			}
+		},
+		{
+			"name": "unstash",
+			"result": {
+				"outputs": [
+					{
+						"ledger": "Alice",
+						"data": {},
+						"coins": [],
+						"tags": [],
+						"msgs": [],
+						"title": "Stashed Message",
+						"subtitle": "Stashed Message",
+						"description": ""
+					}
+				],
+				"state": {
+					"state": {
+						"ended": false,
+						"owner": "Alice",
+						"stashed": {
+							"message": {
+								"actionKey": "",
+								"key": "stash",
+								"ledger": "Alice",
+								"data": {},
+								"tags": [],
+								"title": "Stashed Message",
+								"subtitle": "Stashed Message",
+								"description": "",
+								"msgs": [],
+								"coins": []
+							}
+						},
+						"view": {
+							"title": "Stash Items",
+							"subtitle": "Stash for Misc.",
+							"msgs": [
+								"stash started"
+							]
+						}
+					},
+					"coins": []
+				},
+				"mint": []
+			},
+			"contract": {
+				"ledger": "Alice",
+				"template": {
+					"reducerMap": {
+						"start": {
+							"type": "start",
+							"code": "(\n  $newstate := {\n    'ended': false,\n    'owner': $action.ledger,\n    'stashed': {},\n    'view': {\n      'title': $form.title,\n      'subtitle': $form.subtitle,\n      'msgs': ['stash started']\n    }\n  };\n  \n  $out := $x.output($action.ledger, [], $form.title, $form.subtitle, 'Send this output to the contract when you want to end it', $action.tags);\n  $x.result($newstate, [$out])\n)",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"end": {
+							"type": "end",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 0, 'do not send coins, just send the start output');\n\n  $newstate := $merge([$state, { 'ended': true }]);\n  $x.result($newstate)\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"stash": {
+							"type": "stash",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $x.assert.isOk($form.key, 'please supply a key');\n  $found := $lookup($state.stashed, $form.key);\n  $x.assert.isNotOk($found, 'key already stashed');\n  \n  $i := $inputs[0];\n  $o := $i.output;\n  $stashed := $merge([$state.stashed, { $form.key: $o }]);\n  \n  $newstate := $merge([$state, { 'stashed': $stashed }]);\n  $x.result($newstate)\n)",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"unstash": {
+							"type": "unstash",
+							"code": "(\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 0, 'no inputs are allowed');\n  $x.assert.isOk($form.key, 'please supply a key');\n  $found := $lookup($state.stashed, $form.key);\n  $x.assert.isOk($found, 'key not found in stash');\n  \n  $stashed := $sift($state.stashed, function($v, $k, $o) {\n    (\n    $x.log('sifting', $k);\n    ($k != $form.key) \n    )\n  });\n  $x.log('sifted', $stashed);\n  $newstate := $merge([$state, { 'stashed': $stashed }]);\n  $out := $x.output($state.owner, $found.coins, $found.title, $found.subtitle, $found.description, $found.tags, $found.data);\n  $x.result($newstate, [$out])\n)",
+							"language": "jsonata",
+							"expr": {}
+						}
+					},
+					"name": "incentum-stash",
+					"tags": [],
+					"other": {},
+					"ledger": "Ledger",
+					"versionMajor": 1,
+					"versionMinor": 0,
+					"versionPatch": 0,
+					"reducers": [
+						{
+							"type": "start",
+							"language": "jsonata",
+							"code": "(\n  $newstate := {\n    'ended': false,\n    'owner': $action.ledger,\n    'stashed': {},\n    'view': {\n      'title': $form.title,\n      'subtitle': $form.subtitle,\n      'msgs': ['stash started']\n    }\n  };\n  \n  $out := $x.output($action.ledger, [], $form.title, $form.subtitle, 'Send this output to the contract when you want to end it', $action.tags);\n  $x.result($newstate, [$out])\n)"
+						},
+						{
+							"type": "end",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 0, 'do not send coins, just send the start output');\n\n  $newstate := $merge([$state, { 'ended': true }]);\n  $x.result($newstate)\n)\n"
+						},
+						{
+							"type": "stash",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $x.assert.isOk($form.key, 'please supply a key');\n  $found := $lookup($state.stashed, $form.key);\n  $x.assert.isNotOk($found, 'key already stashed');\n  \n  $i := $inputs[0];\n  $o := $i.output;\n  $stashed := $merge([$state.stashed, { $form.key: $o }]);\n  \n  $newstate := $merge([$state, { 'stashed': $stashed }]);\n  $x.result($newstate)\n)"
+						},
+						{
+							"type": "unstash",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 0, 'no inputs are allowed');\n  $x.assert.isOk($form.key, 'please supply a key');\n  $found := $lookup($state.stashed, $form.key);\n  $x.assert.isOk($found, 'key not found in stash');\n  \n  $stashed := $sift($state.stashed, function($v, $k, $o) { $k != $form.key });\n  $newstate := $merge([$state, { 'stashed': ($stashed or {}) }]);\n  $out := $x.output($state.owner, $found.coins, $found.title, $found.subtitle, $found.description, $found.tags, $found.data);\n  $x.result($newstate, [$out])\n)"
+						}
+					],
+					"description": "incentum-stash Description"
+				},
+				"other": {},
+				"title": "",
+				"subtitle": "",
+				"description": "",
+				"key": "4ec07c319f2e2df46f67b4168ade7ed94363fcf9e7aeae895611252b7d9c299b"
+			}
+		},
+		{
+			"name": "unstash",
+			"result": {
+				"outputs": [
+					{
+						"ledger": "Alice",
+						"data": {},
+						"coins": [],
+						"tags": [],
+						"msgs": [],
+						"title": "Stashed Message",
+						"subtitle": "Stashed Message",
+						"description": ""
+					}
+				],
+				"state": {
+					"state": {
+						"ended": false,
+						"owner": "Alice",
+						"stashed": {
+							"message": {
+								"actionKey": "",
+								"key": "stash",
+								"ledger": "Alice",
+								"data": {},
+								"tags": [],
+								"title": "Stashed Message",
+								"subtitle": "Stashed Message",
+								"description": "",
+								"msgs": [],
+								"coins": []
+							}
+						},
+						"view": {
+							"title": "Stash Items",
+							"subtitle": "Stash for Misc.",
+							"msgs": [
+								"stash started"
+							]
+						}
+					},
+					"coins": []
+				},
+				"mint": []
+			},
+			"contract": {
+				"ledger": "Alice",
+				"template": {
+					"reducerMap": {
+						"start": {
+							"type": "start",
+							"code": "(\n  $newstate := {\n    'ended': false,\n    'owner': $action.ledger,\n    'stashed': {},\n    'view': {\n      'title': $form.title,\n      'subtitle': $form.subtitle,\n      'msgs': ['stash started']\n    }\n  };\n  \n  $out := $x.output($action.ledger, [], $form.title, $form.subtitle, 'Send this output to the contract when you want to end it', $action.tags);\n  $x.result($newstate, [$out])\n)",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"end": {
+							"type": "end",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 0, 'do not send coins, just send the start output');\n\n  $newstate := $merge([$state, { 'ended': true }]);\n  $x.result($newstate)\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"stash": {
+							"type": "stash",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $x.assert.isOk($form.key, 'please supply a key');\n  $found := $lookup($state.stashed, $form.key);\n  $x.assert.isNotOk($found, 'key already stashed');\n  \n  $i := $inputs[0];\n  $o := $i.output;\n  $stashed := $merge([$state.stashed, { $form.key: $o }]);\n  \n  $newstate := $merge([$state, { 'stashed': $stashed }]);\n  $x.result($newstate)\n)",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"unstash": {
+							"type": "unstash",
+							"code": "(\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 0, 'no inputs are allowed');\n  $x.assert.isOk($form.key, 'please supply a key');\n  $found := $lookup($state.stashed, $form.key);\n  $x.assert.isOk($found, 'key not found in stash');\n  \n  $stashed := $sift($state.stashed, function($v, $k, $o) {\n    (\n    $x.log('sifting', $k);\n    ($k != $form.key) \n    )\n  });\n  $x.log('sifted', $stashed);\n  $newstate := $merge([$state, { 'stashed': $stashed }]);\n  $out := $x.output($state.owner, $found.coins, $found.title, $found.subtitle, $found.description, $found.tags, $found.data);\n  $x.result($newstate, [$out])\n)",
+							"language": "jsonata",
+							"expr": {}
+						}
+					},
+					"name": "incentum-stash",
+					"tags": [],
+					"other": {},
+					"ledger": "Ledger",
+					"versionMajor": 1,
+					"versionMinor": 0,
+					"versionPatch": 0,
+					"reducers": [
+						{
+							"type": "start",
+							"language": "jsonata",
+							"code": "(\n  $newstate := {\n    'ended': false,\n    'owner': $action.ledger,\n    'stashed': {},\n    'view': {\n      'title': $form.title,\n      'subtitle': $form.subtitle,\n      'msgs': ['stash started']\n    }\n  };\n  \n  $out := $x.output($action.ledger, [], $form.title, $form.subtitle, 'Send this output to the contract when you want to end it', $action.tags);\n  $x.result($newstate, [$out])\n)"
+						},
+						{
+							"type": "end",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 0, 'do not send coins, just send the start output');\n\n  $newstate := $merge([$state, { 'ended': true }]);\n  $x.result($newstate)\n)\n"
+						},
+						{
+							"type": "stash",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $x.assert.isOk($form.key, 'please supply a key');\n  $found := $lookup($state.stashed, $form.key);\n  $x.assert.isNotOk($found, 'key already stashed');\n  \n  $i := $inputs[0];\n  $o := $i.output;\n  $stashed := $merge([$state.stashed, { $form.key: $o }]);\n  \n  $newstate := $merge([$state, { 'stashed': $stashed }]);\n  $x.result($newstate)\n)"
+						},
+						{
+							"type": "unstash",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 0, 'no inputs are allowed');\n  $x.assert.isOk($form.key, 'please supply a key');\n  $found := $lookup($state.stashed, $form.key);\n  $x.assert.isOk($found, 'key not found in stash');\n  \n  $stashed := $sift($state.stashed, function($v, $k, $o) { $k != $form.key });\n  $newstate := $merge([$state, { 'stashed': ($stashed or {}) }]);\n  $out := $x.output($state.owner, $found.coins, $found.title, $found.subtitle, $found.description, $found.tags, $found.data);\n  $x.result($newstate, [$out])\n)"
+						}
+					],
+					"description": "incentum-stash Description"
+				},
+				"other": {},
+				"title": "",
+				"subtitle": "",
+				"description": "",
+				"key": "4ec07c319f2e2df46f67b4168ade7ed94363fcf9e7aeae895611252b7d9c299b"
+			}
+		},
+		{
+			"name": "unstash",
+			"result": {
+				"outputs": [
+					{
+						"ledger": "Alice",
+						"data": {},
+						"coins": [],
+						"tags": [],
+						"msgs": [],
+						"title": "Stashed Message",
+						"subtitle": "Stashed Message",
+						"description": ""
+					}
+				],
+				"state": {
+					"state": {
+						"ended": false,
+						"owner": "Alice",
+						"stashed": {
+							"message": {
+								"actionKey": "",
+								"key": "stash",
+								"ledger": "Alice",
+								"data": {},
+								"tags": [],
+								"title": "Stashed Message",
+								"subtitle": "Stashed Message",
+								"description": "",
+								"msgs": [],
+								"coins": []
+							}
+						},
+						"view": {
+							"title": "Stash Items",
+							"subtitle": "Stash for Misc.",
+							"msgs": [
+								"stash started"
+							]
+						}
+					},
+					"coins": []
+				},
+				"mint": []
+			},
+			"contract": {
+				"ledger": "Alice",
+				"template": {
+					"reducerMap": {
+						"start": {
+							"type": "start",
+							"code": "(\n  $newstate := {\n    'ended': false,\n    'owner': $action.ledger,\n    'stashed': {},\n    'view': {\n      'title': $form.title,\n      'subtitle': $form.subtitle,\n      'msgs': ['stash started']\n    }\n  };\n  \n  $out := $x.output($action.ledger, [], $form.title, $form.subtitle, 'Send this output to the contract when you want to end it', $action.tags);\n  $x.result($newstate, [$out])\n)",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"end": {
+							"type": "end",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 0, 'do not send coins, just send the start output');\n\n  $newstate := $merge([$state, { 'ended': true }]);\n  $x.result($newstate)\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"stash": {
+							"type": "stash",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $x.assert.isOk($form.key, 'please supply a key');\n  $found := $lookup($state.stashed, $form.key);\n  $x.assert.isNotOk($found, 'key already stashed');\n  \n  $i := $inputs[0];\n  $o := $i.output;\n  $stashed := $merge([$state.stashed, { $form.key: $o }]);\n  \n  $newstate := $merge([$state, { 'stashed': $stashed }]);\n  $x.result($newstate)\n)",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"unstash": {
+							"type": "unstash",
+							"code": "(\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 0, 'no inputs are allowed');\n  $x.assert.isOk($form.key, 'please supply a key');\n  $found := $lookup($state.stashed, $form.key);\n  $x.assert.isOk($found, 'key not found in stash');\n  \n  $stashed := $sift($state.stashed, function($v, $k, $o) { $not($lookup($state.stashed, $form.key)) });\n  $x.log('sifted', $stashed);\n  $newstate := $merge([$state, { 'stashed': $stashed }]);\n  $out := $x.output($state.owner, $found.coins, $found.title, $found.subtitle, $found.description, $found.tags, $found.data);\n  $x.result($newstate, [$out])\n)",
+							"language": "jsonata",
+							"expr": {}
+						}
+					},
+					"name": "incentum-stash",
+					"tags": [],
+					"other": {},
+					"ledger": "Ledger",
+					"versionMajor": 1,
+					"versionMinor": 0,
+					"versionPatch": 0,
+					"reducers": [
+						{
+							"type": "start",
+							"language": "jsonata",
+							"code": "(\n  $newstate := {\n    'ended': false,\n    'owner': $action.ledger,\n    'stashed': {},\n    'view': {\n      'title': $form.title,\n      'subtitle': $form.subtitle,\n      'msgs': ['stash started']\n    }\n  };\n  \n  $out := $x.output($action.ledger, [], $form.title, $form.subtitle, 'Send this output to the contract when you want to end it', $action.tags);\n  $x.result($newstate, [$out])\n)"
+						},
+						{
+							"type": "end",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 0, 'do not send coins, just send the start output');\n\n  $newstate := $merge([$state, { 'ended': true }]);\n  $x.result($newstate)\n)\n"
+						},
+						{
+							"type": "stash",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $x.assert.isOk($form.key, 'please supply a key');\n  $found := $lookup($state.stashed, $form.key);\n  $x.assert.isNotOk($found, 'key already stashed');\n  \n  $i := $inputs[0];\n  $o := $i.output;\n  $stashed := $merge([$state.stashed, { $form.key: $o }]);\n  \n  $newstate := $merge([$state, { 'stashed': $stashed }]);\n  $x.result($newstate)\n)"
+						},
+						{
+							"type": "unstash",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 0, 'no inputs are allowed');\n  $x.assert.isOk($form.key, 'please supply a key');\n  $found := $lookup($state.stashed, $form.key);\n  $x.assert.isOk($found, 'key not found in stash');\n  \n  $stashed := $sift($state.stashed, function($v, $k, $o) { $k != $form.key });\n  $newstate := $merge([$state, { 'stashed': ($stashed or {}) }]);\n  $out := $x.output($state.owner, $found.coins, $found.title, $found.subtitle, $found.description, $found.tags, $found.data);\n  $x.result($newstate, [$out])\n)"
+						}
+					],
+					"description": "incentum-stash Description"
+				},
+				"other": {},
+				"title": "",
+				"subtitle": "",
+				"description": "",
+				"key": "4ec07c319f2e2df46f67b4168ade7ed94363fcf9e7aeae895611252b7d9c299b"
+			}
+		},
+		{
+			"name": "unstash",
+			"result": {
+				"outputs": [
+					{
+						"ledger": "Alice",
+						"data": {},
+						"coins": [],
+						"tags": [],
+						"msgs": [],
+						"title": "Stashed Message",
+						"subtitle": "Stashed Message",
+						"description": ""
+					}
+				],
+				"state": {
+					"state": {
+						"ended": false,
+						"owner": "Alice",
+						"stashed": false,
+						"view": {
+							"title": "Stash Items",
+							"subtitle": "Stash for Misc.",
+							"msgs": [
+								"stash started"
+							]
+						}
+					},
+					"coins": []
+				},
+				"mint": []
+			},
+			"contract": {
+				"ledger": "Alice",
+				"template": {
+					"reducerMap": {
+						"start": {
+							"type": "start",
+							"code": "(\n  $newstate := {\n    'ended': false,\n    'owner': $action.ledger,\n    'stashed': {},\n    'view': {\n      'title': $form.title,\n      'subtitle': $form.subtitle,\n      'msgs': ['stash started']\n    }\n  };\n  \n  $out := $x.output($action.ledger, [], $form.title, $form.subtitle, 'Send this output to the contract when you want to end it', $action.tags);\n  $x.result($newstate, [$out])\n)",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"end": {
+							"type": "end",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 0, 'do not send coins, just send the start output');\n\n  $newstate := $merge([$state, { 'ended': true }]);\n  $x.result($newstate)\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"stash": {
+							"type": "stash",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $x.assert.isOk($form.key, 'please supply a key');\n  $found := $lookup($state.stashed, $form.key);\n  $x.assert.isNotOk($found, 'key already stashed');\n  \n  $i := $inputs[0];\n  $o := $i.output;\n  $stashed := $merge([$state.stashed, { $form.key: $o }]);\n  \n  $newstate := $merge([$state, { 'stashed': $stashed }]);\n  $x.result($newstate)\n)",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"unstash": {
+							"type": "unstash",
+							"code": "(\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 0, 'no inputs are allowed');\n  $x.assert.isOk($form.key, 'please supply a key');\n  $found := $lookup($state.stashed, $form.key);\n  $x.assert.isOk($found, 'key not found in stash');\n  \n  $stashed := $sift($state.stashed, function($v, $k, $o) { $k != $form.key });\n  $x.log('sifted', $stashed);\n  $newstate := $merge([$state, { 'stashed': $stashed or {} }]);\n  $out := $x.output($state.owner, $found.coins, $found.title, $found.subtitle, $found.description, $found.tags, $found.data);\n  $x.result($newstate, [$out])\n)",
+							"language": "jsonata",
+							"expr": {}
+						}
+					},
+					"name": "incentum-stash",
+					"tags": [],
+					"other": {},
+					"ledger": "Ledger",
+					"versionMajor": 1,
+					"versionMinor": 0,
+					"versionPatch": 0,
+					"reducers": [
+						{
+							"type": "start",
+							"language": "jsonata",
+							"code": "(\n  $newstate := {\n    'ended': false,\n    'owner': $action.ledger,\n    'stashed': {},\n    'view': {\n      'title': $form.title,\n      'subtitle': $form.subtitle,\n      'msgs': ['stash started']\n    }\n  };\n  \n  $out := $x.output($action.ledger, [], $form.title, $form.subtitle, 'Send this output to the contract when you want to end it', $action.tags);\n  $x.result($newstate, [$out])\n)"
+						},
+						{
+							"type": "end",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 0, 'do not send coins, just send the start output');\n\n  $newstate := $merge([$state, { 'ended': true }]);\n  $x.result($newstate)\n)\n"
+						},
+						{
+							"type": "stash",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $x.assert.isOk($form.key, 'please supply a key');\n  $found := $lookup($state.stashed, $form.key);\n  $x.assert.isNotOk($found, 'key already stashed');\n  \n  $i := $inputs[0];\n  $o := $i.output;\n  $stashed := $merge([$state.stashed, { $form.key: $o }]);\n  \n  $newstate := $merge([$state, { 'stashed': $stashed }]);\n  $x.result($newstate)\n)"
+						},
+						{
+							"type": "unstash",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 0, 'no inputs are allowed');\n  $x.assert.isOk($form.key, 'please supply a key');\n  $found := $lookup($state.stashed, $form.key);\n  $x.assert.isOk($found, 'key not found in stash');\n  \n  $stashed := $sift($state.stashed, function($v, $k, $o) { $k != $form.key });\n  $newstate := $merge([$state, { 'stashed': ($stashed or {}) }]);\n  $out := $x.output($state.owner, $found.coins, $found.title, $found.subtitle, $found.description, $found.tags, $found.data);\n  $x.result($newstate, [$out])\n)"
+						}
+					],
+					"description": "incentum-stash Description"
+				},
+				"other": {},
+				"title": "",
+				"subtitle": "",
+				"description": "",
+				"key": "4ec07c319f2e2df46f67b4168ade7ed94363fcf9e7aeae895611252b7d9c299b"
+			}
+		},
+		{
+			"name": "unstash",
+			"result": {
+				"outputs": [
+					{
+						"ledger": "Alice",
+						"data": {},
+						"coins": [],
+						"tags": [],
+						"msgs": [],
+						"title": "Stashed Message",
+						"subtitle": "Stashed Message",
+						"description": ""
+					}
+				],
+				"state": {
+					"state": {
+						"ended": false,
+						"owner": "Alice",
+						"stashed": false,
+						"view": {
+							"title": "Stash Items",
+							"subtitle": "Stash for Misc.",
+							"msgs": [
+								"stash started"
+							]
+						}
+					},
+					"coins": []
+				},
+				"mint": []
+			},
+			"contract": {
+				"ledger": "Alice",
+				"template": {
+					"reducerMap": {
+						"start": {
+							"type": "start",
+							"code": "(\n  $newstate := {\n    'ended': false,\n    'owner': $action.ledger,\n    'stashed': {},\n    'view': {\n      'title': $form.title,\n      'subtitle': $form.subtitle,\n      'msgs': ['stash started']\n    }\n  };\n  \n  $out := $x.output($action.ledger, [], $form.title, $form.subtitle, 'Send this output to the contract when you want to end it', $action.tags);\n  $x.result($newstate, [$out])\n)",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"end": {
+							"type": "end",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 0, 'do not send coins, just send the start output');\n\n  $newstate := $merge([$state, { 'ended': true }]);\n  $x.result($newstate)\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"stash": {
+							"type": "stash",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $x.assert.isOk($form.key, 'please supply a key');\n  $found := $lookup($state.stashed, $form.key);\n  $x.assert.isNotOk($found, 'key already stashed');\n  \n  $i := $inputs[0];\n  $o := $i.output;\n  $stashed := $merge([$state.stashed, { $form.key: $o }]);\n  \n  $newstate := $merge([$state, { 'stashed': $stashed }]);\n  $x.result($newstate)\n)",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"unstash": {
+							"type": "unstash",
+							"code": "(\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 0, 'no inputs are allowed');\n  $x.assert.isOk($form.key, 'please supply a key');\n  $found := $lookup($state.stashed, $form.key);\n  $x.assert.isOk($found, 'key not found in stash');\n  \n  $stashed := $sift($state.stashed, function($v, $k, $o) { $k != $form.key });\n  $newstate := $merge([$state, { 'stashed': ($stashed or {}) }]);\n  $out := $x.output($state.owner, $found.coins, $found.title, $found.subtitle, $found.description, $found.tags, $found.data);\n  $x.result($newstate, [$out])\n)",
+							"language": "jsonata",
+							"expr": {}
+						}
+					},
+					"name": "incentum-stash",
+					"tags": [],
+					"other": {},
+					"ledger": "Ledger",
+					"versionMajor": 1,
+					"versionMinor": 0,
+					"versionPatch": 0,
+					"reducers": [
+						{
+							"type": "start",
+							"language": "jsonata",
+							"code": "(\n  $newstate := {\n    'ended': false,\n    'owner': $action.ledger,\n    'stashed': {},\n    'view': {\n      'title': $form.title,\n      'subtitle': $form.subtitle,\n      'msgs': ['stash started']\n    }\n  };\n  \n  $out := $x.output($action.ledger, [], $form.title, $form.subtitle, 'Send this output to the contract when you want to end it', $action.tags);\n  $x.result($newstate, [$out])\n)"
+						},
+						{
+							"type": "end",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 0, 'do not send coins, just send the start output');\n\n  $newstate := $merge([$state, { 'ended': true }]);\n  $x.result($newstate)\n)\n"
+						},
+						{
+							"type": "stash",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $x.assert.isOk($form.key, 'please supply a key');\n  $found := $lookup($state.stashed, $form.key);\n  $x.assert.isNotOk($found, 'key already stashed');\n  \n  $i := $inputs[0];\n  $o := $i.output;\n  $stashed := $merge([$state.stashed, { $form.key: $o }]);\n  \n  $newstate := $merge([$state, { 'stashed': $stashed }]);\n  $x.result($newstate)\n)"
+						},
+						{
+							"type": "unstash",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 0, 'no inputs are allowed');\n  $x.assert.isOk($form.key, 'please supply a key');\n  $found := $lookup($state.stashed, $form.key);\n  $x.assert.isOk($found, 'key not found in stash');\n  \n  $stashed := $sift($state.stashed, function($v, $k, $o) { $k != $form.key });\n  $newstate := $merge([$state, { 'stashed': ($stashed or {}) }]);\n  $out := $x.output($state.owner, $found.coins, $found.title, $found.subtitle, $found.description, $found.tags, $found.data);\n  $x.result($newstate, [$out])\n)"
+						}
+					],
+					"description": "incentum-stash Description"
+				},
+				"other": {},
+				"title": "",
+				"subtitle": "",
+				"description": "",
+				"key": "4ec07c319f2e2df46f67b4168ade7ed94363fcf9e7aeae895611252b7d9c299b"
+			}
+		},
+		{
+			"name": "stash",
+			"result": {
+				"outputs": [],
+				"state": {
+					"state": {
+						"ended": false,
+						"owner": "Alice",
+						"stashed": {
+							"message": {
+								"actionKey": "",
+								"key": "stash",
+								"ledger": "Alice",
+								"data": {},
+								"tags": [],
+								"title": "Stashed Message",
+								"subtitle": "Stashed Message",
+								"description": "",
+								"msgs": [],
+								"coins": []
+							}
+						},
+						"view": {
+							"title": "Stash Items",
+							"subtitle": "Stash for Misc.",
+							"msgs": [
+								"stash started",
+								"Stashed message"
+							]
+						}
+					},
+					"coins": []
+				},
+				"mint": []
+			},
+			"contract": {
+				"ledger": "Alice",
+				"template": {
+					"reducerMap": {
+						"start": {
+							"type": "start",
+							"code": "(\n  $newstate := {\n    'ended': false,\n    'owner': $action.ledger,\n    'stashed': {},\n    'view': {\n      'title': $form.title,\n      'subtitle': $form.subtitle,\n      'msgs': ['stash started']\n    }\n  };\n  \n  $out := $x.output($action.ledger, [], $form.title, $form.subtitle, 'Send this output to the contract when you want to end it', $action.tags);\n  $x.result($newstate, [$out])\n)",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"end": {
+							"type": "end",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 0, 'do not send coins, just send the start output');\n\n  $newstate := $merge([$state, { 'ended': true }]);\n  $x.result($newstate)\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"stash": {
+							"type": "stash",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $x.assert.isOk($form.key, 'please supply a key');\n  $found := $lookup($state.stashed, $form.key);\n  $x.assert.isNotOk($found, 'key already stashed');\n  \n  $i := $inputs[0];\n  $o := $i.output;\n  $stashed := $merge([$state.stashed, { $form.key: $o }]);\n  \n  $msg := 'Stashed ' & $form.key;\n  $view := {\n    'stashed': $stashed,\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $x.result($newState)\n)",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"unstash": {
+							"type": "unstash",
+							"code": "(\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 0, 'no inputs are allowed');\n  $x.assert.isOk($form.key, 'please supply a key');\n  $found := $lookup($state.stashed, $form.key);\n  $x.assert.isOk($found, 'key not found in stash');\n  \n  $stashed := $sift($state.stashed, function($v, $k, $o) { $k != $form.key });\n  $msg := 'Unstashed ' & $form.key;\n  $view := {\n    'stashed': $stashed or {},\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $out := $x.output($state.owner, $found.coins, $found.title, $found.subtitle, $found.description, $found.tags, $found.data);\n  $x.result($newState, [$out])\n)",
+							"language": "jsonata",
+							"expr": {}
+						}
+					},
+					"name": "incentum-stash",
+					"tags": [],
+					"other": {},
+					"ledger": "THWJcWwvAGCqGgzpqxwDH9DgaXSwrtJWBm",
+					"versionMajor": 1,
+					"versionMinor": 0,
+					"versionPatch": 0,
+					"reducers": [
+						{
+							"type": "start",
+							"code": "(\n  $newstate := {\n    'ended': false,\n    'owner': $action.ledger,\n    'stashed': {},\n    'view': {\n      'title': $form.title,\n      'subtitle': $form.subtitle,\n      'msgs': ['stash started']\n    }\n  };\n  \n  $out := $x.output($action.ledger, [], $form.title, $form.subtitle, 'Send this output to the contract when you want to end it', $action.tags);\n  $x.result($newstate, [$out])\n)",
+							"language": "jsonata"
+						},
+						{
+							"type": "end",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 0, 'do not send coins, just send the start output');\n\n  $newstate := $merge([$state, { 'ended': true }]);\n  $x.result($newstate)\n)\n",
+							"language": "jsonata"
+						},
+						{
+							"type": "stash",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $x.assert.isOk($form.key, 'please supply a key');\n  $found := $lookup($state.stashed, $form.key);\n  $x.assert.isNotOk($found, 'key already stashed');\n  \n  $i := $inputs[0];\n  $o := $i.output;\n  $stashed := $merge([$state.stashed, { $form.key: $o }]);\n  \n  $msg := 'stash ' & $form.key;\n  $view := {\n    'stashed': $stashed,\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $x.result($newState)\n)",
+							"language": "jsonata"
+						},
+						{
+							"type": "unstash",
+							"code": "(\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 0, 'no inputs are allowed');\n  $x.assert.isOk($form.key, 'please supply a key');\n  $found := $lookup($state.stashed, $form.key);\n  $x.assert.isOk($found, 'key not found in stash');\n  \n  $stashed := $sift($state.stashed, function($v, $k, $o) { $k != $form.key });\n  $msg := 'unstash ' & $form.key;\n  $view := {\n    'stashed': $stashed ? $stashed : {},\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $out := $x.output($state.owner, $found.coins, $found.title, $found.subtitle, $found.description, $found.tags, $found.data);\n  $x.result($newState, [$out])\n)",
+							"language": "jsonata"
+						}
+					],
+					"description": "Stash Outputs"
+				},
+				"other": {},
+				"title": "",
+				"subtitle": "",
+				"description": "",
+				"key": "4ec07c319f2e2df46f67b4168ade7ed94363fcf9e7aeae895611252b7d9c299b"
+			}
+		},
+		{
+			"name": "stash",
+			"result": {
+				"outputs": [],
+				"state": {
+					"state": {
+						"ended": false,
+						"owner": "Alice",
+						"stashed": {
+							"message": {
+								"actionKey": "",
+								"key": "stash",
+								"ledger": "Alice",
+								"data": {},
+								"tags": [],
+								"title": "Stashed Message",
+								"subtitle": "Stashed Message",
+								"description": "",
+								"msgs": [],
+								"coins": []
+							}
+						},
+						"view": {
+							"title": "Stash Items",
+							"subtitle": "Stash for Misc.",
+							"msgs": [
+								"stash started",
+								"stash message"
+							]
+						}
+					},
+					"coins": []
+				},
+				"mint": []
+			},
+			"contract": {
+				"ledger": "Alice",
+				"template": {
+					"reducerMap": {
+						"start": {
+							"type": "start",
+							"code": "(\n  $newstate := {\n    'ended': false,\n    'owner': $action.ledger,\n    'stashed': {},\n    'view': {\n      'title': $form.title,\n      'subtitle': $form.subtitle,\n      'msgs': ['stash started']\n    }\n  };\n  \n  $out := $x.output($action.ledger, [], $form.title, $form.subtitle, 'Send this output to the contract when you want to end it', $action.tags);\n  $x.result($newstate, [$out])\n)",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"end": {
+							"type": "end",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 0, 'do not send coins, just send the start output');\n\n  $newstate := $merge([$state, { 'ended': true }]);\n  $x.result($newstate)\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"stash": {
+							"type": "stash",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $x.assert.isOk($form.key, 'please supply a key');\n  $found := $lookup($state.stashed, $form.key);\n  $x.assert.isNotOk($found, 'key already stashed');\n  \n  $i := $inputs[0];\n  $o := $i.output;\n  $stashed := $merge([$state.stashed, { $form.key: $o }]);\n  \n  $msg := 'stash ' & $form.key;\n  $view := {\n    'stashed': $stashed,\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $x.result($newState)\n)",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"unstash": {
+							"type": "unstash",
+							"code": "(\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 0, 'no inputs are allowed');\n  $x.assert.isOk($form.key, 'please supply a key');\n  $found := $lookup($state.stashed, $form.key);\n  $x.assert.isOk($found, 'key not found in stash');\n  \n  $stashed := $sift($state.stashed, function($v, $k, $o) { $k != $form.key });\n  $msg := 'unstashed ' & $form.key;\n  $view := {\n    'stashed': $stashed or {},\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $out := $x.output($state.owner, $found.coins, $found.title, $found.subtitle, $found.description, $found.tags, $found.data);\n  $x.result($newState, [$out])\n)",
+							"language": "jsonata",
+							"expr": {}
+						}
+					},
+					"name": "incentum-stash",
+					"tags": [],
+					"other": {},
+					"ledger": "THWJcWwvAGCqGgzpqxwDH9DgaXSwrtJWBm",
+					"versionMajor": 1,
+					"versionMinor": 0,
+					"versionPatch": 0,
+					"reducers": [
+						{
+							"type": "start",
+							"code": "(\n  $newstate := {\n    'ended': false,\n    'owner': $action.ledger,\n    'stashed': {},\n    'view': {\n      'title': $form.title,\n      'subtitle': $form.subtitle,\n      'msgs': ['stash started']\n    }\n  };\n  \n  $out := $x.output($action.ledger, [], $form.title, $form.subtitle, 'Send this output to the contract when you want to end it', $action.tags);\n  $x.result($newstate, [$out])\n)",
+							"language": "jsonata"
+						},
+						{
+							"type": "end",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 0, 'do not send coins, just send the start output');\n\n  $newstate := $merge([$state, { 'ended': true }]);\n  $x.result($newstate)\n)\n",
+							"language": "jsonata"
+						},
+						{
+							"type": "stash",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $x.assert.isOk($form.key, 'please supply a key');\n  $found := $lookup($state.stashed, $form.key);\n  $x.assert.isNotOk($found, 'key already stashed');\n  \n  $i := $inputs[0];\n  $o := $i.output;\n  $stashed := $merge([$state.stashed, { $form.key: $o }]);\n  \n  $msg := 'stash ' & $form.key;\n  $view := {\n    'stashed': $stashed,\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $x.result($newState)\n)",
+							"language": "jsonata"
+						},
+						{
+							"type": "unstash",
+							"code": "(\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 0, 'no inputs are allowed');\n  $x.assert.isOk($form.key, 'please supply a key');\n  $found := $lookup($state.stashed, $form.key);\n  $x.assert.isOk($found, 'key not found in stash');\n  \n  $stashed := $sift($state.stashed, function($v, $k, $o) { $k != $form.key });\n  $msg := 'unstash ' & $form.key;\n  $view := {\n    'stashed': $stashed ? $stashed : {},\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $out := $x.output($state.owner, $found.coins, $found.title, $found.subtitle, $found.description, $found.tags, $found.data);\n  $x.result($newState, [$out])\n)",
+							"language": "jsonata"
+						}
+					],
+					"description": "Stash Outputs"
+				},
+				"other": {},
+				"title": "",
+				"subtitle": "",
+				"description": "",
+				"key": "4ec07c319f2e2df46f67b4168ade7ed94363fcf9e7aeae895611252b7d9c299b"
+			}
+		},
+		{
+			"name": "unstash",
+			"result": {
+				"outputs": [
+					{
+						"ledger": "Alice",
+						"data": {},
+						"coins": [],
+						"tags": [],
+						"msgs": [],
+						"title": "Stashed Message",
+						"subtitle": "Stashed Message",
+						"description": ""
+					}
+				],
+				"state": {
+					"state": {
+						"ended": false,
+						"owner": "Alice",
+						"stashed": false,
+						"view": {
+							"title": "Stash Items",
+							"subtitle": "Stash for Misc.",
+							"msgs": [
+								"stash started",
+								"stash message",
+								"unstashed message"
+							]
+						}
+					},
+					"coins": []
+				},
+				"mint": []
+			},
+			"contract": {
+				"ledger": "Alice",
+				"template": {
+					"reducerMap": {
+						"start": {
+							"type": "start",
+							"code": "(\n  $newstate := {\n    'ended': false,\n    'owner': $action.ledger,\n    'stashed': {},\n    'view': {\n      'title': $form.title,\n      'subtitle': $form.subtitle,\n      'msgs': ['stash started']\n    }\n  };\n  \n  $out := $x.output($action.ledger, [], $form.title, $form.subtitle, 'Send this output to the contract when you want to end it', $action.tags);\n  $x.result($newstate, [$out])\n)",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"end": {
+							"type": "end",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 0, 'do not send coins, just send the start output');\n\n  $newstate := $merge([$state, { 'ended': true }]);\n  $x.result($newstate)\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"stash": {
+							"type": "stash",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $x.assert.isOk($form.key, 'please supply a key');\n  $found := $lookup($state.stashed, $form.key);\n  $x.assert.isNotOk($found, 'key already stashed');\n  \n  $i := $inputs[0];\n  $o := $i.output;\n  $stashed := $merge([$state.stashed, { $form.key: $o }]);\n  \n  $msg := 'stash ' & $form.key;\n  $view := {\n    'stashed': $stashed,\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $x.result($newState)\n)",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"unstash": {
+							"type": "unstash",
+							"code": "(\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 0, 'no inputs are allowed');\n  $x.assert.isOk($form.key, 'please supply a key');\n  $found := $lookup($state.stashed, $form.key);\n  $x.assert.isOk($found, 'key not found in stash');\n  \n  $stashed := $sift($state.stashed, function($v, $k, $o) { $k != $form.key });\n  $msg := 'unstashed ' & $form.key;\n  $view := {\n    'stashed': $stashed or {},\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $out := $x.output($state.owner, $found.coins, $found.title, $found.subtitle, $found.description, $found.tags, $found.data);\n  $x.result($newState, [$out])\n)",
+							"language": "jsonata",
+							"expr": {}
+						}
+					},
+					"name": "incentum-stash",
+					"tags": [],
+					"other": {},
+					"ledger": "THWJcWwvAGCqGgzpqxwDH9DgaXSwrtJWBm",
+					"versionMajor": 1,
+					"versionMinor": 0,
+					"versionPatch": 0,
+					"reducers": [
+						{
+							"type": "start",
+							"code": "(\n  $newstate := {\n    'ended': false,\n    'owner': $action.ledger,\n    'stashed': {},\n    'view': {\n      'title': $form.title,\n      'subtitle': $form.subtitle,\n      'msgs': ['stash started']\n    }\n  };\n  \n  $out := $x.output($action.ledger, [], $form.title, $form.subtitle, 'Send this output to the contract when you want to end it', $action.tags);\n  $x.result($newstate, [$out])\n)",
+							"language": "jsonata"
+						},
+						{
+							"type": "end",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 0, 'do not send coins, just send the start output');\n\n  $newstate := $merge([$state, { 'ended': true }]);\n  $x.result($newstate)\n)\n",
+							"language": "jsonata"
+						},
+						{
+							"type": "stash",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $x.assert.isOk($form.key, 'please supply a key');\n  $found := $lookup($state.stashed, $form.key);\n  $x.assert.isNotOk($found, 'key already stashed');\n  \n  $i := $inputs[0];\n  $o := $i.output;\n  $stashed := $merge([$state.stashed, { $form.key: $o }]);\n  \n  $msg := 'stash ' & $form.key;\n  $view := {\n    'stashed': $stashed,\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $x.result($newState)\n)",
+							"language": "jsonata"
+						},
+						{
+							"type": "unstash",
+							"code": "(\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 0, 'no inputs are allowed');\n  $x.assert.isOk($form.key, 'please supply a key');\n  $found := $lookup($state.stashed, $form.key);\n  $x.assert.isOk($found, 'key not found in stash');\n  \n  $stashed := $sift($state.stashed, function($v, $k, $o) { $k != $form.key });\n  $msg := 'unstash ' & $form.key;\n  $view := {\n    'stashed': $stashed ? $stashed : {},\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $out := $x.output($state.owner, $found.coins, $found.title, $found.subtitle, $found.description, $found.tags, $found.data);\n  $x.result($newState, [$out])\n)",
+							"language": "jsonata"
+						}
+					],
+					"description": "Stash Outputs"
+				},
+				"other": {},
+				"title": "",
+				"subtitle": "",
+				"description": "",
+				"key": "4ec07c319f2e2df46f67b4168ade7ed94363fcf9e7aeae895611252b7d9c299b"
+			}
+		},
+		{
+			"name": "stash",
+			"result": {
+				"outputs": [],
+				"state": {
+					"state": {
+						"ended": false,
+						"owner": "Alice",
+						"stashed": {
+							"message": {
+								"actionKey": "",
+								"key": "stash",
+								"ledger": "Alice",
+								"data": {},
+								"tags": [],
+								"title": "Stashed Message",
+								"subtitle": "Stashed Message",
+								"description": "",
+								"msgs": [],
+								"coins": []
+							}
+						},
+						"view": {
+							"title": "Stash Items",
+							"subtitle": "Stash for Misc.",
+							"msgs": [
+								"stash started",
+								"stash message"
+							]
+						}
+					},
+					"coins": []
+				},
+				"mint": []
+			},
+			"contract": {
+				"ledger": "Alice",
+				"template": {
+					"reducerMap": {
+						"start": {
+							"type": "start",
+							"code": "(\n  $newstate := {\n    'ended': false,\n    'owner': $action.ledger,\n    'stashed': {},\n    'view': {\n      'title': $form.title,\n      'subtitle': $form.subtitle,\n      'msgs': ['stash started']\n    }\n  };\n  \n  $out := $x.output($action.ledger, [], $form.title, $form.subtitle, 'Send this output to the contract when you want to end it', $action.tags);\n  $x.result($newstate, [$out])\n)",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"end": {
+							"type": "end",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 0, 'do not send coins, just send the start output');\n\n  $newstate := $merge([$state, { 'ended': true }]);\n  $x.result($newstate)\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"stash": {
+							"type": "stash",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $x.assert.isOk($form.key, 'please supply a key');\n  $found := $lookup($state.stashed, $form.key);\n  $x.assert.isNotOk($found, 'key already stashed');\n  \n  $i := $inputs[0];\n  $o := $i.output;\n  $stashed := $merge([$state.stashed, { $form.key: $o }]);\n  \n  $msg := 'stash ' & $form.key;\n  $view := {\n    'stashed': $stashed,\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $x.result($newState)\n)",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"unstash": {
+							"type": "unstash",
+							"code": "(\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 0, 'no inputs are allowed');\n  $x.assert.isOk($form.key, 'please supply a key');\n  $found := $lookup($state.stashed, $form.key);\n  $x.assert.isOk($found, 'key not found in stash');\n  \n  $stashed := $sift($state.stashed, function($v, $k, $o) { $k != $form.key });\n  $msg := 'unstash ' & $form.key;\n  $view := {\n    'stashed': $stashed or {},\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $out := $x.output($state.owner, $found.coins, $found.title, $found.subtitle, $found.description, $found.tags, $found.data);\n  $x.result($newState, [$out])\n)",
+							"language": "jsonata",
+							"expr": {}
+						}
+					},
+					"name": "incentum-stash",
+					"tags": [],
+					"other": {},
+					"ledger": "THWJcWwvAGCqGgzpqxwDH9DgaXSwrtJWBm",
+					"versionMajor": 1,
+					"versionMinor": 0,
+					"versionPatch": 0,
+					"reducers": [
+						{
+							"type": "start",
+							"code": "(\n  $newstate := {\n    'ended': false,\n    'owner': $action.ledger,\n    'stashed': {},\n    'view': {\n      'title': $form.title,\n      'subtitle': $form.subtitle,\n      'msgs': ['stash started']\n    }\n  };\n  \n  $out := $x.output($action.ledger, [], $form.title, $form.subtitle, 'Send this output to the contract when you want to end it', $action.tags);\n  $x.result($newstate, [$out])\n)",
+							"language": "jsonata"
+						},
+						{
+							"type": "end",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 0, 'do not send coins, just send the start output');\n\n  $newstate := $merge([$state, { 'ended': true }]);\n  $x.result($newstate)\n)\n",
+							"language": "jsonata"
+						},
+						{
+							"type": "stash",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $x.assert.isOk($form.key, 'please supply a key');\n  $found := $lookup($state.stashed, $form.key);\n  $x.assert.isNotOk($found, 'key already stashed');\n  \n  $i := $inputs[0];\n  $o := $i.output;\n  $stashed := $merge([$state.stashed, { $form.key: $o }]);\n  \n  $msg := 'stash ' & $form.key;\n  $view := {\n    'stashed': $stashed,\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $x.result($newState)\n)",
+							"language": "jsonata"
+						},
+						{
+							"type": "unstash",
+							"code": "(\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 0, 'no inputs are allowed');\n  $x.assert.isOk($form.key, 'please supply a key');\n  $found := $lookup($state.stashed, $form.key);\n  $x.assert.isOk($found, 'key not found in stash');\n  \n  $stashed := $sift($state.stashed, function($v, $k, $o) { $k != $form.key });\n  $msg := 'unstash ' & $form.key;\n  $view := {\n    'stashed': $stashed ? $stashed : {},\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $out := $x.output($state.owner, $found.coins, $found.title, $found.subtitle, $found.description, $found.tags, $found.data);\n  $x.result($newState, [$out])\n)",
+							"language": "jsonata"
+						}
+					],
+					"description": "Stash Outputs"
+				},
+				"other": {},
+				"title": "",
+				"subtitle": "",
+				"description": "",
+				"key": "4ec07c319f2e2df46f67b4168ade7ed94363fcf9e7aeae895611252b7d9c299b"
+			}
+		},
+		{
+			"name": "unstash",
+			"result": {
+				"outputs": [
+					{
+						"ledger": "Alice",
+						"data": {},
+						"coins": [],
+						"tags": [],
+						"msgs": [],
+						"title": "Stashed Message",
+						"subtitle": "Stashed Message",
+						"description": ""
+					}
+				],
+				"state": {
+					"state": {
+						"ended": false,
+						"owner": "Alice",
+						"stashed": false,
+						"view": {
+							"title": "Stash Items",
+							"subtitle": "Stash for Misc.",
+							"msgs": [
+								"stash started",
+								"stash message",
+								"unstash message"
+							]
+						}
+					},
+					"coins": []
+				},
+				"mint": []
+			},
+			"contract": {
+				"ledger": "Alice",
+				"template": {
+					"reducerMap": {
+						"start": {
+							"type": "start",
+							"code": "(\n  $newstate := {\n    'ended': false,\n    'owner': $action.ledger,\n    'stashed': {},\n    'view': {\n      'title': $form.title,\n      'subtitle': $form.subtitle,\n      'msgs': ['stash started']\n    }\n  };\n  \n  $out := $x.output($action.ledger, [], $form.title, $form.subtitle, 'Send this output to the contract when you want to end it', $action.tags);\n  $x.result($newstate, [$out])\n)",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"end": {
+							"type": "end",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 0, 'do not send coins, just send the start output');\n\n  $newstate := $merge([$state, { 'ended': true }]);\n  $x.result($newstate)\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"stash": {
+							"type": "stash",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $x.assert.isOk($form.key, 'please supply a key');\n  $found := $lookup($state.stashed, $form.key);\n  $x.assert.isNotOk($found, 'key already stashed');\n  \n  $i := $inputs[0];\n  $o := $i.output;\n  $stashed := $merge([$state.stashed, { $form.key: $o }]);\n  \n  $msg := 'stash ' & $form.key;\n  $view := {\n    'stashed': $stashed,\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $x.result($newState)\n)",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"unstash": {
+							"type": "unstash",
+							"code": "(\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 0, 'no inputs are allowed');\n  $x.assert.isOk($form.key, 'please supply a key');\n  $found := $lookup($state.stashed, $form.key);\n  $x.assert.isOk($found, 'key not found in stash');\n  \n  $stashed := $sift($state.stashed, function($v, $k, $o) { $k != $form.key });\n  $msg := 'unstash ' & $form.key;\n  $view := {\n    'stashed': $stashed or {},\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $out := $x.output($state.owner, $found.coins, $found.title, $found.subtitle, $found.description, $found.tags, $found.data);\n  $x.result($newState, [$out])\n)",
+							"language": "jsonata",
+							"expr": {}
+						}
+					},
+					"name": "incentum-stash",
+					"tags": [],
+					"other": {},
+					"ledger": "THWJcWwvAGCqGgzpqxwDH9DgaXSwrtJWBm",
+					"versionMajor": 1,
+					"versionMinor": 0,
+					"versionPatch": 0,
+					"reducers": [
+						{
+							"type": "start",
+							"code": "(\n  $newstate := {\n    'ended': false,\n    'owner': $action.ledger,\n    'stashed': {},\n    'view': {\n      'title': $form.title,\n      'subtitle': $form.subtitle,\n      'msgs': ['stash started']\n    }\n  };\n  \n  $out := $x.output($action.ledger, [], $form.title, $form.subtitle, 'Send this output to the contract when you want to end it', $action.tags);\n  $x.result($newstate, [$out])\n)",
+							"language": "jsonata"
+						},
+						{
+							"type": "end",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 0, 'do not send coins, just send the start output');\n\n  $newstate := $merge([$state, { 'ended': true }]);\n  $x.result($newstate)\n)\n",
+							"language": "jsonata"
+						},
+						{
+							"type": "stash",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $x.assert.isOk($form.key, 'please supply a key');\n  $found := $lookup($state.stashed, $form.key);\n  $x.assert.isNotOk($found, 'key already stashed');\n  \n  $i := $inputs[0];\n  $o := $i.output;\n  $stashed := $merge([$state.stashed, { $form.key: $o }]);\n  \n  $msg := 'stash ' & $form.key;\n  $view := {\n    'stashed': $stashed,\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $x.result($newState)\n)",
+							"language": "jsonata"
+						},
+						{
+							"type": "unstash",
+							"code": "(\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 0, 'no inputs are allowed');\n  $x.assert.isOk($form.key, 'please supply a key');\n  $found := $lookup($state.stashed, $form.key);\n  $x.assert.isOk($found, 'key not found in stash');\n  \n  $stashed := $sift($state.stashed, function($v, $k, $o) { $k != $form.key });\n  $msg := 'unstash ' & $form.key;\n  $view := {\n    'stashed': $stashed ? $stashed : {},\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $out := $x.output($state.owner, $found.coins, $found.title, $found.subtitle, $found.description, $found.tags, $found.data);\n  $x.result($newState, [$out])\n)",
+							"language": "jsonata"
+						}
+					],
+					"description": "Stash Outputs"
+				},
+				"other": {},
+				"title": "",
+				"subtitle": "",
+				"description": "",
+				"key": "4ec07c319f2e2df46f67b4168ade7ed94363fcf9e7aeae895611252b7d9c299b"
+			}
+		},
+		{
+			"name": "unstash",
+			"result": {
+				"outputs": [
+					{
+						"ledger": "Alice",
+						"data": {},
+						"coins": [],
+						"tags": [],
+						"msgs": [],
+						"title": "Stashed Message",
+						"subtitle": "Stashed Message",
+						"description": ""
+					}
+				],
+				"state": {
+					"state": {
+						"ended": false,
+						"owner": "Alice",
+						"stashed": {},
+						"view": {
+							"title": "Stash Items",
+							"subtitle": "Stash for Misc.",
+							"msgs": [
+								"stash started",
+								"stash message",
+								"unstash message"
+							]
+						}
+					},
+					"coins": []
+				},
+				"mint": []
+			},
+			"contract": {
+				"ledger": "Alice",
+				"template": {
+					"reducerMap": {
+						"start": {
+							"type": "start",
+							"code": "(\n  $newstate := {\n    'ended': false,\n    'owner': $action.ledger,\n    'stashed': {},\n    'view': {\n      'title': $form.title,\n      'subtitle': $form.subtitle,\n      'msgs': ['stash started']\n    }\n  };\n  \n  $out := $x.output($action.ledger, [], $form.title, $form.subtitle, 'Send this output to the contract when you want to end it', $action.tags);\n  $x.result($newstate, [$out])\n)",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"end": {
+							"type": "end",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 0, 'do not send coins, just send the start output');\n\n  $newstate := $merge([$state, { 'ended': true }]);\n  $x.result($newstate)\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"stash": {
+							"type": "stash",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $x.assert.isOk($form.key, 'please supply a key');\n  $found := $lookup($state.stashed, $form.key);\n  $x.assert.isNotOk($found, 'key already stashed');\n  \n  $i := $inputs[0];\n  $o := $i.output;\n  $stashed := $merge([$state.stashed, { $form.key: $o }]);\n  \n  $msg := 'stash ' & $form.key;\n  $view := {\n    'stashed': $stashed,\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $x.result($newState)\n)",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"unstash": {
+							"type": "unstash",
+							"code": "(\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 0, 'no inputs are allowed');\n  $x.assert.isOk($form.key, 'please supply a key');\n  $found := $lookup($state.stashed, $form.key);\n  $x.assert.isOk($found, 'key not found in stash');\n  \n  $stashed := $sift($state.stashed, function($v, $k, $o) { $k != $form.key });\n  $msg := 'unstash ' & $form.key;\n  $view := {\n    'stashed': $stashed ? $stashed : {},\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $out := $x.output($state.owner, $found.coins, $found.title, $found.subtitle, $found.description, $found.tags, $found.data);\n  $x.result($newState, [$out])\n)",
+							"language": "jsonata",
+							"expr": {}
+						}
+					},
+					"name": "incentum-stash",
+					"tags": [],
+					"other": {},
+					"ledger": "THWJcWwvAGCqGgzpqxwDH9DgaXSwrtJWBm",
+					"versionMajor": 1,
+					"versionMinor": 0,
+					"versionPatch": 0,
+					"reducers": [
+						{
+							"type": "start",
+							"code": "(\n  $newstate := {\n    'ended': false,\n    'owner': $action.ledger,\n    'stashed': {},\n    'view': {\n      'title': $form.title,\n      'subtitle': $form.subtitle,\n      'msgs': ['stash started']\n    }\n  };\n  \n  $out := $x.output($action.ledger, [], $form.title, $form.subtitle, 'Send this output to the contract when you want to end it', $action.tags);\n  $x.result($newstate, [$out])\n)",
+							"language": "jsonata"
+						},
+						{
+							"type": "end",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 0, 'do not send coins, just send the start output');\n\n  $newstate := $merge([$state, { 'ended': true }]);\n  $x.result($newstate)\n)\n",
+							"language": "jsonata"
+						},
+						{
+							"type": "stash",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $x.assert.isOk($form.key, 'please supply a key');\n  $found := $lookup($state.stashed, $form.key);\n  $x.assert.isNotOk($found, 'key already stashed');\n  \n  $i := $inputs[0];\n  $o := $i.output;\n  $stashed := $merge([$state.stashed, { $form.key: $o }]);\n  \n  $msg := 'stash ' & $form.key;\n  $view := {\n    'stashed': $stashed,\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $x.result($newState)\n)",
+							"language": "jsonata"
+						},
+						{
+							"type": "unstash",
+							"code": "(\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 0, 'no inputs are allowed');\n  $x.assert.isOk($form.key, 'please supply a key');\n  $found := $lookup($state.stashed, $form.key);\n  $x.assert.isOk($found, 'key not found in stash');\n  \n  $stashed := $sift($state.stashed, function($v, $k, $o) { $k != $form.key });\n  $msg := 'unstash ' & $form.key;\n  $view := {\n    'stashed': $stashed ? $stashed : {},\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $out := $x.output($state.owner, $found.coins, $found.title, $found.subtitle, $found.description, $found.tags, $found.data);\n  $x.result($newState, [$out])\n)",
+							"language": "jsonata"
+						}
+					],
+					"description": "Stash Outputs"
+				},
+				"other": {},
+				"title": "",
+				"subtitle": "",
+				"description": "",
+				"key": "4ec07c319f2e2df46f67b4168ade7ed94363fcf9e7aeae895611252b7d9c299b"
+			}
+		}
+	],
+	"resultSel": 0,
+	"schemaSel": 2,
+	"jsonSchemas": [
+		{
+			"name": "start",
+			"json": "{\n  \"title\": \"Start a Stash\",\n  \"type\": \"object\",\n  \"required\": [\n    \"title\",\n    \"subtitle\"\n  ],\n  \"properties\": {\n    \"title\": {\n      \"type\": \"string\",\n      \"title\": \"Title\"\n    },\n    \"subtitle\": {\n      \"type\": \"string\",\n      \"title\": \"Subtitle\"\n    }\n  }\n}"
+		},
+		{
+			"name": "stash",
+			"json": "{\n  \"title\": \"Stash an Output\",\n  \"type\": \"object\",\n  \"required\": [\n    \"key\",\n    \"output:item\"\n  ],\n  \"properties\": {\n    \"key\": {\n      \"type\": \"string\",\n      \"title\": \"Key\"\n    },\n    \"output:item\": {\n      \"title\": \"Output\",\n      \"type\": \"string\"\n    }\n  }\n}"
+		},
+		{
+			"name": "unstash",
+			"json": "{\n  \"title\": \"Unstash an Output\",\n  \"type\": \"object\",\n  \"required\": [\n    \"key\"\n  ],\n  \"properties\": {\n    \"key\": {\n      \"type\": \"string\",\n      \"title\": \"Key\"\n    }\n  }\n}"
+		}
+	],
+	"jsonSchemaSel": 2,
+	"uiSchemas": [
+		{
+			"name": "start",
+			"json": "{}"
+		},
+		{
+			"name": "stash",
+			"json": "{\n  \"output:item\": {\n    \"ui:widget\": \"praxOutputs\"\n  }\n}"
+		},
+		{
+			"name": "unstash",
+			"json": "{}"
+		}
+	],
+	"uiSchemaSel": 2,
+	"markdown": [
+		{
+			"name": "start",
+			"json": "### Start a Stash\n\nOutputs can accumulate with heavy usage of Praxis,\nand stashes are useful for organizing outputs.\n\nYou can store outputs in a stash with a key, and\nretrieve them later with the same key when you\nare ready to use them.\n"
+		},
+		{
+			"name": "stash",
+			"json": "### Stash an Output\n\nStash an output with a key.\n"
+		},
+		{
+			"name": "unstash",
+			"json": "### Unstash an Output\n\nUnstash an output. Supply the key to unstash."
+		}
+	],
+	"markdownSel": 2,
+	"formData": "{\n\t\"key\": \"asdf\"\n}",
+	"jsonSchemaObject": {
+		"title": "Unstash an Output",
+		"type": "object",
+		"required": [
+			"key"
+		],
+		"properties": {
+			"key": {
+				"type": "string",
+				"title": "Key"
+			}
+		}
+	},
+	"uiSchemaObject": {},
+	"showSaveTemplateForm": false,
+	"showSaveSchemasForm": false,
+	"formSegment": 0
+}

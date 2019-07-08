@@ -1,0 +1,1903 @@
+{
+	"name": "tokenize",
+	"segment": 1,
+	"templates": [
+		{
+			"other": {},
+			"name": "incentum-tokenize",
+			"ledger": "THWJcWwvAGCqGgzpqxwDH9DgaXSwrtJWBm",
+			"versionMajor": 1,
+			"versionMinor": 0,
+			"versionPatch": 1,
+			"description": "Tokenize Music, Art, or Writing",
+			"tags": [],
+			"reducers": [
+				{
+					"type": "start",
+					"code": "(\n  $newstate := {\n    'ended': false,\n    'owner': $action.ledger,\n    'view': {\n      'title': $form.title,\n      'subtitle': $form.subtitle,\n      'description': $form.description,\n      'msgs': ['tokenize started']\n    }\n  };\n  \n  $out := $x.output($action.ledger, [], $form.title, $form.subtitle, 'Send this output to the contract when you want to end it', $action.tags);\n  $x.result($newstate, [$out])\n)",
+					"language": "jsonata"
+				},
+				{
+					"type": "end",
+					"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 0, 'do not send coins, just send the start output');\n\n  $newstate := $merge([$state, { 'ended': true }]);\n  $x.result($newstate)\n)\n",
+					"language": "jsonata"
+				},
+				{
+					"type": "music",
+					"code": "(\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.isOk($form.symbol, 'symbol is required');\n  $x.assert.isAtLeast($form.decimals, 0, 'decimals must be >= 0');\n  $x.assert.isAtLeast($form.amount, 1, 'amount must be at least 1');\n\n  $mint := $x.mint($action.ledger, $form.symbol, $form.amount, $form.decimals, $form.title, $form.subtitle, $form.description, $action.tags, {}, $form.metadata);\n  \n  $msg := 'tokenize music ' & $form.metadata.song;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'description': $state.view.description,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $x.result($newState, [], [$mint])\n)\n",
+					"language": "jsonata"
+				},
+				{
+					"type": "writing",
+					"code": "(\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.isOk($form.symbol, 'symbol is required');\n  $x.assert.isAtLeast($form.decimals, 0, 'decimals must be >= 0');\n  $x.assert.isAtLeast($form.amount, 1, 'amount must be at least 1');\n  \n  $mint := $x.mint($action.ledger, $form.symbol, $form.amount, $form.decimals, $form.title, $form.subtitle, $form.description, $action.tags, {}, $form.metadata);\n  \n  $msg := 'tokenize writing ' & $form.metadata.title;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'description': $state.view.description,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $x.result($newState, [], [$mint])\n)\n",
+					"language": "jsonata"
+				},
+				{
+					"type": "art",
+					"code": "(\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.isOk($form.symbol, 'symbol is required');\n  $x.assert.isAtLeast($form.decimals, 0, 'decimals must be >= 0');\n  $x.assert.isAtLeast($form.amount, 1, 'amount must be at least 1');\n  \n  $mint := $x.mint($action.ledger, $form.symbol, $form.amount, $form.decimals, $form.title, $form.subtitle, $form.description, $action.tags, {}, $form.metadata);\n  \n  $msg := 'tokenize art ' & $form.metadata.name;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'description': $state.view.description,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $x.result($newState, [], [$mint])\n)\n",
+					"language": "jsonata"
+				}
+			]
+		}
+	],
+	"templateSel": 0,
+	"reducerSel": 3,
+	"outputs": [
+		{
+			"name": "end",
+			"json": "{\n\t\"tags\": [],\n\t\"ledger\": \"Alice\",\n\t\"data\": {},\n\t\"title\": \"\",\n\t\"subtitle\": \"\",\n\t\"msgs\": [],\n\t\"description\": \"\",\n\t\"coins\": []\n}",
+			"output": {
+				"tags": [],
+				"ledger": "Alice",
+				"data": {},
+				"title": "",
+				"subtitle": "",
+				"msgs": [],
+				"description": "",
+				"coins": []
+			}
+		}
+	],
+	"outputSel": 0,
+	"actions": [
+		{
+			"name": "start",
+			"json": "{\n\t\"template\": \"incentum-tokenize\",\n\t\"form\": {\n\t  \"title\": \"My tokenization contract\",\n\t  \"subtitle\": \"Use this contract to tokenize stuff\"\n\t},\n\t\"ledger\": \"Alice\",\n\t\"type\": \"start\",\n\t\"inputs\": []\n}",
+			"action": {
+				"template": "incentum-tokenize",
+				"form": {
+					"title": "My tokenization contract",
+					"subtitle": "Use this contract to tokenize stuff"
+				},
+				"ledger": "Alice",
+				"type": "start",
+				"inputs": []
+			},
+			"template": ""
+		},
+		{
+			"name": "music",
+			"json": "{\n\t\"template\": \"incentum-tokenize\",\n\t\"form\": {\n\t  \"title\": \"My first song\",\n\t  \"subtitle\": \"My first song\",\n\t  \"description\": \"### Long markdown\",\n\t  \"amount\": 1,\n\t  \"decimals\": 2,\n\t  \"symbol\": \"SONG-1\",\n\t  \"metadata\": {\n\t    \"song\": \"My first song\",\n\t    \"artist\": \"Alice\",\n\t    \"album\": \"Album Alone\",\n\t    \"composer\": \"Alice\",\n\t    \"genre\": \"rock\",\n      \"copyright\": \"2019 Alice\",\n\t    \"bpm\": 80,\n\t    \"comments\": \"### lots of markdown description\"\n\t  }\n\t},\n\t\"ledger\": \"Alice\",\n\t\"type\": \"music\",\n\t\"inputs\": []\n}",
+			"action": {
+				"template": "incentum-tokenize",
+				"form": {
+					"title": "My first song",
+					"subtitle": "My first song",
+					"description": "### Long markdown",
+					"amount": 1,
+					"decimals": 2,
+					"symbol": "SONG-1",
+					"metadata": {
+						"song": "My first song",
+						"artist": "Alice",
+						"album": "Album Alone",
+						"composer": "Alice",
+						"genre": "rock",
+						"copyright": "2019 Alice",
+						"bpm": 80,
+						"comments": "### lots of markdown description"
+					}
+				},
+				"ledger": "Alice",
+				"type": "music",
+				"inputs": []
+			},
+			"template": ""
+		},
+		{
+			"name": "writing",
+			"json": "{\n\t\"template\": \"incentum-tokenize\",\n\t\"form\": {\n\t  \"title\": \"My cool book\",\n\t  \"subtitle\": \"Another book\",\n\t  \"description\": \"Long markdown\",\n\t  \"amount\": 1,\n\t  \"decimals\": 2,\n\t  \"symbol\": \"BOOK-1\",\n\t  \"metadata\": {\n\t    \"title\": \"My cool book\",\n\t    \"subtitle\": \"Another book\",\n\t    \"description\": \"Long desc\",\n\t    \"keywords\": [\"sports\"],\n\t    \"url\": \"http://x.y.z\",\n\t    \"author\": \"Alice\",\n\t    \"format\": \"ebook\",\n\t    \"isbn\": \"2222-2222\",\n\t    \"pubDate\": \"2019-01-01\",\n\t    \"copyright\": \"2019 Alice\"\n\t  }\n\t},\n\t\"ledger\": \"Alice\",\n\t\"type\": \"writing\",\n\t\"inputs\": []\n}",
+			"action": {
+				"template": "incentum-tokenize",
+				"form": {
+					"title": "My cool book",
+					"subtitle": "Another book",
+					"description": "Long markdown",
+					"amount": 1,
+					"decimals": 2,
+					"symbol": "BOOK-1",
+					"metadata": {
+						"title": "My cool book",
+						"subtitle": "Another book",
+						"description": "Long desc",
+						"keywords": [
+							"sports"
+						],
+						"url": "http://x.y.z",
+						"author": "Alice",
+						"format": "ebook",
+						"isbn": "2222-2222",
+						"pubDate": "2019-01-01",
+						"copyright": "2019 Alice"
+					}
+				},
+				"ledger": "Alice",
+				"type": "writing",
+				"inputs": []
+			},
+			"template": ""
+		},
+		{
+			"name": "art",
+			"json": "{\n\t\"template\": \"incentum-tokenize\",\n\t\"form\": {\n\t  \"title\": \"My first painting\",\n\t  \"subtitle\": \"My first painting\",\n\t  \"description\": \"### Long markdown\",\n\t  \"amount\": 1,\n\t  \"decimals\": 2,\n\t  \"symbol\": \"ART-1\",\n\t  \"metadata\": {\n\t    \"title\": \"My first painting\",\n\t    \"artist\": \"Alice\",\n\t    \"copyright\": \"2019 Alice\",\n\t    \"comments\": \"### lots of markdown description\"\n\t  }\n\t},\n\t\"ledger\": \"Alice\",\n\t\"type\": \"art\",\n\t\"inputs\": []\n}",
+			"action": {
+				"template": "incentum-tokenize",
+				"form": {
+					"title": "My first painting",
+					"subtitle": "My first painting",
+					"description": "### Long markdown",
+					"amount": 1,
+					"decimals": 2,
+					"symbol": "ART-1",
+					"metadata": {
+						"title": "My first painting",
+						"artist": "Alice",
+						"copyright": "2019 Alice",
+						"comments": "### lots of markdown description"
+					}
+				},
+				"ledger": "Alice",
+				"type": "art",
+				"inputs": []
+			},
+			"template": ""
+		},
+		{
+			"name": "end",
+			"json": "{\n\t\"template\": \"incentum-tokenize\",\n\t\"form\": {},\n\t\"ledger\": \"Alice\",\n\t\"type\": \"end\",\n\t\"inputs\": [\n\t  \"end\"\n\t]\n}",
+			"action": {
+				"template": "incentum-tokenize",
+				"form": {},
+				"ledger": "Alice",
+				"type": "end",
+				"inputs": [
+					"end"
+				]
+			},
+			"template": ""
+		}
+	],
+	"actionSel": 4,
+	"states": [
+		{
+			"name": "start",
+			"json": "{\n\t\"coins\": [],\n\t\"state\": {}\n}"
+		},
+		{
+			"name": "started",
+			"json": "{\n  \"state\": {\n\t\t\"ended\": false,\n\t\t\"owner\": \"Alice\",\n\t\t\"view\": {\n\t\t\t\"title\": \"My tokenization contract\",\n\t\t\t\"subtitle\": \"Use this contract to tokenize stuff\",\n\t\t\t\"msgs\": [\n\t\t\t\t\"tokenize started\"\n\t\t\t]\n\t\t}\n\t},\n\t\"coins\": []\n}"
+		}
+	],
+	"stateSel": 1,
+	"results": [
+		{
+			"name": "start",
+			"result": {
+				"outputs": [
+					{
+						"ledger": "Alice",
+						"data": {},
+						"coins": [],
+						"tags": [],
+						"msgs": [],
+						"title": "",
+						"subtitle": "",
+						"description": "Send this output to the contract when you want to end it"
+					}
+				],
+				"state": {
+					"state": {
+						"ended": false,
+						"owner": "Alice",
+						"view": {
+							"msgs": [
+								"tokenize started"
+							]
+						}
+					},
+					"coins": []
+				},
+				"mint": []
+			},
+			"contract": {
+				"ledger": "Alice",
+				"template": {
+					"reducerMap": {
+						"start": {
+							"type": "start",
+							"code": "(\n  $newstate := {\n    'ended': false,\n    'owner': $action.ledger,\n    'view': {\n      'title': $form.title,\n      'subtitle': $form.subtitle,\n      'description': $form.description,\n      'msgs': ['tokenize started']\n    }\n  };\n  \n  $out := $x.output($action.ledger, [], $form.title, $form.subtitle, 'Send this output to the contract when you want to end it', $action.tags);\n  $x.result($newstate, [$out])\n)",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"end": {
+							"type": "end",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.isEqual($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 0, 'do not send coins, just send the start output');\n\n  $newstate := $merge([$state, { 'ended': true }]);\n  $x.result($newstate)\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"music": {
+							"type": "music",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  \n  $coin := $x.coin.new($form.amount, $form.decimals);\n  $coin.other = $form;\n  \n  $msg := 'tokenize music ' & $form.song;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'description': $state.view.description,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $out := $x.output($state.owner, [$coin], $form.title, $form.subtitle, $form.description, $action.tags, $form);\n  $x.result($newState, [$out])\n)",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"writing": {
+							"type": "writing",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n\n  $coin := $x.coin.new($form.amount, $form.decimals);\n  $coin.other = $form;\n  \n  $msg := 'tokenize writing ' & $form.name;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'description': $state.view.description,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $out := $x.output($state.owner, [$coin], $form.title, $form.subtitle, $form.description, $action.tags, $form);\n  $x.result($newState, [$out])\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"art": {
+							"type": "art",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  \n  $coin := $x.coin.new($form.amount, $form.decimals);\n  $coin.other = $form;\n  \n  $msg := 'tokenize art ' & $form.name;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'description': $state.view.description,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $out := $x.output($state.owner, [$coin], $form.title, $form.subtitle, $form.description, $action.tags, $form);\n  $x.result($newState, [$out])\n)",
+							"language": "jsonata",
+							"expr": {}
+						}
+					},
+					"name": "incentum-tokenize",
+					"tags": [],
+					"other": {},
+					"ledger": "Ledger",
+					"versionMajor": 1,
+					"versionMinor": 0,
+					"versionPatch": 0,
+					"reducers": [
+						{
+							"type": "start",
+							"language": "jsonata",
+							"code": "(\n  $newstate := {\n    'ended': false,\n    'owner': $action.ledger,\n    'view': {\n      'title': $form.title,\n      'subtitle': $form.subtitle,\n      'description': $form.description,\n      'msgs': ['tokenize started']\n    }\n  };\n  \n  $out := $x.output($action.ledger, [], $form.title, $form.subtitle, 'Send this output to the contract when you want to end it', $action.tags);\n  $x.result($newstate, [$out])\n)"
+						},
+						{
+							"type": "end",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.isEqual($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 0, 'do not send coins, just send the start output');\n\n  $newstate := $merge([$state, { 'ended': true }]);\n  $x.result($newstate)\n)\n"
+						},
+						{
+							"type": "music",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isEqual($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.isOk($form.symbol, 'symbol is required');\n  $x.assert.isAtLeast($form.decimals, 0, 'decimals must be > 0');\n  $x.assert.isAtLeast($form.amount, 1, 'amount must be at least 1');\n\n  $mint := $x.mint($action.ledger, $form.symbol, $form.amount, $form.decimals, $form.title, $form.subtitle, $form.description, $action.tags, {}, $form.metadata);\n  \n  $msg := 'tokenize music ' & $form.metadata.song;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'description': $state.view.description,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $x.result($newState, [], [$mint])\n)\n"
+						},
+						{
+							"type": "writing",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isEqual($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.isOk($form.symbol, 'symbol is required');\n  $x.assert.isAtLeast($form.decimals, 0, 'decimals must be > 0');\n  $x.assert.isAtLeast($form.amount, 1, 'amount must be at least 1');\n  \n  $mint := $x.mint($action.ledger, $form.symbol, $form.amount, $form.decimals, $form.title, $form.subtitle, $form.description, $action.tags, {}, $form.metadata);\n  \n  $msg := 'tokenize writing ' & $form.metadata.title;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'description': $state.view.description,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $x.result($newState, [], [$mint])\n)\n"
+						},
+						{
+							"type": "art",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isEqual($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.isOk($form.symbol, 'symbol is required');\n  $x.assert.isAtLeast($form.decimals, 0, 'decimals must be > 0');\n  $x.assert.isAtLeast($form.amount, 1, 'amount must be at least 1');\n  \n  $mint := $x.mint($action.ledger, $form.symbol, $form.amount, $form.decimals, $form.title, $form.subtitle, $form.description, $action.tags, {}, $form.metadata);\n  \n  $msg := 'tokenize art ' & $form.metadata.name;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'description': $state.view.description,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $x.result($newState, [], [$mint])\n)\n"
+						}
+					],
+					"description": "tokenize Description"
+				},
+				"other": {},
+				"title": "",
+				"subtitle": "",
+				"description": "",
+				"key": "4ec07c319f2e2df46f67b4168ade7ed94363fcf9e7aeae895611252b7d9c299b"
+			}
+		},
+		{
+			"name": "start",
+			"result": {
+				"outputs": [
+					{
+						"ledger": "Alice",
+						"data": {},
+						"coins": [],
+						"tags": [],
+						"msgs": [],
+						"title": "My tokenization contract",
+						"subtitle": "Use this contract to tokenize stuff",
+						"description": "Send this output to the contract when you want to end it"
+					}
+				],
+				"state": {
+					"state": {
+						"ended": false,
+						"owner": "Alice",
+						"view": {
+							"title": "My tokenization contract",
+							"subtitle": "Use this contract to tokenize stuff",
+							"msgs": [
+								"tokenize started"
+							]
+						}
+					},
+					"coins": []
+				},
+				"mint": []
+			},
+			"contract": {
+				"ledger": "Alice",
+				"template": {
+					"reducerMap": {
+						"start": {
+							"type": "start",
+							"code": "(\n  $newstate := {\n    'ended': false,\n    'owner': $action.ledger,\n    'view': {\n      'title': $form.title,\n      'subtitle': $form.subtitle,\n      'description': $form.description,\n      'msgs': ['tokenize started']\n    }\n  };\n  \n  $out := $x.output($action.ledger, [], $form.title, $form.subtitle, 'Send this output to the contract when you want to end it', $action.tags);\n  $x.result($newstate, [$out])\n)",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"end": {
+							"type": "end",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.isEqual($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 0, 'do not send coins, just send the start output');\n\n  $newstate := $merge([$state, { 'ended': true }]);\n  $x.result($newstate)\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"music": {
+							"type": "music",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  \n  $coin := $x.coin.new($form.amount, $form.decimals);\n  $coin.other = $form;\n  \n  $msg := 'tokenize music ' & $form.song;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'description': $state.view.description,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $out := $x.output($state.owner, [$coin], $form.title, $form.subtitle, $form.description, $action.tags, $form);\n  $x.result($newState, [$out])\n)",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"writing": {
+							"type": "writing",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n\n  $coin := $x.coin.new($form.amount, $form.decimals);\n  $coin.other = $form;\n  \n  $msg := 'tokenize writing ' & $form.name;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'description': $state.view.description,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $out := $x.output($state.owner, [$coin], $form.title, $form.subtitle, $form.description, $action.tags, $form);\n  $x.result($newState, [$out])\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"art": {
+							"type": "art",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  \n  $coin := $x.coin.new($form.amount, $form.decimals);\n  $coin.other = $form;\n  \n  $msg := 'tokenize art ' & $form.name;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'description': $state.view.description,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $out := $x.output($state.owner, [$coin], $form.title, $form.subtitle, $form.description, $action.tags, $form);\n  $x.result($newState, [$out])\n)",
+							"language": "jsonata",
+							"expr": {}
+						}
+					},
+					"name": "incentum-tokenize",
+					"tags": [],
+					"other": {},
+					"ledger": "Ledger",
+					"versionMajor": 1,
+					"versionMinor": 0,
+					"versionPatch": 0,
+					"reducers": [
+						{
+							"type": "start",
+							"language": "jsonata",
+							"code": "(\n  $newstate := {\n    'ended': false,\n    'owner': $action.ledger,\n    'view': {\n      'title': $form.title,\n      'subtitle': $form.subtitle,\n      'description': $form.description,\n      'msgs': ['tokenize started']\n    }\n  };\n  \n  $out := $x.output($action.ledger, [], $form.title, $form.subtitle, 'Send this output to the contract when you want to end it', $action.tags);\n  $x.result($newstate, [$out])\n)"
+						},
+						{
+							"type": "end",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.isEqual($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 0, 'do not send coins, just send the start output');\n\n  $newstate := $merge([$state, { 'ended': true }]);\n  $x.result($newstate)\n)\n"
+						},
+						{
+							"type": "music",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isEqual($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.isOk($form.symbol, 'symbol is required');\n  $x.assert.isAtLeast($form.decimals, 0, 'decimals must be > 0');\n  $x.assert.isAtLeast($form.amount, 1, 'amount must be at least 1');\n\n  $mint := $x.mint($action.ledger, $form.symbol, $form.amount, $form.decimals, $form.title, $form.subtitle, $form.description, $action.tags, {}, $form.metadata);\n  \n  $msg := 'tokenize music ' & $form.metadata.song;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'description': $state.view.description,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $x.result($newState, [], [$mint])\n)\n"
+						},
+						{
+							"type": "writing",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isEqual($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.isOk($form.symbol, 'symbol is required');\n  $x.assert.isAtLeast($form.decimals, 0, 'decimals must be > 0');\n  $x.assert.isAtLeast($form.amount, 1, 'amount must be at least 1');\n  \n  $mint := $x.mint($action.ledger, $form.symbol, $form.amount, $form.decimals, $form.title, $form.subtitle, $form.description, $action.tags, {}, $form.metadata);\n  \n  $msg := 'tokenize writing ' & $form.metadata.title;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'description': $state.view.description,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $x.result($newState, [], [$mint])\n)\n"
+						},
+						{
+							"type": "art",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isEqual($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.isOk($form.symbol, 'symbol is required');\n  $x.assert.isAtLeast($form.decimals, 0, 'decimals must be > 0');\n  $x.assert.isAtLeast($form.amount, 1, 'amount must be at least 1');\n  \n  $mint := $x.mint($action.ledger, $form.symbol, $form.amount, $form.decimals, $form.title, $form.subtitle, $form.description, $action.tags, {}, $form.metadata);\n  \n  $msg := 'tokenize art ' & $form.metadata.name;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'description': $state.view.description,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $x.result($newState, [], [$mint])\n)\n"
+						}
+					],
+					"description": "tokenize Description"
+				},
+				"other": {},
+				"title": "",
+				"subtitle": "",
+				"description": "",
+				"key": "4ec07c319f2e2df46f67b4168ade7ed94363fcf9e7aeae895611252b7d9c299b"
+			}
+		},
+		{
+			"name": "music",
+			"result": {
+				"outputs": [
+					{
+						"key": "",
+						"tags": [],
+						"msgs": [],
+						"title": "My first song",
+						"subtitle": "My first song",
+						"description": "### Long markdown",
+						"ledger": "Alice",
+						"data": {},
+						"coins": [
+							{
+								"mint": "6ed8166e98a02d085b9f8770e40b669d91d09a7f93388f3f0bf4f46ec9ceb834",
+								"amount": "1",
+								"other": {
+									"song": "My first song",
+									"artist": "Alice",
+									"album": "Album Alone",
+									"composer": "Alice",
+									"genre": "rock",
+									"bpm": 80,
+									"comments": "### lots of markdown description"
+								},
+								"decimals": 2
+							}
+						],
+						"actionKey": "",
+						"actionHash": ""
+					}
+				],
+				"state": {
+					"state": {
+						"ended": false,
+						"owner": "Alice",
+						"view": {
+							"title": "My tokenization contract",
+							"subtitle": "Use this contract to tokenize stuff",
+							"msgs": [
+								"tokenize started",
+								"tokenize music My first song"
+							]
+						}
+					},
+					"coins": []
+				},
+				"mint": [
+					{
+						"ledger": "Alice",
+						"amount": "1",
+						"decimals": 2,
+						"title": "My first song",
+						"subtitle": "My first song",
+						"description": "### Long markdown",
+						"tags": [],
+						"other": {
+							"song": "My first song",
+							"artist": "Alice",
+							"album": "Album Alone",
+							"composer": "Alice",
+							"genre": "rock",
+							"bpm": 80,
+							"comments": "### lots of markdown description"
+						},
+						"outputData": {}
+					}
+				]
+			},
+			"contract": {
+				"ledger": "Alice",
+				"template": {
+					"reducerMap": {
+						"start": {
+							"type": "start",
+							"code": "(\n  $newstate := {\n    'ended': false,\n    'owner': $action.ledger,\n    'view': {\n      'title': $form.title,\n      'subtitle': $form.subtitle,\n      'description': $form.description,\n      'msgs': ['tokenize started']\n    }\n  };\n  \n  $out := $x.output($action.ledger, [], $form.title, $form.subtitle, 'Send this output to the contract when you want to end it', $action.tags);\n  $x.result($newstate, [$out])\n)",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"end": {
+							"type": "end",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.isEqual($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 0, 'do not send coins, just send the start output');\n\n  $newstate := $merge([$state, { 'ended': true }]);\n  $x.result($newstate)\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"music": {
+							"type": "music",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  \n  $mint := $x.mint($action.ledger, $form.symbol, $form.amount, $form.decimals, $form.title, $form.subtitle, $form.description, $action.tags, {}, $form.metadata);\n  \n  $msg := 'tokenize music ' & $form.metadata.song;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'description': $state.view.description,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $x.result($newState, [], [$mint])\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"writing": {
+							"type": "writing",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  \n  $mint := $x.mint($action.ledger, $form.symbol, $form.amount, $form.decimals, $form.title, $form.subtitle, $form.description, $action.tags, {}, $form.metadata);\n  \n  $msg := 'tokenize writing ' & $form.metadata.name;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'description': $state.view.description,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $x.result($newState, [], [$mint])\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"art": {
+							"type": "art",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  \n  $mint := $x.mint($action.ledger, $form.symbol, $form.amount, $form.decimals, $form.title, $form.subtitle, $form.description, $action.tags, {}, $form.metadata);\n  \n  $msg := 'tokenize art ' & $form.metadata.name;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'description': $state.view.description,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $x.result($newState, [], [$mint])\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						}
+					},
+					"name": "incentum-tokenize",
+					"tags": [],
+					"other": {},
+					"ledger": "Ledger",
+					"versionMajor": 1,
+					"versionMinor": 0,
+					"versionPatch": 0,
+					"reducers": [
+						{
+							"type": "start",
+							"language": "jsonata",
+							"code": "(\n  $newstate := {\n    'ended': false,\n    'owner': $action.ledger,\n    'view': {\n      'title': $form.title,\n      'subtitle': $form.subtitle,\n      'description': $form.description,\n      'msgs': ['tokenize started']\n    }\n  };\n  \n  $out := $x.output($action.ledger, [], $form.title, $form.subtitle, 'Send this output to the contract when you want to end it', $action.tags);\n  $x.result($newstate, [$out])\n)"
+						},
+						{
+							"type": "end",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.isEqual($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 0, 'do not send coins, just send the start output');\n\n  $newstate := $merge([$state, { 'ended': true }]);\n  $x.result($newstate)\n)\n"
+						},
+						{
+							"type": "music",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isEqual($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.isOk($form.symbol, 'symbol is required');\n  $x.assert.isAtLeast($form.decimals, 0, 'decimals must be > 0');\n  $x.assert.isAtLeast($form.amount, 1, 'amount must be at least 1');\n\n  $mint := $x.mint($action.ledger, $form.symbol, $form.amount, $form.decimals, $form.title, $form.subtitle, $form.description, $action.tags, {}, $form.metadata);\n  \n  $msg := 'tokenize music ' & $form.metadata.song;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'description': $state.view.description,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $x.result($newState, [], [$mint])\n)\n"
+						},
+						{
+							"type": "writing",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isEqual($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.isOk($form.symbol, 'symbol is required');\n  $x.assert.isAtLeast($form.decimals, 0, 'decimals must be > 0');\n  $x.assert.isAtLeast($form.amount, 1, 'amount must be at least 1');\n  \n  $mint := $x.mint($action.ledger, $form.symbol, $form.amount, $form.decimals, $form.title, $form.subtitle, $form.description, $action.tags, {}, $form.metadata);\n  \n  $msg := 'tokenize writing ' & $form.metadata.title;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'description': $state.view.description,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $x.result($newState, [], [$mint])\n)\n"
+						},
+						{
+							"type": "art",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isEqual($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.isOk($form.symbol, 'symbol is required');\n  $x.assert.isAtLeast($form.decimals, 0, 'decimals must be > 0');\n  $x.assert.isAtLeast($form.amount, 1, 'amount must be at least 1');\n  \n  $mint := $x.mint($action.ledger, $form.symbol, $form.amount, $form.decimals, $form.title, $form.subtitle, $form.description, $action.tags, {}, $form.metadata);\n  \n  $msg := 'tokenize art ' & $form.metadata.name;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'description': $state.view.description,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $x.result($newState, [], [$mint])\n)\n"
+						}
+					],
+					"description": "tokenize Description"
+				},
+				"other": {},
+				"title": "",
+				"subtitle": "",
+				"description": "",
+				"key": "4ec07c319f2e2df46f67b4168ade7ed94363fcf9e7aeae895611252b7d9c299b"
+			}
+		},
+		{
+			"name": "writing",
+			"result": {
+				"outputs": [
+					{
+						"key": "",
+						"tags": [],
+						"msgs": [],
+						"title": "My cool book",
+						"subtitle": "Another book",
+						"description": "Long markdown",
+						"ledger": "Alice",
+						"data": {},
+						"coins": [
+							{
+								"mint": "7191a2cb13140ed688a24c0bc62cdcf73903886a0aacf13629d55373a2d70605",
+								"amount": "1",
+								"other": {
+									"title": "My cool book",
+									"subtitle": "Another book",
+									"description": "Long desc",
+									"keywords": [
+										"sports"
+									],
+									"url": "http://x.y.z",
+									"author": "Alice",
+									"format": "ebook",
+									"isbn": "2222-2222",
+									"pubDate": "2019-01-01"
+								},
+								"decimals": 2
+							}
+						],
+						"actionKey": "",
+						"actionHash": ""
+					}
+				],
+				"state": {
+					"state": {
+						"ended": false,
+						"owner": "Alice",
+						"view": {
+							"title": "My tokenization contract",
+							"subtitle": "Use this contract to tokenize stuff",
+							"msgs": [
+								"tokenize started",
+								"tokenize writing My cool book"
+							]
+						}
+					},
+					"coins": []
+				},
+				"mint": [
+					{
+						"ledger": "Alice",
+						"amount": "1",
+						"decimals": 2,
+						"title": "My cool book",
+						"subtitle": "Another book",
+						"description": "Long markdown",
+						"tags": [],
+						"other": {
+							"title": "My cool book",
+							"subtitle": "Another book",
+							"description": "Long desc",
+							"keywords": [
+								"sports"
+							],
+							"url": "http://x.y.z",
+							"author": "Alice",
+							"format": "ebook",
+							"isbn": "2222-2222",
+							"pubDate": "2019-01-01"
+						},
+						"outputData": {}
+					}
+				]
+			},
+			"contract": {
+				"ledger": "Alice",
+				"template": {
+					"reducerMap": {
+						"start": {
+							"type": "start",
+							"code": "(\n  $newstate := {\n    'ended': false,\n    'owner': $action.ledger,\n    'view': {\n      'title': $form.title,\n      'subtitle': $form.subtitle,\n      'description': $form.description,\n      'msgs': ['tokenize started']\n    }\n  };\n  \n  $out := $x.output($action.ledger, [], $form.title, $form.subtitle, 'Send this output to the contract when you want to end it', $action.tags);\n  $x.result($newstate, [$out])\n)",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"end": {
+							"type": "end",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.isEqual($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 0, 'do not send coins, just send the start output');\n\n  $newstate := $merge([$state, { 'ended': true }]);\n  $x.result($newstate)\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"music": {
+							"type": "music",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  \n  $mint := $x.mint($action.ledger, $form.symbol, $form.amount, $form.decimals, $form.title, $form.subtitle, $form.description, $action.tags, {}, $form.metadata);\n  \n  $msg := 'tokenize music ' & $form.metadata.song;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'description': $state.view.description,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $x.result($newState, [], [$mint])\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"writing": {
+							"type": "writing",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  \n  $mint := $x.mint($action.ledger, $form.symbol, $form.amount, $form.decimals, $form.title, $form.subtitle, $form.description, $action.tags, {}, $form.metadata);\n  \n  $msg := 'tokenize writing ' & $form.metadata.title;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'description': $state.view.description,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $x.result($newState, [], [$mint])\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"art": {
+							"type": "art",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  \n  $mint := $x.mint($action.ledger, $form.symbol, $form.amount, $form.decimals, $form.title, $form.subtitle, $form.description, $action.tags, {}, $form.metadata);\n  \n  $msg := 'tokenize art ' & $form.metadata.name;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'description': $state.view.description,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $x.result($newState, [], [$mint])\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						}
+					},
+					"name": "incentum-tokenize",
+					"tags": [],
+					"other": {},
+					"ledger": "Ledger",
+					"versionMajor": 1,
+					"versionMinor": 0,
+					"versionPatch": 0,
+					"reducers": [
+						{
+							"type": "start",
+							"language": "jsonata",
+							"code": "(\n  $newstate := {\n    'ended': false,\n    'owner': $action.ledger,\n    'view': {\n      'title': $form.title,\n      'subtitle': $form.subtitle,\n      'description': $form.description,\n      'msgs': ['tokenize started']\n    }\n  };\n  \n  $out := $x.output($action.ledger, [], $form.title, $form.subtitle, 'Send this output to the contract when you want to end it', $action.tags);\n  $x.result($newstate, [$out])\n)"
+						},
+						{
+							"type": "end",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.isEqual($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 0, 'do not send coins, just send the start output');\n\n  $newstate := $merge([$state, { 'ended': true }]);\n  $x.result($newstate)\n)\n"
+						},
+						{
+							"type": "music",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isEqual($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.isOk($form.symbol, 'symbol is required');\n  $x.assert.isAtLeast($form.decimals, 0, 'decimals must be > 0');\n  $x.assert.isAtLeast($form.amount, 1, 'amount must be at least 1');\n\n  $mint := $x.mint($action.ledger, $form.symbol, $form.amount, $form.decimals, $form.title, $form.subtitle, $form.description, $action.tags, {}, $form.metadata);\n  \n  $msg := 'tokenize music ' & $form.metadata.song;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'description': $state.view.description,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $x.result($newState, [], [$mint])\n)\n"
+						},
+						{
+							"type": "writing",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isEqual($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.isOk($form.symbol, 'symbol is required');\n  $x.assert.isAtLeast($form.decimals, 0, 'decimals must be > 0');\n  $x.assert.isAtLeast($form.amount, 1, 'amount must be at least 1');\n  \n  $mint := $x.mint($action.ledger, $form.symbol, $form.amount, $form.decimals, $form.title, $form.subtitle, $form.description, $action.tags, {}, $form.metadata);\n  \n  $msg := 'tokenize writing ' & $form.metadata.title;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'description': $state.view.description,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $x.result($newState, [], [$mint])\n)\n"
+						},
+						{
+							"type": "art",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isEqual($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.isOk($form.symbol, 'symbol is required');\n  $x.assert.isAtLeast($form.decimals, 0, 'decimals must be > 0');\n  $x.assert.isAtLeast($form.amount, 1, 'amount must be at least 1');\n  \n  $mint := $x.mint($action.ledger, $form.symbol, $form.amount, $form.decimals, $form.title, $form.subtitle, $form.description, $action.tags, {}, $form.metadata);\n  \n  $msg := 'tokenize art ' & $form.metadata.name;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'description': $state.view.description,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $x.result($newState, [], [$mint])\n)\n"
+						}
+					],
+					"description": "tokenize Description"
+				},
+				"other": {},
+				"title": "",
+				"subtitle": "",
+				"description": "",
+				"key": "4ec07c319f2e2df46f67b4168ade7ed94363fcf9e7aeae895611252b7d9c299b"
+			}
+		},
+		{
+			"name": "writing",
+			"result": {
+				"outputs": [
+					{
+						"key": "",
+						"tags": [],
+						"msgs": [],
+						"title": "My cool book",
+						"subtitle": "Another book",
+						"description": "Long markdown",
+						"ledger": "Alice",
+						"data": {},
+						"coins": [
+							{
+								"mint": "7191a2cb13140ed688a24c0bc62cdcf73903886a0aacf13629d55373a2d70605",
+								"amount": "1",
+								"symbol": "BOOK-1",
+								"other": {
+									"title": "My cool book",
+									"subtitle": "Another book",
+									"description": "Long desc",
+									"keywords": [
+										"sports"
+									],
+									"url": "http://x.y.z",
+									"author": "Alice",
+									"format": "ebook",
+									"isbn": "2222-2222",
+									"pubDate": "2019-01-01"
+								},
+								"decimals": 2
+							}
+						],
+						"actionKey": "",
+						"actionHash": ""
+					}
+				],
+				"state": {
+					"state": {
+						"ended": false,
+						"owner": "Alice",
+						"view": {
+							"title": "My tokenization contract",
+							"subtitle": "Use this contract to tokenize stuff",
+							"msgs": [
+								"tokenize started",
+								"tokenize writing My cool book"
+							]
+						}
+					},
+					"coins": []
+				},
+				"mint": [
+					{
+						"ledger": "Alice",
+						"symbol": "BOOK-1",
+						"amount": "1",
+						"decimals": 2,
+						"title": "My cool book",
+						"subtitle": "Another book",
+						"description": "Long markdown",
+						"tags": [],
+						"other": {
+							"title": "My cool book",
+							"subtitle": "Another book",
+							"description": "Long desc",
+							"keywords": [
+								"sports"
+							],
+							"url": "http://x.y.z",
+							"author": "Alice",
+							"format": "ebook",
+							"isbn": "2222-2222",
+							"pubDate": "2019-01-01"
+						},
+						"outputData": {}
+					}
+				]
+			},
+			"contract": {
+				"ledger": "Alice",
+				"template": {
+					"reducerMap": {
+						"start": {
+							"type": "start",
+							"code": "(\n  $newstate := {\n    'ended': false,\n    'owner': $action.ledger,\n    'view': {\n      'title': $form.title,\n      'subtitle': $form.subtitle,\n      'description': $form.description,\n      'msgs': ['tokenize started']\n    }\n  };\n  \n  $out := $x.output($action.ledger, [], $form.title, $form.subtitle, 'Send this output to the contract when you want to end it', $action.tags);\n  $x.result($newstate, [$out])\n)",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"end": {
+							"type": "end",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.isEqual($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 0, 'do not send coins, just send the start output');\n\n  $newstate := $merge([$state, { 'ended': true }]);\n  $x.result($newstate)\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"music": {
+							"type": "music",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  \n  $mint := $x.mint($action.ledger, $form.symbol, $form.amount, $form.decimals, $form.title, $form.subtitle, $form.description, $action.tags, {}, $form.metadata);\n  \n  $msg := 'tokenize music ' & $form.metadata.song;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'description': $state.view.description,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $x.result($newState, [], [$mint])\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"writing": {
+							"type": "writing",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  \n  $mint := $x.mint($action.ledger, $form.symbol, $form.amount, $form.decimals, $form.title, $form.subtitle, $form.description, $action.tags, {}, $form.metadata);\n  \n  $msg := 'tokenize writing ' & $form.metadata.title;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'description': $state.view.description,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $x.result($newState, [], [$mint])\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"art": {
+							"type": "art",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  \n  $mint := $x.mint($action.ledger, $form.symbol, $form.amount, $form.decimals, $form.title, $form.subtitle, $form.description, $action.tags, {}, $form.metadata);\n  \n  $msg := 'tokenize art ' & $form.metadata.name;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'description': $state.view.description,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $x.result($newState, [], [$mint])\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						}
+					},
+					"name": "incentum-tokenize",
+					"tags": [],
+					"other": {},
+					"ledger": "Ledger",
+					"versionMajor": 1,
+					"versionMinor": 0,
+					"versionPatch": 0,
+					"reducers": [
+						{
+							"type": "start",
+							"language": "jsonata",
+							"code": "(\n  $newstate := {\n    'ended': false,\n    'owner': $action.ledger,\n    'view': {\n      'title': $form.title,\n      'subtitle': $form.subtitle,\n      'description': $form.description,\n      'msgs': ['tokenize started']\n    }\n  };\n  \n  $out := $x.output($action.ledger, [], $form.title, $form.subtitle, 'Send this output to the contract when you want to end it', $action.tags);\n  $x.result($newstate, [$out])\n)"
+						},
+						{
+							"type": "end",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.isEqual($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 0, 'do not send coins, just send the start output');\n\n  $newstate := $merge([$state, { 'ended': true }]);\n  $x.result($newstate)\n)\n"
+						},
+						{
+							"type": "music",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isEqual($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.isOk($form.symbol, 'symbol is required');\n  $x.assert.isAtLeast($form.decimals, 0, 'decimals must be > 0');\n  $x.assert.isAtLeast($form.amount, 1, 'amount must be at least 1');\n\n  $mint := $x.mint($action.ledger, $form.symbol, $form.amount, $form.decimals, $form.title, $form.subtitle, $form.description, $action.tags, {}, $form.metadata);\n  \n  $msg := 'tokenize music ' & $form.metadata.song;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'description': $state.view.description,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $x.result($newState, [], [$mint])\n)\n"
+						},
+						{
+							"type": "writing",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isEqual($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.isOk($form.symbol, 'symbol is required');\n  $x.assert.isAtLeast($form.decimals, 0, 'decimals must be > 0');\n  $x.assert.isAtLeast($form.amount, 1, 'amount must be at least 1');\n  \n  $mint := $x.mint($action.ledger, $form.symbol, $form.amount, $form.decimals, $form.title, $form.subtitle, $form.description, $action.tags, {}, $form.metadata);\n  \n  $msg := 'tokenize writing ' & $form.metadata.title;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'description': $state.view.description,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $x.result($newState, [], [$mint])\n)\n"
+						},
+						{
+							"type": "art",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isEqual($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.isOk($form.symbol, 'symbol is required');\n  $x.assert.isAtLeast($form.decimals, 0, 'decimals must be > 0');\n  $x.assert.isAtLeast($form.amount, 1, 'amount must be at least 1');\n  \n  $mint := $x.mint($action.ledger, $form.symbol, $form.amount, $form.decimals, $form.title, $form.subtitle, $form.description, $action.tags, {}, $form.metadata);\n  \n  $msg := 'tokenize art ' & $form.metadata.name;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'description': $state.view.description,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $x.result($newState, [], [$mint])\n)\n"
+						}
+					],
+					"description": "tokenize Description"
+				},
+				"other": {},
+				"title": "",
+				"subtitle": "",
+				"description": "",
+				"key": "4ec07c319f2e2df46f67b4168ade7ed94363fcf9e7aeae895611252b7d9c299b"
+			}
+		},
+		{
+			"name": "writing",
+			"result": {
+				"outputs": [
+					{
+						"key": "",
+						"tags": [],
+						"msgs": [],
+						"title": "My cool book",
+						"subtitle": "Another book",
+						"description": "Long markdown",
+						"ledger": "Alice",
+						"data": {},
+						"coins": [
+							{
+								"mint": "6f0bd0243f772099465577c1c2966ddbd497fa74ab1fcb47826bcbf309e9508a",
+								"amount": "1",
+								"symbol": "BOOK-1",
+								"other": {
+									"title": "My cool book",
+									"subtitle": "Another book",
+									"description": "Long desc",
+									"keywords": [
+										"sports"
+									],
+									"url": "http://x.y.z",
+									"author": "Alice",
+									"format": "ebook",
+									"isbn": "2222-2222",
+									"pubDate": "2019-01-01"
+								},
+								"decimals": 2
+							}
+						],
+						"actionKey": "",
+						"actionHash": ""
+					}
+				],
+				"state": {
+					"state": {
+						"ended": false,
+						"owner": "Alice",
+						"view": {
+							"title": "My tokenization contract",
+							"subtitle": "Use this contract to tokenize stuff",
+							"msgs": [
+								"tokenize started",
+								"tokenize writing My cool book"
+							]
+						}
+					},
+					"coins": []
+				},
+				"mint": [
+					{
+						"ledger": "Alice",
+						"symbol": "BOOK-1",
+						"amount": "1",
+						"decimals": 2,
+						"title": "My cool book",
+						"subtitle": "Another book",
+						"description": "Long markdown",
+						"tags": [],
+						"other": {
+							"title": "My cool book",
+							"subtitle": "Another book",
+							"description": "Long desc",
+							"keywords": [
+								"sports"
+							],
+							"url": "http://x.y.z",
+							"author": "Alice",
+							"format": "ebook",
+							"isbn": "2222-2222",
+							"pubDate": "2019-01-01"
+						},
+						"outputData": {}
+					}
+				]
+			},
+			"contract": {
+				"ledger": "Alice",
+				"template": {
+					"reducerMap": {
+						"start": {
+							"type": "start",
+							"code": "(\n  $newstate := {\n    'ended': false,\n    'owner': $action.ledger,\n    'view': {\n      'title': $form.title,\n      'subtitle': $form.subtitle,\n      'description': $form.description,\n      'msgs': ['tokenize started']\n    }\n  };\n  \n  $out := $x.output($action.ledger, [], $form.title, $form.subtitle, 'Send this output to the contract when you want to end it', $action.tags);\n  $x.result($newstate, [$out])\n)",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"end": {
+							"type": "end",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.isEqual($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 0, 'do not send coins, just send the start output');\n\n  $newstate := $merge([$state, { 'ended': true }]);\n  $x.result($newstate)\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"music": {
+							"type": "music",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  \n  $mint := $x.mint($action.ledger, $form.symbol, $form.amount, $form.decimals, $form.title, $form.subtitle, $form.description, $action.tags, {}, $form.metadata);\n  \n  $msg := 'tokenize music ' & $form.metadata.song;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'description': $state.view.description,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $x.result($newState, [], [$mint])\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"writing": {
+							"type": "writing",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.isOk($form.symbol, 'symbol is required');\n  $x.assert.isAtLeast($form.decimals, 0, 'decimals must be > 0');\n  $x.assert.isAtLeast($form.amount, 1, 'amount must be at least 1');\n  \n  $mint := $x.mint($action.ledger, $form.symbol, $form.amount, $form.decimals, $form.title, $form.subtitle, $form.description, $action.tags, {}, $form.metadata);\n  \n  $msg := 'tokenize writing ' & $form.metadata.title;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'description': $state.view.description,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $x.result($newState, [], [$mint])\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"art": {
+							"type": "art",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  \n  $mint := $x.mint($action.ledger, $form.symbol, $form.amount, $form.decimals, $form.title, $form.subtitle, $form.description, $action.tags, {}, $form.metadata);\n  \n  $msg := 'tokenize art ' & $form.metadata.name;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'description': $state.view.description,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $x.result($newState, [], [$mint])\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						}
+					},
+					"name": "incentum-tokenize",
+					"tags": [],
+					"other": {},
+					"ledger": "Ledger",
+					"versionMajor": 1,
+					"versionMinor": 0,
+					"versionPatch": 0,
+					"reducers": [
+						{
+							"type": "start",
+							"language": "jsonata",
+							"code": "(\n  $newstate := {\n    'ended': false,\n    'owner': $action.ledger,\n    'view': {\n      'title': $form.title,\n      'subtitle': $form.subtitle,\n      'description': $form.description,\n      'msgs': ['tokenize started']\n    }\n  };\n  \n  $out := $x.output($action.ledger, [], $form.title, $form.subtitle, 'Send this output to the contract when you want to end it', $action.tags);\n  $x.result($newstate, [$out])\n)"
+						},
+						{
+							"type": "end",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.isEqual($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 0, 'do not send coins, just send the start output');\n\n  $newstate := $merge([$state, { 'ended': true }]);\n  $x.result($newstate)\n)\n"
+						},
+						{
+							"type": "music",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isEqual($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.isOk($form.symbol, 'symbol is required');\n  $x.assert.isAtLeast($form.decimals, 0, 'decimals must be > 0');\n  $x.assert.isAtLeast($form.amount, 1, 'amount must be at least 1');\n\n  $mint := $x.mint($action.ledger, $form.symbol, $form.amount, $form.decimals, $form.title, $form.subtitle, $form.description, $action.tags, {}, $form.metadata);\n  \n  $msg := 'tokenize music ' & $form.metadata.song;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'description': $state.view.description,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $x.result($newState, [], [$mint])\n)\n"
+						},
+						{
+							"type": "writing",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isEqual($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.isOk($form.symbol, 'symbol is required');\n  $x.assert.isAtLeast($form.decimals, 0, 'decimals must be > 0');\n  $x.assert.isAtLeast($form.amount, 1, 'amount must be at least 1');\n  \n  $mint := $x.mint($action.ledger, $form.symbol, $form.amount, $form.decimals, $form.title, $form.subtitle, $form.description, $action.tags, {}, $form.metadata);\n  \n  $msg := 'tokenize writing ' & $form.metadata.title;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'description': $state.view.description,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $x.result($newState, [], [$mint])\n)\n"
+						},
+						{
+							"type": "art",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isEqual($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.isOk($form.symbol, 'symbol is required');\n  $x.assert.isAtLeast($form.decimals, 0, 'decimals must be > 0');\n  $x.assert.isAtLeast($form.amount, 1, 'amount must be at least 1');\n  \n  $mint := $x.mint($action.ledger, $form.symbol, $form.amount, $form.decimals, $form.title, $form.subtitle, $form.description, $action.tags, {}, $form.metadata);\n  \n  $msg := 'tokenize art ' & $form.metadata.name;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'description': $state.view.description,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $x.result($newState, [], [$mint])\n)\n"
+						}
+					],
+					"description": "tokenize Description"
+				},
+				"other": {},
+				"title": "",
+				"subtitle": "",
+				"description": "",
+				"key": "4ec07c319f2e2df46f67b4168ade7ed94363fcf9e7aeae895611252b7d9c299b"
+			}
+		},
+		{
+			"name": "music",
+			"result": {
+				"outputs": [
+					{
+						"key": "",
+						"tags": [],
+						"msgs": [],
+						"title": "My first song",
+						"subtitle": "My first song",
+						"description": "### Long markdown",
+						"ledger": "Alice",
+						"data": {},
+						"coins": [
+							{
+								"mint": "cc89ad582fee69f0a5b9e84429a60619c4975962db93fdb5d9fe51c8575f0a43",
+								"amount": "1",
+								"symbol": "SONG-1",
+								"other": {
+									"song": "My first song",
+									"artist": "Alice",
+									"album": "Album Alone",
+									"composer": "Alice",
+									"genre": "rock",
+									"bpm": 80,
+									"comments": "### lots of markdown description"
+								},
+								"decimals": 2
+							}
+						],
+						"actionKey": "",
+						"actionHash": ""
+					}
+				],
+				"state": {
+					"state": {
+						"ended": false,
+						"owner": "Alice",
+						"view": {
+							"title": "My tokenization contract",
+							"subtitle": "Use this contract to tokenize stuff",
+							"msgs": [
+								"tokenize started",
+								"tokenize music My first song"
+							]
+						}
+					},
+					"coins": []
+				},
+				"mint": [
+					{
+						"ledger": "Alice",
+						"symbol": "SONG-1",
+						"amount": "1",
+						"decimals": 2,
+						"title": "My first song",
+						"subtitle": "My first song",
+						"description": "### Long markdown",
+						"tags": [],
+						"other": {
+							"song": "My first song",
+							"artist": "Alice",
+							"album": "Album Alone",
+							"composer": "Alice",
+							"genre": "rock",
+							"bpm": 80,
+							"comments": "### lots of markdown description"
+						},
+						"outputData": {}
+					}
+				]
+			},
+			"contract": {
+				"ledger": "Alice",
+				"template": {
+					"reducerMap": {
+						"start": {
+							"type": "start",
+							"code": "(\n  $newstate := {\n    'ended': false,\n    'owner': $action.ledger,\n    'view': {\n      'title': $form.title,\n      'subtitle': $form.subtitle,\n      'description': $form.description,\n      'msgs': ['tokenize started']\n    }\n  };\n  \n  $out := $x.output($action.ledger, [], $form.title, $form.subtitle, 'Send this output to the contract when you want to end it', $action.tags);\n  $x.result($newstate, [$out])\n)",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"end": {
+							"type": "end",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.isEqual($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 0, 'do not send coins, just send the start output');\n\n  $newstate := $merge([$state, { 'ended': true }]);\n  $x.result($newstate)\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"music": {
+							"type": "music",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.isOk($form.symbol, 'symbol is required');\n  $x.assert.isAtLeast($form.decimals, 0, 'decimals must be > 0');\n  $x.assert.isAtLeast($form.amount, 1, 'amount must be at least 1');\n\n  $mint := $x.mint($action.ledger, $form.symbol, $form.amount, $form.decimals, $form.title, $form.subtitle, $form.description, $action.tags, {}, $form.metadata);\n  \n  $msg := 'tokenize music ' & $form.metadata.song;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'description': $state.view.description,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $x.result($newState, [], [$mint])\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"writing": {
+							"type": "writing",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.isOk($form.symbol, 'symbol is required');\n  $x.assert.isAtLeast($form.decimals, 0, 'decimals must be > 0');\n  $x.assert.isAtLeast($form.amount, 1, 'amount must be at least 1');\n  \n  $mint := $x.mint($action.ledger, $form.symbol, $form.amount, $form.decimals, $form.title, $form.subtitle, $form.description, $action.tags, {}, $form.metadata);\n  \n  $msg := 'tokenize writing ' & $form.metadata.title;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'description': $state.view.description,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $x.result($newState, [], [$mint])\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"art": {
+							"type": "art",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.isOk($form.symbol, 'symbol is required');\n  $x.assert.isAtLeast($form.decimals, 0, 'decimals must be > 0');\n  $x.assert.isAtLeast($form.amount, 1, 'amount must be at least 1');\n  \n  $mint := $x.mint($action.ledger, $form.symbol, $form.amount, $form.decimals, $form.title, $form.subtitle, $form.description, $action.tags, {}, $form.metadata);\n  \n  $msg := 'tokenize art ' & $form.metadata.name;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'description': $state.view.description,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $x.result($newState, [], [$mint])\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						}
+					},
+					"name": "incentum-tokenize",
+					"tags": [],
+					"other": {},
+					"ledger": "Ledger",
+					"versionMajor": 1,
+					"versionMinor": 0,
+					"versionPatch": 0,
+					"reducers": [
+						{
+							"type": "start",
+							"language": "jsonata",
+							"code": "(\n  $newstate := {\n    'ended': false,\n    'owner': $action.ledger,\n    'view': {\n      'title': $form.title,\n      'subtitle': $form.subtitle,\n      'description': $form.description,\n      'msgs': ['tokenize started']\n    }\n  };\n  \n  $out := $x.output($action.ledger, [], $form.title, $form.subtitle, 'Send this output to the contract when you want to end it', $action.tags);\n  $x.result($newstate, [$out])\n)"
+						},
+						{
+							"type": "end",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.isEqual($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 0, 'do not send coins, just send the start output');\n\n  $newstate := $merge([$state, { 'ended': true }]);\n  $x.result($newstate)\n)\n"
+						},
+						{
+							"type": "music",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isEqual($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.isOk($form.symbol, 'symbol is required');\n  $x.assert.isAtLeast($form.decimals, 0, 'decimals must be > 0');\n  $x.assert.isAtLeast($form.amount, 1, 'amount must be at least 1');\n\n  $mint := $x.mint($action.ledger, $form.symbol, $form.amount, $form.decimals, $form.title, $form.subtitle, $form.description, $action.tags, {}, $form.metadata);\n  \n  $msg := 'tokenize music ' & $form.metadata.song;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'description': $state.view.description,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $x.result($newState, [], [$mint])\n)\n"
+						},
+						{
+							"type": "writing",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isEqual($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.isOk($form.symbol, 'symbol is required');\n  $x.assert.isAtLeast($form.decimals, 0, 'decimals must be > 0');\n  $x.assert.isAtLeast($form.amount, 1, 'amount must be at least 1');\n  \n  $mint := $x.mint($action.ledger, $form.symbol, $form.amount, $form.decimals, $form.title, $form.subtitle, $form.description, $action.tags, {}, $form.metadata);\n  \n  $msg := 'tokenize writing ' & $form.metadata.title;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'description': $state.view.description,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $x.result($newState, [], [$mint])\n)\n"
+						},
+						{
+							"type": "art",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isEqual($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.isOk($form.symbol, 'symbol is required');\n  $x.assert.isAtLeast($form.decimals, 0, 'decimals must be > 0');\n  $x.assert.isAtLeast($form.amount, 1, 'amount must be at least 1');\n  \n  $mint := $x.mint($action.ledger, $form.symbol, $form.amount, $form.decimals, $form.title, $form.subtitle, $form.description, $action.tags, {}, $form.metadata);\n  \n  $msg := 'tokenize art ' & $form.metadata.name;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'description': $state.view.description,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $x.result($newState, [], [$mint])\n)\n"
+						}
+					],
+					"description": "tokenize Description"
+				},
+				"other": {},
+				"title": "",
+				"subtitle": "",
+				"description": "",
+				"key": "4ec07c319f2e2df46f67b4168ade7ed94363fcf9e7aeae895611252b7d9c299b"
+			}
+		},
+		{
+			"name": "art",
+			"result": {
+				"outputs": [
+					{
+						"key": "",
+						"tags": [],
+						"msgs": [],
+						"title": "My first painting",
+						"subtitle": "My first painting",
+						"description": "### Long markdown",
+						"ledger": "Alice",
+						"data": {},
+						"coins": [
+							{
+								"mint": "cc89ad582fee69f0a5b9e84429a60619c4975962db93fdb5d9fe51c8575f0a43",
+								"amount": "1",
+								"symbol": "ART-1",
+								"other": {
+									"title": "My first painting",
+									"artist": "Alice",
+									"copyright": "2019 Alice",
+									"comments": "### lots of markdown description"
+								},
+								"decimals": 2
+							}
+						],
+						"actionKey": "",
+						"actionHash": ""
+					}
+				],
+				"state": {
+					"state": {
+						"ended": false,
+						"owner": "Alice",
+						"view": {
+							"title": "My tokenization contract",
+							"subtitle": "Use this contract to tokenize stuff",
+							"msgs": [
+								"tokenize started",
+								"tokenize art "
+							]
+						}
+					},
+					"coins": []
+				},
+				"mint": [
+					{
+						"ledger": "Alice",
+						"symbol": "ART-1",
+						"amount": "1",
+						"decimals": 2,
+						"title": "My first painting",
+						"subtitle": "My first painting",
+						"description": "### Long markdown",
+						"tags": [],
+						"other": {
+							"title": "My first painting",
+							"artist": "Alice",
+							"copyright": "2019 Alice",
+							"comments": "### lots of markdown description"
+						},
+						"outputData": {}
+					}
+				]
+			},
+			"contract": {
+				"ledger": "Alice",
+				"template": {
+					"reducerMap": {
+						"start": {
+							"type": "start",
+							"code": "(\n  $newstate := {\n    'ended': false,\n    'owner': $action.ledger,\n    'view': {\n      'title': $form.title,\n      'subtitle': $form.subtitle,\n      'description': $form.description,\n      'msgs': ['tokenize started']\n    }\n  };\n  \n  $out := $x.output($action.ledger, [], $form.title, $form.subtitle, 'Send this output to the contract when you want to end it', $action.tags);\n  $x.result($newstate, [$out])\n)",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"end": {
+							"type": "end",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.isEqual($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 0, 'do not send coins, just send the start output');\n\n  $newstate := $merge([$state, { 'ended': true }]);\n  $x.result($newstate)\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"music": {
+							"type": "music",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.isOk($form.symbol, 'symbol is required');\n  $x.assert.isAtLeast($form.decimals, 0, 'decimals must be > 0');\n  $x.assert.isAtLeast($form.amount, 1, 'amount must be at least 1');\n\n  $mint := $x.mint($action.ledger, $form.symbol, $form.amount, $form.decimals, $form.title, $form.subtitle, $form.description, $action.tags, {}, $form.metadata);\n  \n  $msg := 'tokenize music ' & $form.metadata.song;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'description': $state.view.description,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $x.result($newState, [], [$mint])\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"writing": {
+							"type": "writing",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.isOk($form.symbol, 'symbol is required');\n  $x.assert.isAtLeast($form.decimals, 0, 'decimals must be > 0');\n  $x.assert.isAtLeast($form.amount, 1, 'amount must be at least 1');\n  \n  $mint := $x.mint($action.ledger, $form.symbol, $form.amount, $form.decimals, $form.title, $form.subtitle, $form.description, $action.tags, {}, $form.metadata);\n  \n  $msg := 'tokenize writing ' & $form.metadata.title;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'description': $state.view.description,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $x.result($newState, [], [$mint])\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"art": {
+							"type": "art",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.isOk($form.symbol, 'symbol is required');\n  $x.assert.isAtLeast($form.decimals, 0, 'decimals must be > 0');\n  $x.assert.isAtLeast($form.amount, 1, 'amount must be at least 1');\n  \n  $mint := $x.mint($action.ledger, $form.symbol, $form.amount, $form.decimals, $form.title, $form.subtitle, $form.description, $action.tags, {}, $form.metadata);\n  \n  $msg := 'tokenize art ' & $form.metadata.name;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'description': $state.view.description,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $x.result($newState, [], [$mint])\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						}
+					},
+					"name": "incentum-tokenize",
+					"tags": [],
+					"other": {},
+					"ledger": "Ledger",
+					"versionMajor": 1,
+					"versionMinor": 0,
+					"versionPatch": 0,
+					"reducers": [
+						{
+							"type": "start",
+							"language": "jsonata",
+							"code": "(\n  $newstate := {\n    'ended': false,\n    'owner': $action.ledger,\n    'view': {\n      'title': $form.title,\n      'subtitle': $form.subtitle,\n      'description': $form.description,\n      'msgs': ['tokenize started']\n    }\n  };\n  \n  $out := $x.output($action.ledger, [], $form.title, $form.subtitle, 'Send this output to the contract when you want to end it', $action.tags);\n  $x.result($newstate, [$out])\n)"
+						},
+						{
+							"type": "end",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.isEqual($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 0, 'do not send coins, just send the start output');\n\n  $newstate := $merge([$state, { 'ended': true }]);\n  $x.result($newstate)\n)\n"
+						},
+						{
+							"type": "music",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isEqual($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.isOk($form.symbol, 'symbol is required');\n  $x.assert.isAtLeast($form.decimals, 0, 'decimals must be > 0');\n  $x.assert.isAtLeast($form.amount, 1, 'amount must be at least 1');\n\n  $mint := $x.mint($action.ledger, $form.symbol, $form.amount, $form.decimals, $form.title, $form.subtitle, $form.description, $action.tags, {}, $form.metadata);\n  \n  $msg := 'tokenize music ' & $form.metadata.song;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'description': $state.view.description,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $x.result($newState, [], [$mint])\n)\n"
+						},
+						{
+							"type": "writing",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isEqual($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.isOk($form.symbol, 'symbol is required');\n  $x.assert.isAtLeast($form.decimals, 0, 'decimals must be > 0');\n  $x.assert.isAtLeast($form.amount, 1, 'amount must be at least 1');\n  \n  $mint := $x.mint($action.ledger, $form.symbol, $form.amount, $form.decimals, $form.title, $form.subtitle, $form.description, $action.tags, {}, $form.metadata);\n  \n  $msg := 'tokenize writing ' & $form.metadata.title;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'description': $state.view.description,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $x.result($newState, [], [$mint])\n)\n"
+						},
+						{
+							"type": "art",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isEqual($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.isOk($form.symbol, 'symbol is required');\n  $x.assert.isAtLeast($form.decimals, 0, 'decimals must be > 0');\n  $x.assert.isAtLeast($form.amount, 1, 'amount must be at least 1');\n  \n  $mint := $x.mint($action.ledger, $form.symbol, $form.amount, $form.decimals, $form.title, $form.subtitle, $form.description, $action.tags, {}, $form.metadata);\n  \n  $msg := 'tokenize art ' & $form.metadata.name;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'description': $state.view.description,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $x.result($newState, [], [$mint])\n)\n"
+						}
+					],
+					"description": "tokenize Description"
+				},
+				"other": {},
+				"title": "",
+				"subtitle": "",
+				"description": "",
+				"key": "4ec07c319f2e2df46f67b4168ade7ed94363fcf9e7aeae895611252b7d9c299b"
+			}
+		},
+		{
+			"name": "music",
+			"result": {
+				"outputs": [
+					{
+						"key": "",
+						"tags": [],
+						"msgs": [],
+						"title": "My first song",
+						"subtitle": "My first song",
+						"description": "### Long markdown",
+						"ledger": "Alice",
+						"data": {},
+						"coins": [
+							{
+								"mint": "cc89ad582fee69f0a5b9e84429a60619c4975962db93fdb5d9fe51c8575f0a43",
+								"amount": "1",
+								"symbol": "SONG-1",
+								"other": {
+									"song": "My first song",
+									"artist": "Alice",
+									"album": "Album Alone",
+									"composer": "Alice",
+									"genre": "rock",
+									"copyright": "2019 Alice",
+									"bpm": 80,
+									"comments": "### lots of markdown description"
+								},
+								"decimals": 2
+							}
+						],
+						"actionKey": "",
+						"actionHash": ""
+					}
+				],
+				"state": {
+					"state": {
+						"ended": false,
+						"owner": "Alice",
+						"view": {
+							"title": "My tokenization contract",
+							"subtitle": "Use this contract to tokenize stuff",
+							"msgs": [
+								"tokenize started",
+								"tokenize music My first song"
+							]
+						}
+					},
+					"coins": []
+				},
+				"mint": [
+					{
+						"ledger": "Alice",
+						"symbol": "SONG-1",
+						"amount": "1",
+						"decimals": 2,
+						"title": "My first song",
+						"subtitle": "My first song",
+						"description": "### Long markdown",
+						"tags": [],
+						"other": {
+							"song": "My first song",
+							"artist": "Alice",
+							"album": "Album Alone",
+							"composer": "Alice",
+							"genre": "rock",
+							"copyright": "2019 Alice",
+							"bpm": 80,
+							"comments": "### lots of markdown description"
+						},
+						"outputData": {}
+					}
+				]
+			},
+			"contract": {
+				"ledger": "Alice",
+				"template": {
+					"reducerMap": {
+						"start": {
+							"type": "start",
+							"code": "(\n  $newstate := {\n    'ended': false,\n    'owner': $action.ledger,\n    'view': {\n      'title': $form.title,\n      'subtitle': $form.subtitle,\n      'description': $form.description,\n      'msgs': ['tokenize started']\n    }\n  };\n  \n  $out := $x.output($action.ledger, [], $form.title, $form.subtitle, 'Send this output to the contract when you want to end it', $action.tags);\n  $x.result($newstate, [$out])\n)",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"end": {
+							"type": "end",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.isEqual($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 0, 'do not send coins, just send the start output');\n\n  $newstate := $merge([$state, { 'ended': true }]);\n  $x.result($newstate)\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"music": {
+							"type": "music",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.isOk($form.symbol, 'symbol is required');\n  $x.assert.isAtLeast($form.decimals, 0, 'decimals must be > 0');\n  $x.assert.isAtLeast($form.amount, 1, 'amount must be at least 1');\n\n  $mint := $x.mint($action.ledger, $form.symbol, $form.amount, $form.decimals, $form.title, $form.subtitle, $form.description, $action.tags, {}, $form.metadata);\n  \n  $msg := 'tokenize music ' & $form.metadata.song;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'description': $state.view.description,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $x.result($newState, [], [$mint])\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"writing": {
+							"type": "writing",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.isOk($form.symbol, 'symbol is required');\n  $x.assert.isAtLeast($form.decimals, 0, 'decimals must be > 0');\n  $x.assert.isAtLeast($form.amount, 1, 'amount must be at least 1');\n  \n  $mint := $x.mint($action.ledger, $form.symbol, $form.amount, $form.decimals, $form.title, $form.subtitle, $form.description, $action.tags, {}, $form.metadata);\n  \n  $msg := 'tokenize writing ' & $form.metadata.title;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'description': $state.view.description,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $x.result($newState, [], [$mint])\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"art": {
+							"type": "art",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.isOk($form.symbol, 'symbol is required');\n  $x.assert.isAtLeast($form.decimals, 0, 'decimals must be > 0');\n  $x.assert.isAtLeast($form.amount, 1, 'amount must be at least 1');\n  \n  $mint := $x.mint($action.ledger, $form.symbol, $form.amount, $form.decimals, $form.title, $form.subtitle, $form.description, $action.tags, {}, $form.metadata);\n  \n  $msg := 'tokenize art ' & $form.metadata.name;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'description': $state.view.description,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $x.result($newState, [], [$mint])\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						}
+					},
+					"name": "incentum-tokenize",
+					"tags": [],
+					"other": {},
+					"ledger": "Ledger",
+					"versionMajor": 1,
+					"versionMinor": 0,
+					"versionPatch": 0,
+					"reducers": [
+						{
+							"type": "start",
+							"language": "jsonata",
+							"code": "(\n  $newstate := {\n    'ended': false,\n    'owner': $action.ledger,\n    'view': {\n      'title': $form.title,\n      'subtitle': $form.subtitle,\n      'description': $form.description,\n      'msgs': ['tokenize started']\n    }\n  };\n  \n  $out := $x.output($action.ledger, [], $form.title, $form.subtitle, 'Send this output to the contract when you want to end it', $action.tags);\n  $x.result($newstate, [$out])\n)"
+						},
+						{
+							"type": "end",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.isEqual($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 0, 'do not send coins, just send the start output');\n\n  $newstate := $merge([$state, { 'ended': true }]);\n  $x.result($newstate)\n)\n"
+						},
+						{
+							"type": "music",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isEqual($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.isOk($form.symbol, 'symbol is required');\n  $x.assert.isAtLeast($form.decimals, 0, 'decimals must be > 0');\n  $x.assert.isAtLeast($form.amount, 1, 'amount must be at least 1');\n\n  $mint := $x.mint($action.ledger, $form.symbol, $form.amount, $form.decimals, $form.title, $form.subtitle, $form.description, $action.tags, {}, $form.metadata);\n  \n  $msg := 'tokenize music ' & $form.metadata.song;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'description': $state.view.description,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $x.result($newState, [], [$mint])\n)\n"
+						},
+						{
+							"type": "writing",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isEqual($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.isOk($form.symbol, 'symbol is required');\n  $x.assert.isAtLeast($form.decimals, 0, 'decimals must be > 0');\n  $x.assert.isAtLeast($form.amount, 1, 'amount must be at least 1');\n  \n  $mint := $x.mint($action.ledger, $form.symbol, $form.amount, $form.decimals, $form.title, $form.subtitle, $form.description, $action.tags, {}, $form.metadata);\n  \n  $msg := 'tokenize writing ' & $form.metadata.title;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'description': $state.view.description,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $x.result($newState, [], [$mint])\n)\n"
+						},
+						{
+							"type": "art",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isEqual($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.isOk($form.symbol, 'symbol is required');\n  $x.assert.isAtLeast($form.decimals, 0, 'decimals must be > 0');\n  $x.assert.isAtLeast($form.amount, 1, 'amount must be at least 1');\n  \n  $mint := $x.mint($action.ledger, $form.symbol, $form.amount, $form.decimals, $form.title, $form.subtitle, $form.description, $action.tags, {}, $form.metadata);\n  \n  $msg := 'tokenize art ' & $form.metadata.name;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'description': $state.view.description,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $x.result($newState, [], [$mint])\n)\n"
+						}
+					],
+					"description": "tokenize Description"
+				},
+				"other": {},
+				"title": "",
+				"subtitle": "",
+				"description": "",
+				"key": "4ec07c319f2e2df46f67b4168ade7ed94363fcf9e7aeae895611252b7d9c299b"
+			}
+		},
+		{
+			"name": "writing",
+			"result": {
+				"outputs": [
+					{
+						"key": "",
+						"tags": [],
+						"msgs": [],
+						"title": "My cool book",
+						"subtitle": "Another book",
+						"description": "Long markdown",
+						"ledger": "Alice",
+						"data": {},
+						"coins": [
+							{
+								"mint": "cc89ad582fee69f0a5b9e84429a60619c4975962db93fdb5d9fe51c8575f0a43",
+								"amount": "1",
+								"symbol": "BOOK-1",
+								"other": {
+									"title": "My cool book",
+									"subtitle": "Another book",
+									"description": "Long desc",
+									"keywords": [
+										"sports"
+									],
+									"url": "http://x.y.z",
+									"author": "Alice",
+									"format": "ebook",
+									"isbn": "2222-2222",
+									"pubDate": "2019-01-01",
+									"copyright": "2019 Alice"
+								},
+								"decimals": 2
+							}
+						],
+						"actionKey": "",
+						"actionHash": ""
+					}
+				],
+				"state": {
+					"state": {
+						"ended": false,
+						"owner": "Alice",
+						"view": {
+							"title": "My tokenization contract",
+							"subtitle": "Use this contract to tokenize stuff",
+							"msgs": [
+								"tokenize started",
+								"tokenize writing My cool book"
+							]
+						}
+					},
+					"coins": []
+				},
+				"mint": [
+					{
+						"ledger": "Alice",
+						"symbol": "BOOK-1",
+						"amount": "1",
+						"decimals": 2,
+						"title": "My cool book",
+						"subtitle": "Another book",
+						"description": "Long markdown",
+						"tags": [],
+						"other": {
+							"title": "My cool book",
+							"subtitle": "Another book",
+							"description": "Long desc",
+							"keywords": [
+								"sports"
+							],
+							"url": "http://x.y.z",
+							"author": "Alice",
+							"format": "ebook",
+							"isbn": "2222-2222",
+							"pubDate": "2019-01-01",
+							"copyright": "2019 Alice"
+						},
+						"outputData": {}
+					}
+				]
+			},
+			"contract": {
+				"ledger": "Alice",
+				"template": {
+					"reducerMap": {
+						"start": {
+							"type": "start",
+							"code": "(\n  $newstate := {\n    'ended': false,\n    'owner': $action.ledger,\n    'view': {\n      'title': $form.title,\n      'subtitle': $form.subtitle,\n      'description': $form.description,\n      'msgs': ['tokenize started']\n    }\n  };\n  \n  $out := $x.output($action.ledger, [], $form.title, $form.subtitle, 'Send this output to the contract when you want to end it', $action.tags);\n  $x.result($newstate, [$out])\n)",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"end": {
+							"type": "end",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.isEqual($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 0, 'do not send coins, just send the start output');\n\n  $newstate := $merge([$state, { 'ended': true }]);\n  $x.result($newstate)\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"music": {
+							"type": "music",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.isOk($form.symbol, 'symbol is required');\n  $x.assert.isAtLeast($form.decimals, 0, 'decimals must be > 0');\n  $x.assert.isAtLeast($form.amount, 1, 'amount must be at least 1');\n\n  $mint := $x.mint($action.ledger, $form.symbol, $form.amount, $form.decimals, $form.title, $form.subtitle, $form.description, $action.tags, {}, $form.metadata);\n  \n  $msg := 'tokenize music ' & $form.metadata.song;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'description': $state.view.description,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $x.result($newState, [], [$mint])\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"writing": {
+							"type": "writing",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.isOk($form.symbol, 'symbol is required');\n  $x.assert.isAtLeast($form.decimals, 0, 'decimals must be > 0');\n  $x.assert.isAtLeast($form.amount, 1, 'amount must be at least 1');\n  \n  $mint := $x.mint($action.ledger, $form.symbol, $form.amount, $form.decimals, $form.title, $form.subtitle, $form.description, $action.tags, {}, $form.metadata);\n  \n  $msg := 'tokenize writing ' & $form.metadata.title;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'description': $state.view.description,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $x.result($newState, [], [$mint])\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"art": {
+							"type": "art",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.isOk($form.symbol, 'symbol is required');\n  $x.assert.isAtLeast($form.decimals, 0, 'decimals must be > 0');\n  $x.assert.isAtLeast($form.amount, 1, 'amount must be at least 1');\n  \n  $mint := $x.mint($action.ledger, $form.symbol, $form.amount, $form.decimals, $form.title, $form.subtitle, $form.description, $action.tags, {}, $form.metadata);\n  \n  $msg := 'tokenize art ' & $form.metadata.name;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'description': $state.view.description,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $x.result($newState, [], [$mint])\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						}
+					},
+					"name": "incentum-tokenize",
+					"tags": [],
+					"other": {},
+					"ledger": "Ledger",
+					"versionMajor": 1,
+					"versionMinor": 0,
+					"versionPatch": 0,
+					"reducers": [
+						{
+							"type": "start",
+							"language": "jsonata",
+							"code": "(\n  $newstate := {\n    'ended': false,\n    'owner': $action.ledger,\n    'view': {\n      'title': $form.title,\n      'subtitle': $form.subtitle,\n      'description': $form.description,\n      'msgs': ['tokenize started']\n    }\n  };\n  \n  $out := $x.output($action.ledger, [], $form.title, $form.subtitle, 'Send this output to the contract when you want to end it', $action.tags);\n  $x.result($newstate, [$out])\n)"
+						},
+						{
+							"type": "end",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.isEqual($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 0, 'do not send coins, just send the start output');\n\n  $newstate := $merge([$state, { 'ended': true }]);\n  $x.result($newstate)\n)\n"
+						},
+						{
+							"type": "music",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isEqual($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.isOk($form.symbol, 'symbol is required');\n  $x.assert.isAtLeast($form.decimals, 0, 'decimals must be > 0');\n  $x.assert.isAtLeast($form.amount, 1, 'amount must be at least 1');\n\n  $mint := $x.mint($action.ledger, $form.symbol, $form.amount, $form.decimals, $form.title, $form.subtitle, $form.description, $action.tags, {}, $form.metadata);\n  \n  $msg := 'tokenize music ' & $form.metadata.song;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'description': $state.view.description,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $x.result($newState, [], [$mint])\n)\n"
+						},
+						{
+							"type": "writing",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isEqual($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.isOk($form.symbol, 'symbol is required');\n  $x.assert.isAtLeast($form.decimals, 0, 'decimals must be > 0');\n  $x.assert.isAtLeast($form.amount, 1, 'amount must be at least 1');\n  \n  $mint := $x.mint($action.ledger, $form.symbol, $form.amount, $form.decimals, $form.title, $form.subtitle, $form.description, $action.tags, {}, $form.metadata);\n  \n  $msg := 'tokenize writing ' & $form.metadata.title;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'description': $state.view.description,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $x.result($newState, [], [$mint])\n)\n"
+						},
+						{
+							"type": "art",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isEqual($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.isOk($form.symbol, 'symbol is required');\n  $x.assert.isAtLeast($form.decimals, 0, 'decimals must be > 0');\n  $x.assert.isAtLeast($form.amount, 1, 'amount must be at least 1');\n  \n  $mint := $x.mint($action.ledger, $form.symbol, $form.amount, $form.decimals, $form.title, $form.subtitle, $form.description, $action.tags, {}, $form.metadata);\n  \n  $msg := 'tokenize art ' & $form.metadata.name;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'description': $state.view.description,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $x.result($newState, [], [$mint])\n)\n"
+						}
+					],
+					"description": "tokenize Description"
+				},
+				"other": {},
+				"title": "",
+				"subtitle": "",
+				"description": "",
+				"key": "4ec07c319f2e2df46f67b4168ade7ed94363fcf9e7aeae895611252b7d9c299b"
+			}
+		},
+		{
+			"name": "end",
+			"result": {
+				"outputs": [],
+				"state": {
+					"state": {
+						"ended": true,
+						"owner": "Alice",
+						"view": {
+							"title": "My tokenization contract",
+							"subtitle": "Use this contract to tokenize stuff",
+							"msgs": [
+								"tokenize started"
+							]
+						}
+					},
+					"coins": []
+				},
+				"mint": []
+			},
+			"contract": {
+				"ledger": "Alice",
+				"template": {
+					"reducerMap": {
+						"start": {
+							"type": "start",
+							"code": "(\n  $newstate := {\n    'ended': false,\n    'owner': $action.ledger,\n    'view': {\n      'title': $form.title,\n      'subtitle': $form.subtitle,\n      'description': $form.description,\n      'msgs': ['tokenize started']\n    }\n  };\n  \n  $out := $x.output($action.ledger, [], $form.title, $form.subtitle, 'Send this output to the contract when you want to end it', $action.tags);\n  $x.result($newstate, [$out])\n)",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"end": {
+							"type": "end",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 0, 'do not send coins, just send the start output');\n\n  $newstate := $merge([$state, { 'ended': true }]);\n  $x.result($newstate)\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"music": {
+							"type": "music",
+							"code": "(\n  $x.assert.isEqual($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.isOk($form.symbol, 'symbol is required');\n  $x.assert.isAtLeast($form.decimals, 0, 'decimals must be >= 0');\n  $x.assert.isAtLeast($form.amount, 1, 'amount must be at least 1');\n\n  $mint := $x.mint($action.ledger, $form.symbol, $form.amount, $form.decimals, $form.title, $form.subtitle, $form.description, $action.tags, {}, $form.metadata);\n  \n  $msg := 'tokenize music ' & $form.metadata.song;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'description': $state.view.description,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $x.result($newState, [], [$mint])\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"writing": {
+							"type": "writing",
+							"code": "(\n  $x.assert.isEqual($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.isOk($form.symbol, 'symbol is required');\n  $x.assert.isAtLeast($form.decimals, 0, 'decimals must be >= 0');\n  $x.assert.isAtLeast($form.amount, 1, 'amount must be at least 1');\n  \n  $mint := $x.mint($action.ledger, $form.symbol, $form.amount, $form.decimals, $form.title, $form.subtitle, $form.description, $action.tags, {}, $form.metadata);\n  \n  $msg := 'tokenize writing ' & $form.metadata.title;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'description': $state.view.description,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $x.result($newState, [], [$mint])\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						},
+						"art": {
+							"type": "art",
+							"code": "(\n  $x.assert.isEqual($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.isOk($form.symbol, 'symbol is required');\n  $x.assert.isAtLeast($form.decimals, 0, 'decimals must be >= 0');\n  $x.assert.isAtLeast($form.amount, 1, 'amount must be at least 1');\n  \n  $mint := $x.mint($action.ledger, $form.symbol, $form.amount, $form.decimals, $form.title, $form.subtitle, $form.description, $action.tags, {}, $form.metadata);\n  \n  $msg := 'tokenize art ' & $form.metadata.name;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'description': $state.view.description,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $x.result($newState, [], [$mint])\n)\n",
+							"language": "jsonata",
+							"expr": {}
+						}
+					},
+					"name": "incentum-tokenize",
+					"tags": [],
+					"other": {},
+					"ledger": "Ledger",
+					"versionMajor": 1,
+					"versionMinor": 0,
+					"versionPatch": 0,
+					"reducers": [
+						{
+							"type": "start",
+							"language": "jsonata",
+							"code": "(\n  $newstate := {\n    'ended': false,\n    'owner': $action.ledger,\n    'view': {\n      'title': $form.title,\n      'subtitle': $form.subtitle,\n      'description': $form.description,\n      'msgs': ['tokenize started']\n    }\n  };\n  \n  $out := $x.output($action.ledger, [], $form.title, $form.subtitle, 'Send this output to the contract when you want to end it', $action.tags);\n  $x.result($newstate, [$out])\n)"
+						},
+						{
+							"type": "end",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.equal($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.equal($count($inputs), 1, 'only one input is allowed');\n  $i := $inputs[0];\n  $o := $i.output;\n  $x.assert.equal($count($o.coins), 0, 'do not send coins, just send the start output');\n\n  $newstate := $merge([$state, { 'ended': true }]);\n  $x.result($newstate)\n)\n"
+						},
+						{
+							"type": "music",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isEqual($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.isOk($form.symbol, 'symbol is required');\n  $x.assert.isAtLeast($form.decimals, 0, 'decimals must be >= 0');\n  $x.assert.isAtLeast($form.amount, 1, 'amount must be at least 1');\n\n  $mint := $x.mint($action.ledger, $form.symbol, $form.amount, $form.decimals, $form.title, $form.subtitle, $form.description, $action.tags, {}, $form.metadata);\n  \n  $msg := 'tokenize music ' & $form.metadata.song;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'description': $state.view.description,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $x.result($newState, [], [$mint])\n)\n"
+						},
+						{
+							"type": "writing",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isEqual($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.isOk($form.symbol, 'symbol is required');\n  $x.assert.isAtLeast($form.decimals, 0, 'decimals must be >= 0');\n  $x.assert.isAtLeast($form.amount, 1, 'amount must be at least 1');\n  \n  $mint := $x.mint($action.ledger, $form.symbol, $form.amount, $form.decimals, $form.title, $form.subtitle, $form.description, $action.tags, {}, $form.metadata);\n  \n  $msg := 'tokenize writing ' & $form.metadata.title;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'description': $state.view.description,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $x.result($newState, [], [$mint])\n)\n"
+						},
+						{
+							"type": "art",
+							"language": "jsonata",
+							"code": "(\n  $x.assert.isEqual($state.owner, $action.ledger, 'you are not the owner');\n  $x.assert.isNotTrue($state.ended, 'contract was ended');\n  $x.assert.isOk($form.symbol, 'symbol is required');\n  $x.assert.isAtLeast($form.decimals, 0, 'decimals must be >= 0');\n  $x.assert.isAtLeast($form.amount, 1, 'amount must be at least 1');\n  \n  $mint := $x.mint($action.ledger, $form.symbol, $form.amount, $form.decimals, $form.title, $form.subtitle, $form.description, $action.tags, {}, $form.metadata);\n  \n  $msg := 'tokenize art ' & $form.metadata.name;\n  $view := {\n    'view': {\n      'title': $state.view.title,\n      'subtitle': $state.view.subtitle,\n      'description': $state.view.description,\n      'msgs': $append($state.view.msgs, [$msg])\n    }\n  };\n  $newState := $merge([$state, $view]);\n  $x.result($newState, [], [$mint])\n)\n"
+						}
+					],
+					"description": "tokenize Description"
+				},
+				"other": {},
+				"title": "",
+				"subtitle": "",
+				"description": "",
+				"key": "4ec07c319f2e2df46f67b4168ade7ed94363fcf9e7aeae895611252b7d9c299b"
+			}
+		}
+	],
+	"resultSel": 0,
+	"schemaSel": 2,
+	"jsonSchemas": [
+		{
+			"name": "start",
+			"json": "{\n  \"title\": \"Start an Tokenize Contract\",\n  \"type\": \"object\",\n  \"required\": [\n    \"title\",\n    \"subtitle\"\n  ],\n  \"properties\": {\n    \"title\": {\n      \"type\": \"string\",\n      \"title\": \"Title\"\n    },\n    \"subtitle\": {\n      \"type\": \"string\",\n      \"title\": \"Subtitle\"\n    },\n    \"description\": {\n      \"type\": \"string\",\n      \"title\": \"Description\",\n      \"description\": \"Can be markdown\"\n    }\n  }\n}"
+		},
+		{
+			"name": "music",
+			"json": "{\n  \"title\": \"Tokenize Music\",\n  \"type\": \"object\",\n  \"required\": [\n    \"title\",\n    \"subtitle\",\n    \"symbol\",\n    \"decimals\",\n    \"amount\"\n  ],\n  \"properties\": {\n    \"title\": {\n      \"type\": \"string\",\n      \"title\": \"Title\"\n    },\n    \"subtitle\": {\n      \"type\": \"string\",\n      \"title\": \"Subtitle\"\n    },\n    \"description\": {\n      \"type\": \"string\",\n      \"title\": \"Description\",\n      \"description\": \"Can be markdown\"\n    },\n    \"symbol\": {\n      \"type\": \"string\",\n      \"title\": \"Symbol\"\n    },\n    \"decimals\": {\n      \"type\": \"integer\",\n      \"title\": \"Decimals\"\n    },\n    \"amount\": {\n      \"type\": \"integer\",\n      \"title\": \"Amount\"\n    },\n    \"metadata\": {\n      \"type\": \"object\",\n      \"title\": \"Metadata\",\n      \"required\": [\n        \"song\",\n        \"artist\",\n        \"composer\",\n        \"copyright\"\n      ],\n      \"properties\": {\n        \"song\": {\n          \"type\": \"string\",\n          \"title\": \"Song\"\n        },\n  \t    \"artist\": {\n          \"type\": \"string\",\n          \"title\": \"Artist\"\n        },\n  \t    \"album\": {\n          \"type\": \"string\",\n          \"title\": \"Album\"\n        },\n  \t    \"composer\": {\n          \"type\": \"string\",\n          \"title\": \"Composer\"\n        },\n  \t    \"genre\": {\n          \"type\": \"string\",\n          \"title\": \"Genre\"\n        },\n        \"copyright\": {\n          \"type\": \"string\",\n          \"title\": \"Copyright\"\n        },\n  \t    \"bpm\": {\n          \"type\": \"integer\",\n          \"title\": \"BPM\"\n        },\n        \"keywords\": {\n          \"type\": \"array\",\n          \"title\": \"Keywords\",\n          \"items\": {\n            \"type\": \"string\",\n            \"default\": \"keyword\"\n          }        \n        },\n  \t    \"comments\": {\n          \"type\": \"string\",\n          \"title\": \"Comments\",\n          \"description\": \"Can be markdown\"\n        }\n      }\n    }\n  }\n}"
+		},
+		{
+			"name": "art",
+			"json": "{\n  \"title\": \"Tokenize Art\",\n  \"type\": \"object\",\n  \"required\": [\n    \"title\",\n    \"subtitle\",\n    \"symbol\",\n    \"decimals\",\n    \"amount\"\n  ],\n  \"properties\": {\n    \"title\": {\n      \"type\": \"string\",\n      \"title\": \"Title\"\n    },\n    \"subtitle\": {\n      \"type\": \"string\",\n      \"title\": \"Subtitle\"\n    },\n    \"description\": {\n      \"type\": \"string\",\n      \"title\": \"Description\",\n      \"description\": \"Can be markdown\"\n    },\n    \"symbol\": {\n      \"type\": \"string\",\n      \"title\": \"Symbol\"\n    },\n    \"decimals\": {\n      \"type\": \"integer\",\n      \"title\": \"Decimals\"\n    },\n    \"amount\": {\n      \"type\": \"integer\",\n      \"title\": \"Amount\"\n    },\n    \"metadata\": {\n      \"type\": \"object\",\n      \"title\": \"Metadata\",\n      \"required\": [\n        \"title\",\n        \"artist\",\n        \"copyright\"\n      ],\n      \"properties\": {\n        \"title\": {\n          \"type\": \"string\",\n          \"title\": \"Title\"\n        },\n  \t    \"artist\": {\n          \"type\": \"string\",\n          \"title\": \"Artist\"\n        },\n  \t    \"genre\": {\n          \"type\": \"string\",\n          \"title\": \"Genre\"\n        },\n        \"copyright\": {\n          \"type\": \"string\",\n          \"title\": \"Copyright\"\n        },\n        \"keywords\": {\n          \"type\": \"array\",\n          \"title\": \"Keywords\",\n          \"items\": {\n            \"type\": \"string\",\n            \"default\": \"keyword\"\n          }        \n        },\n  \t    \"comments\": {\n          \"type\": \"string\",\n          \"title\": \"Comments\",\n          \"description\": \"Can be markdown\"\n        }\n      }\n    }\n  }\n}"
+		},
+		{
+			"name": "writing",
+			"json": "{\n  \"title\": \"Tokenize Writing\",\n  \"type\": \"object\",\n  \"required\": [\n    \"title\",\n    \"subtitle\",\n    \"symbol\",\n    \"decimals\",\n    \"amount\"\n  ],\n  \"properties\": {\n    \"title\": {\n      \"type\": \"string\",\n      \"title\": \"Title\"\n    },\n    \"subtitle\": {\n      \"type\": \"string\",\n      \"title\": \"Subtitle\"\n    },\n    \"description\": {\n      \"type\": \"string\",\n      \"title\": \"Description\",\n      \"description\": \"Can be markdown\"\n    },\n    \"symbol\": {\n      \"type\": \"string\",\n      \"title\": \"Symbol\"\n    },\n    \"decimals\": {\n      \"type\": \"integer\",\n      \"title\": \"Decimals\"\n    },\n    \"amount\": {\n      \"type\": \"integer\",\n      \"title\": \"Amount\"\n    },\n    \"metadata\": {\n      \"type\": \"object\",\n      \"title\": \"Metadata\",\n      \"required\": [\n        \"title\",\n        \"copyright\"\n      ],\n      \"properties\": {\n   \t    \"title\": {\n          \"type\": \"string\",\n          \"title\": \"Title\"\n        },\n  \t    \"subtitle\": {\n          \"type\": \"string\",\n          \"title\": \"Subtitle\"\n        },\n  \t    \"author\": {\n          \"type\": \"string\",\n          \"title\": \"Author\"\n        },\n  \t    \"format\": {\n          \"type\": \"string\",\n          \"title\": \"Format\"\n        },\n        \"copyright\": {\n          \"type\": \"string\",\n          \"title\": \"Copyright\"\n        },\n        \"isbn\": {\n          \"type\": \"string\",\n          \"title\": \"ISBN\"\n        },\n        \"pubDate\": {\n          \"type\": \"string\",\n          \"title\": \"Publication Date\"\n        },\n        \"url\": {\n          \"type\": \"string\",\n          \"title\": \"URL\"\n        },\n        \"keywords\": {\n          \"type\": \"array\",\n          \"title\": \"Keywords\",\n          \"items\": {\n            \"type\": \"string\",\n            \"default\": \"keyword\"\n          }        \n        },\n  \t    \"comments\": {\n          \"type\": \"string\",\n          \"title\": \"Comments\",\n          \"description\": \"Can be markdown\"\n        }\n      }\n    }\n  }\n}"
+		},
+		{
+			"name": "end",
+			"json": "{\n  \"title\": \"End a Tokenize Contract\",\n  \"type\": \"object\",\n  \"required\": [\n    \"output:end\"\n  ],\n  \"properties\": {\n    \"output:end\": {\n      \"type\": \"string\",\n      \"title\": \"Output\"\n    }\n  }\n}\n"
+		}
+	],
+	"jsonSchemaSel": 2,
+	"uiSchemas": [
+		{
+			"name": "start",
+			"json": "{\n  \"description\": {\n      \"ui:widget\": \"textarea\",\n      \"ui:options\": {\n        \"rows\": 5\n      }\n    }\n}"
+		},
+		{
+			"name": "music",
+			"json": "{\n  \"description\": {\n    \"ui:widget\": \"textarea\",\n    \"ui:options\": {\n      \"rows\": 5\n    }\n  },\n  \"metadata\": {\n    \"comments\": {\n      \"ui:widget\": \"textarea\",\n      \"ui:options\": {\n        \"rows\": 5\n      }\n    }\n  }\n}"
+		},
+		{
+			"name": "art",
+			"json": "{\n  \"description\": {\n    \"ui:widget\": \"textarea\",\n    \"ui:options\": {\n      \"rows\": 5\n    }\n  },\n  \"metadata\": {\n    \"comments\": {\n      \"ui:widget\": \"textarea\",\n      \"ui:options\": {\n        \"rows\": 5\n      }\n    }\n  }\n}"
+		},
+		{
+			"name": "writing",
+			"json": "{\n  \"description\": {\n    \"ui:widget\": \"textarea\",\n    \"ui:options\": {\n      \"rows\": 5\n    }\n  },\n  \"metadata\": {\n    \"comments\": {\n      \"ui:widget\": \"textarea\",\n      \"ui:options\": {\n        \"rows\": 5\n      }\n    }\n  }\n}"
+		},
+		{
+			"name": "end",
+			"json": "{\n  \"output:end\": {\n    \"ui:widget\": \"praxOutputs\"\n  }\n}"
+		}
+	],
+	"uiSchemaSel": 2,
+	"markdown": [
+		{
+			"name": "start",
+			"json": "### Start a Tokenize Contract\n\nThis contract can be used to tokenize things. Before\nyou can use anything in a Praxis Smart Contract, it\nmust be tokenized.\n\nThis tokenization contract gives some examples of\nhow you might tokenize music, art, or writing.\n"
+		},
+		{
+			"name": "music",
+			"json": "### Tokenize Music\n\nTokenize music. Tailored for music compositions.\n"
+		},
+		{
+			"name": "art",
+			"json": "### Tokenize Art\n\nTokenize art. Tailored for art works.\n"
+		},
+		{
+			"name": "writing",
+			"json": "### Tokenize Writing\n\nTokenize writing. Tailored for writing.\n"
+		},
+		{
+			"name": "end",
+			"json": "### End Tokenize Contract\n\nSend in the output you recieved from\nthe start method to end this contract."
+		}
+	],
+	"markdownSel": 2,
+	"formData": "{\n\t\"title\": \"asdf\",\n\t\"subtitle\": \"asdf\",\n\t\"metadata\": {\n\t\t\"title\": \"asdf\",\n\t\t\"copyright\": \"asdf\",\n\t\t\"keywords\": [\n\t\t\t\"keyword\",\n\t\t\t\"keyword\"\n\t\t]\n\t}\n}",
+	"jsonSchemaObject": {
+		"title": "Tokenize Art",
+		"type": "object",
+		"required": [
+			"title",
+			"subtitle",
+			"symbol",
+			"decimals",
+			"amount"
+		],
+		"properties": {
+			"title": {
+				"type": "string",
+				"title": "Title"
+			},
+			"subtitle": {
+				"type": "string",
+				"title": "Subtitle"
+			},
+			"description": {
+				"type": "string",
+				"title": "Description",
+				"description": "Can be markdown"
+			},
+			"symbol": {
+				"type": "string",
+				"title": "Symbol"
+			},
+			"decimals": {
+				"type": "integer",
+				"title": "Decimals"
+			},
+			"amount": {
+				"type": "integer",
+				"title": "Amount"
+			},
+			"metadata": {
+				"type": "object",
+				"title": "Metadata",
+				"required": [
+					"title",
+					"artist",
+					"copyright"
+				],
+				"properties": {
+					"title": {
+						"type": "string",
+						"title": "Title"
+					},
+					"artist": {
+						"type": "string",
+						"title": "Artist"
+					},
+					"genre": {
+						"type": "string",
+						"title": "Genre"
+					},
+					"copyright": {
+						"type": "string",
+						"title": "Copyright"
+					},
+					"keywords": {
+						"type": "array",
+						"title": "Keywords",
+						"items": {
+							"type": "string",
+							"default": "keyword"
+						}
+					},
+					"comments": {
+						"type": "string",
+						"title": "Comments",
+						"description": "Can be markdown"
+					}
+				}
+			}
+		}
+	},
+	"uiSchemaObject": {
+		"description": {
+			"ui:widget": "textarea",
+			"ui:options": {
+				"rows": 5
+			}
+		},
+		"metadata": {
+			"comments": {
+				"ui:widget": "textarea",
+				"ui:options": {
+					"rows": 5
+				}
+			}
+		}
+	},
+	"showSaveTemplateForm": false,
+	"showSaveSchemasForm": false,
+	"formSegment": 0
+}
