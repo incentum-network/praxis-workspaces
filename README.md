@@ -1,5 +1,5 @@
-# praxis-db
+# praxis-workspaces
 
-Database manangement library for Praxis. Uses TypeORM. 
+Production and example Praxis Smart Contract workspaces.
 
-Stores and retrieves Computational DAG in a relational database.
+To import, start the [Praxis Developer](https://praxis-developer.web.app) and click the Import button. Then select any of the workspaces to get started.
